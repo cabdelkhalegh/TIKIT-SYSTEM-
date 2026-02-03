@@ -10,6 +10,9 @@ import { isCampaignManagerOrHigher } from '@/utils/rbac';
 import ContentUploadForm from '@/components/ContentUploadForm';
 import VersionHistory from '@/components/VersionHistory';
 import FilePreview from '@/components/FilePreview';
+import ApprovalControls from '@/components/ApprovalControls';
+import FeedbackThread from '@/components/FeedbackThread';
+import ApprovalHistory from '@/components/ApprovalHistory';
 
 export default function CampaignDetailPage() {
   return (
@@ -32,6 +35,8 @@ function CampaignDetail() {
   const [showAddContent, setShowAddContent] = useState(false);
   const [uploadingContentId, setUploadingContentId] = useState<string | null>(null);
   const [viewingVersionsId, setViewingVersionsId] = useState<string | null>(null);
+  const [viewingFeedbackId, setViewingFeedbackId] = useState<string | null>(null);
+  const [viewingApprovalsId, setViewingApprovalsId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState({
     title: '',
     description: '',
@@ -427,39 +432,117 @@ function CampaignDetail() {
               )}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {contentItems.map((item) => (
-                <div key={item.id} className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-medium text-gray-800">{item.title}</h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
-                          {item.status.replace(/_/g, ' ').toUpperCase()}
-                        </span>
+                <div key={item.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                  {/* Content Item Header */}
+                  <div className="p-4 bg-white">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-medium text-gray-800">{item.title}</h3>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
+                            {item.status.replace(/_/g, ' ').toUpperCase()}
+                          </span>
+                        </div>
+                        {item.description && <p className="text-sm text-gray-600 mb-2">{item.description}</p>}
+                        <div className="flex gap-4 text-sm text-gray-500">
+                          <span>📱 {item.platform}</span>
+                          {item.format && <span>🎨 {item.format}</span>}
+                          {item.current_version > 0 && <span>📄 v{item.current_version}</span>}
+                          {item.internal_deadline && (
+                            <span>📅 Internal: {new Date(item.internal_deadline).toLocaleDateString()}</span>
+                          )}
+                          {item.client_deadline && (
+                            <span>👤 Client: {new Date(item.client_deadline).toLocaleDateString()}</span>
+                          )}
+                        </div>
                       </div>
-                      {item.description && <p className="text-sm text-gray-600 mb-2">{item.description}</p>}
-                      <div className="flex gap-4 text-sm text-gray-500">
-                        <span>📱 {item.platform}</span>
-                        {item.format && <span>🎨 {item.format}</span>}
-                        {item.current_version > 0 && <span>📄 v{item.current_version}</span>}
-                        {item.internal_deadline && (
-                          <span>📅 Internal: {new Date(item.internal_deadline).toLocaleDateString()}</span>
-                        )}
-                        {item.client_deadline && (
-                          <span>👤 Client: {new Date(item.client_deadline).toLocaleDateString()}</span>
-                        )}
-                      </div>
+                      {canEdit && (
+                        <button
+                          onClick={() => handleDeleteContent(item.id)}
+                          className="text-red-600 hover:text-red-800 ml-4 text-sm"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
-                    {canEdit && (
+
+                    {/* Action Buttons */}
+                    <div className="mt-4 flex gap-2 flex-wrap">
                       <button
-                        onClick={() => handleDeleteContent(item.id)}
-                        className="text-red-600 hover:text-red-800 ml-4"
+                        onClick={() => setUploadingContentId(uploadingContentId === item.id ? null : item.id)}
+                        className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
                       >
-                        Delete
+                        {uploadingContentId === item.id ? 'Cancel Upload' : '📤 Upload File'}
                       </button>
-                    )}
+                      
+                      {item.current_version > 0 && (
+                        <button
+                          onClick={() => setViewingVersionsId(item.id)}
+                          className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm"
+                        >
+                          📋 Versions ({item.current_version})
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={() => setViewingFeedbackId(viewingFeedbackId === item.id ? null : item.id)}
+                        className="px-3 py-1 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 text-sm"
+                      >
+                        💬 Feedback
+                      </button>
+                      
+                      <button
+                        onClick={() => setViewingApprovalsId(viewingApprovalsId === item.id ? null : item.id)}
+                        className="px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 text-sm"
+                      >
+                        ✓ Approval History
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Upload Form */}
+                  {uploadingContentId === item.id && (
+                    <div className="border-t border-gray-200 bg-gray-50 p-4">
+                      <ContentUploadForm
+                        contentItemId={item.id}
+                        campaignId={campaign!.id}
+                        onUploadComplete={() => {
+                          setUploadingContentId(null);
+                          loadCampaignData();
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Approval Controls */}
+                  {(item.status === 'pending_internal' || item.status === 'pending_client') && profile && (
+                    <div className="border-t border-gray-200 bg-gray-50 p-4">
+                      <ApprovalControls
+                        contentItem={item}
+                        userProfile={profile}
+                        onApprovalChange={() => loadCampaignData()}
+                      />
+                    </div>
+                  )}
+
+                  {/* Feedback Thread */}
+                  {viewingFeedbackId === item.id && profile && (
+                    <div className="border-t border-gray-200 bg-gray-50 p-4">
+                      <FeedbackThread
+                        contentItemId={item.id}
+                        userProfile={profile}
+                      />
+                    </div>
+                  )}
+
+                  {/* Approval History */}
+                  {viewingApprovalsId === item.id && (
+                    <div className="border-t border-gray-200 bg-gray-50 p-4">
+                      <ApprovalHistory contentItemId={item.id} />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
