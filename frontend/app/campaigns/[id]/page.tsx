@@ -7,6 +7,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Campaign, ContentItem, Client, Profile, CampaignStatus, ContentStatus } from '@/types';
 import { isCampaignManagerOrHigher } from '@/utils/rbac';
+import ContentUploadForm from '@/components/ContentUploadForm';
+import VersionHistory from '@/components/VersionHistory';
+import FilePreview from '@/components/FilePreview';
 
 export default function CampaignDetailPage() {
   return (
@@ -27,6 +30,8 @@ function CampaignDetail() {
   const [reviewer, setReviewer] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddContent, setShowAddContent] = useState(false);
+  const [uploadingContentId, setUploadingContentId] = useState<string | null>(null);
+  const [viewingVersionsId, setViewingVersionsId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState({
     title: '',
     description: '',
@@ -461,6 +466,14 @@ function CampaignDetail() {
           )}
         </div>
       </div>
+
+      {/* Version History Modal */}
+      {viewingVersionsId && (
+        <VersionHistory
+          contentItemId={viewingVersionsId}
+          onClose={() => setViewingVersionsId(null)}
+        />
+      )}
     </div>
   );
 }
