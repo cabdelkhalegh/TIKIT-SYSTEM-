@@ -763,6 +763,311 @@ CREATE TRIGGER auto_set_version_number
     EXECUTE FUNCTION set_content_version_number();
 
 -- ============================================================================
+-- KPI TABLES (TASK 5 - Manual KPI Entry)
+-- ============================================================================
+
+-- Post-level KPI metrics
+CREATE TABLE kpis (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    content_item_id UUID NOT NULL REFERENCES content_items(id) ON DELETE CASCADE,
+    content_version_id UUID REFERENCES content_versions(id) ON DELETE SET NULL,
+    snapshot_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    data_source TEXT NOT NULL CHECK (data_source IN ('manual', 'instagram', 'tiktok', 'youtube', 'facebook')),
+    
+    -- Metrics
+    views INTEGER,
+    likes INTEGER,
+    comments INTEGER,
+    shares INTEGER,
+    saves INTEGER,
+    reach INTEGER,
+    impressions INTEGER,
+    engagement_rate DECIMAL(5,2), -- Percentage (0-100)
+    
+    -- Audit fields
+    created_by UUID REFERENCES profiles(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Influencer-level KPI metrics
+CREATE TABLE influencer_kpis (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    influencer_id UUID NOT NULL, -- Will reference influencers table when created
+    snapshot_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    period TEXT NOT NULL CHECK (period IN ('daily', 'weekly', 'monthly')),
+    
+    -- Metrics
+    follower_count INTEGER NOT NULL,
+    avg_engagement_rate DECIMAL(5,2),
+    total_posts INTEGER,
+    
+    -- Audit fields
+    created_by UUID REFERENCES profiles(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Campaign-level KPI rollups
+CREATE TABLE campaign_kpis (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    campaign_id UUID NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    snapshot_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    
+    -- Aggregated metrics
+    total_views INTEGER,
+    total_likes INTEGER,
+    total_comments INTEGER,
+    total_shares INTEGER,
+    total_saves INTEGER,
+    total_reach INTEGER,
+    total_impressions INTEGER,
+    avg_engagement_rate DECIMAL(5,2),
+    total_interactions INTEGER, -- likes + comments + shares + saves
+    
+    -- Performance indicators
+    cost_per_engagement DECIMAL(10,2), -- campaign.budget / total_interactions
+    roi_indicator DECIMAL(10,2), -- (total_reach / campaign.budget) * 100
+    
+    -- Audit fields
+    created_by UUID REFERENCES profiles(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX idx_kpis_content_item ON kpis(content_item_id);
+CREATE INDEX idx_kpis_snapshot_date ON kpis(snapshot_date);
+CREATE INDEX idx_influencer_kpis_influencer ON influencer_kpis(influencer_id);
+CREATE INDEX idx_campaign_kpis_campaign ON campaign_kpis(campaign_id);
+
+-- ============================================================================
+-- KPI RLS POLICIES
+-- ============================================================================
+
+-- KPIs table policies
+CREATE POLICY "Directors can manage all KPIs"
+    ON kpis FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid() AND role = 'director' AND role_approved = TRUE
+        )
+    );
+
+CREATE POLICY "Campaign managers can manage KPIs for their campaigns"
+    ON kpis FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM content_items ci
+            JOIN campaigns c ON c.id = ci.campaign_id
+            WHERE ci.id = kpis.content_item_id
+            AND c.campaign_manager_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Influencers can add KPIs for their assigned content"
+    ON kpis FOR INSERT
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM content_items
+            WHERE id = kpis.content_item_id
+            AND assigned_influencer_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can view KPIs for content they have access to"
+    ON kpis FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid()
+            AND role IN ('director', 'campaign_manager', 'reviewer', 'finance', 'client', 'influencer')
+            AND role_approved = TRUE
+        )
+    );
+
+-- Influencer KPIs policies
+CREATE POLICY "Directors and campaign managers can manage influencer KPIs"
+    ON influencer_kpis FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid()
+            AND role IN ('director', 'campaign_manager')
+            AND role_approved = TRUE
+        )
+    );
+
+CREATE POLICY "Users can view influencer KPIs"
+    ON influencer_kpis FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid()
+            AND role IN ('director', 'campaign_manager', 'reviewer', 'finance')
+            AND role_approved = TRUE
+        )
+    );
+
+-- Campaign KPIs policies
+CREATE POLICY "Directors and campaign managers can manage campaign KPIs"
+    ON campaign_kpis FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM campaigns
+            WHERE id = campaign_kpis.campaign_id
+            AND (
+                campaign_manager_id = auth.uid()
+                OR EXISTS (
+                    SELECT 1 FROM profiles
+                    WHERE id = auth.uid() AND role = 'director' AND role_approved = TRUE
+                )
+            )
+        )
+    );
+
+CREATE POLICY "Users can view campaign KPIs for campaigns they have access to"
+    ON campaign_kpis FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid()
+            AND role IN ('director', 'campaign_manager', 'reviewer', 'finance', 'client')
+            AND role_approved = TRUE
+        )
+    );
+
+-- ============================================================================
+-- KPI HELPER FUNCTIONS
+-- ============================================================================
+
+-- Calculate engagement rate from metrics
+CREATE OR REPLACE FUNCTION calculate_engagement_rate(
+    p_interactions INTEGER,
+    p_reach INTEGER
+) RETURNS DECIMAL(5,2) AS $$
+BEGIN
+    IF p_reach IS NULL OR p_reach = 0 THEN
+        RETURN NULL;
+    END IF;
+    RETURN ROUND((p_interactions::DECIMAL / p_reach) * 100, 2);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Auto-calculate campaign KPI rollup
+CREATE OR REPLACE FUNCTION calculate_campaign_kpi_rollup(p_campaign_id UUID)
+RETURNS VOID AS $$
+DECLARE
+    v_total_interactions INTEGER;
+    v_campaign_budget DECIMAL(10,2);
+BEGIN
+    -- Get campaign budget
+    SELECT budget INTO v_campaign_budget
+    FROM campaigns
+    WHERE id = p_campaign_id;
+
+    -- Calculate total interactions
+    SELECT 
+        COALESCE(SUM(COALESCE(likes, 0) + COALESCE(comments, 0) + COALESCE(shares, 0) + COALESCE(saves, 0)), 0)
+    INTO v_total_interactions
+    FROM kpis k
+    JOIN content_items ci ON ci.id = k.content_item_id
+    WHERE ci.campaign_id = p_campaign_id;
+
+    -- Insert or update campaign KPI
+    INSERT INTO campaign_kpis (
+        campaign_id,
+        total_views,
+        total_likes,
+        total_comments,
+        total_shares,
+        total_saves,
+        total_reach,
+        total_impressions,
+        avg_engagement_rate,
+        total_interactions,
+        cost_per_engagement,
+        roi_indicator
+    )
+    SELECT 
+        p_campaign_id,
+        SUM(COALESCE(k.views, 0)),
+        SUM(COALESCE(k.likes, 0)),
+        SUM(COALESCE(k.comments, 0)),
+        SUM(COALESCE(k.shares, 0)),
+        SUM(COALESCE(k.saves, 0)),
+        SUM(COALESCE(k.reach, 0)),
+        SUM(COALESCE(k.impressions, 0)),
+        AVG(k.engagement_rate),
+        v_total_interactions,
+        CASE WHEN v_total_interactions > 0 AND v_campaign_budget IS NOT NULL
+            THEN v_campaign_budget / v_total_interactions
+            ELSE NULL
+        END,
+        CASE WHEN v_campaign_budget IS NOT NULL AND v_campaign_budget > 0
+            THEN (SUM(COALESCE(k.reach, 0))::DECIMAL / v_campaign_budget) * 100
+            ELSE NULL
+        END
+    FROM kpis k
+    JOIN content_items ci ON ci.id = k.content_item_id
+    WHERE ci.campaign_id = p_campaign_id
+    ON CONFLICT (campaign_id, snapshot_date) DO UPDATE
+    SET 
+        total_views = EXCLUDED.total_views,
+        total_likes = EXCLUDED.total_likes,
+        total_comments = EXCLUDED.total_comments,
+        total_shares = EXCLUDED.total_shares,
+        total_saves = EXCLUDED.total_saves,
+        total_reach = EXCLUDED.total_reach,
+        total_impressions = EXCLUDED.total_impressions,
+        avg_engagement_rate = EXCLUDED.avg_engagement_rate,
+        total_interactions = EXCLUDED.total_interactions,
+        cost_per_engagement = EXCLUDED.cost_per_engagement,
+        roi_indicator = EXCLUDED.roi_indicator,
+        updated_at = NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to auto-update campaign KPIs when post KPIs change
+CREATE OR REPLACE FUNCTION update_campaign_kpis()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_campaign_id UUID;
+BEGIN
+    -- Get campaign_id from content_item
+    SELECT campaign_id INTO v_campaign_id
+    FROM content_items
+    WHERE id = COALESCE(NEW.content_item_id, OLD.content_item_id);
+    
+    -- Recalculate campaign KPIs
+    PERFORM calculate_campaign_kpi_rollup(v_campaign_id);
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_campaign_kpis
+    AFTER INSERT OR UPDATE OR DELETE ON kpis
+    FOR EACH ROW
+    EXECUTE FUNCTION update_campaign_kpis();
+
+-- Add unique constraint for campaign_kpis
+ALTER TABLE campaign_kpis 
+    ADD CONSTRAINT unique_campaign_snapshot 
+    UNIQUE (campaign_id, snapshot_date);
+
+-- Trigger for updated_at
+CREATE TRIGGER update_kpis_updated_at
+    BEFORE UPDATE ON kpis
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_campaign_kpis_updated_at
+    BEFORE UPDATE ON campaign_kpis
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
 -- FUTURE TABLES (To be added in later phases)
 -- ============================================================================
 -- These tables will be added as remaining P0/P1 features are implemented:
@@ -770,8 +1075,6 @@ CREATE TRIGGER auto_set_version_number
 -- influencers (with influencer_code TEXT DEFAULT generate_influencer_id())
 -- influencer_instagram_accounts
 -- campaign_influencers (junction table)
--- kpis
--- kpi_snapshots
 -- invoices (with invoice_code TEXT DEFAULT generate_invoice_id())
 -- reports
 -- notifications

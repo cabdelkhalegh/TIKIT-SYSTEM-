@@ -169,3 +169,58 @@ export interface ContentFeedback {
   created_at: string;
   created_by: string | null;
 }
+
+// KPI Types
+export type KPISource = 'manual' | 'instagram' | 'tiktok' | 'youtube' | 'facebook';
+export type KPIPeriod = 'daily' | 'weekly' | 'monthly';
+
+export interface KPI {
+  id: string;
+  content_item_id: string;
+  content_version_id: string | null;
+  snapshot_date: string;
+  data_source: KPISource;
+  views: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  saves: number | null;
+  reach: number | null;
+  impressions: number | null;
+  engagement_rate: number | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InfluencerKPI {
+  id: string;
+  influencer_id: string;
+  snapshot_date: string;
+  period: KPIPeriod;
+  follower_count: number;
+  avg_engagement_rate: number | null;
+  total_posts: number | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface CampaignKPI {
+  id: string;
+  campaign_id: string;
+  snapshot_date: string;
+  total_views: number | null;
+  total_likes: number | null;
+  total_comments: number | null;
+  total_shares: number | null;
+  total_saves: number | null;
+  total_reach: number | null;
+  total_impressions: number | null;
+  avg_engagement_rate: number | null;
+  total_interactions: number | null;
+  cost_per_engagement: number | null;
+  roi_indicator: number | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
