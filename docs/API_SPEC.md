@@ -81,11 +81,19 @@ Response: 200 OK
     "id": "uuid",
     "email": "user@example.com",
     "full_name": "John Doe",
-    "role": "account_manager",
+    "role": "campaign_manager",
     "role_approved": true,
     ...
   }
 ]
+
+Note: Valid roles per PRD v1.2:
+- director
+- campaign_manager
+- reviewer
+- finance
+- client
+- influencer
 ```
 
 #### Update Profile

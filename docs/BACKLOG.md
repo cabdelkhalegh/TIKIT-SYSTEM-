@@ -10,7 +10,21 @@
 
 ## ✅ COMPLETED
 
+### TASK 1: Documentation [P0] ✅
+- [x] DB_SCHEMA.sql - Updated with 6-role model and ID generation
+- [x] MVP_SPEC.md - Updated with PRD v1.2 alignment
+- [x] ARCHITECTURE.md - Updated with 6-role model
+- [x] API_SPEC.md - Updated role examples
+- [x] DECISIONS.md - Added DEC-008 and DEC-009
+- [x] BACKLOG.md - This file
+- [x] README.md - Updated with security notice
+- [x] PRD_COMPLIANCE_ANALYSIS.md - Comprehensive PRD analysis
+- [x] PRD_ALIGNMENT_PLAN.md - Implementation roadmap
+- [x] PRD_CHECK_SUMMARY.md - Executive summary
+
 ### TASK 2: RBAC + Invite-Only System [P0] ✅
+- [x] **Six-role model per PRD v1.2 Section 2**
+  - director, campaign_manager, reviewer, finance, client, influencer
 - [x] Database schema with user roles
 - [x] Row Level Security policies
 - [x] Director role implementation
@@ -19,51 +33,32 @@
 - [x] Pending approval workflow
 - [x] Frontend route protection
 - [x] Frontend UI role gating
-- [x] RoleGate component for conditional rendering
+- [x] RoleGate component with helpers (DirectorOnly, FinanceOnly, CampaignManagerOnly, ReviewerOnly)
 - [x] Director dashboard for invitation management
-- [x] Documentation
+- [x] Updated RBAC utilities with new role hierarchy
+- [x] Documentation updates
 
----
-
-## 🔄 IN PROGRESS
-
-### TASK 1: Documentation [P0]
-- [x] DB_SCHEMA.sql
-- [x] MVP_SPEC.md
-- [x] ARCHITECTURE.md
-- [x] API_SPEC.md
-- [ ] DECISIONS.md
-- [ ] BACKLOG.md (this file)
-- [ ] README.md update
+### TASK 3: Human-Readable IDs [P0] ✅
+- [x] Database sequences (campaign_id_seq, client_id_seq, influencer_id_seq, invoice_id_seq)
+- [x] ID generation functions:
+  - `generate_campaign_id()` → TKT-YYYY-####
+  - `generate_client_id()` → CLI-####
+  - `generate_influencer_id()` → INF-####
+  - `generate_invoice_id()` → INV-YYYY-####
+- [x] Documentation in DB_SCHEMA.sql
+- [ ] Integration when entity tables are created (future task)
 
 ---
 
 ## 📋 TODO
 
-### TASK 3: Human-Readable IDs [P0]
-**Estimate**: 4-6 hours
-
-- [ ] Campaign ID generator: `TKT-YYYY-####`
-- [ ] Client ID generator: `CLI-####`
-- [ ] Influencer ID generator: `INF-####`
-- [ ] Invoice ID generator: `INV-YYYY-####`
-- [ ] Database sequences for auto-increment
-- [ ] Display IDs in all UI views
-- [ ] Include IDs in exports/reports
-
-**Files to Create/Modify:**
-- `docs/DB_SCHEMA.sql` - Add ID generation functions
-- `lib/id-generators.ts` - ID generation utilities
-- UI components - Display generated IDs
-
----
-
-### TASK 4: Content Workflow [P0]
-**Estimate**: 12-16 hours
+### TASK 4: Content Workflow [P0] - Per PRD Section 8
+**Estimate**: 12-16 hours  
+**Priority**: Critical (P0 per PRD Section 15)
 
 - [ ] Content upload to Supabase Storage
 - [ ] Version control for content
-- [ ] Internal approval stage
+- [ ] Internal approval stage (reviewer role)
 - [ ] Client approval stage
 - [ ] Feedback/comment system
 - [ ] Approval status tracking
@@ -84,8 +79,9 @@
 
 ---
 
-### TASK 5: KPI Manual Entry [P1]
-**Estimate**: 6-8 hours
+### TASK 5: KPI Manual Entry [P0] - Per PRD Section 9
+**Estimate**: 6-8 hours  
+**Priority**: Critical (P0 per PRD Section 15)
 
 - [ ] KPI entry form (per post)
 - [ ] KPI entry form (per influencer)
@@ -103,8 +99,9 @@
 
 ---
 
-### TASK 6: Instagram API Integration [P1]
-**Estimate**: 16-20 hours
+### TASK 6: Instagram API Integration [P0] - Per PRD Section 9
+**Estimate**: 16-20 hours  
+**Priority**: Critical (P0 per PRD Section 15)
 
 - [ ] Instagram OAuth flow
 - [ ] Token storage (server-side, encrypted)
@@ -132,8 +129,9 @@
 
 ---
 
-### TASK 7: Reporting & PDF Export [P1]
-**Estimate**: 10-12 hours
+### TASK 7: Reporting & PDF Export [P1] - Per PRD Section 10
+**Estimate**: 10-12 hours  
+**Priority**: High (P1 per PRD Section 15)
 
 - [ ] Campaign report generator
 - [ ] KPI aggregation for reports
@@ -157,6 +155,114 @@
 **Libraries:**
 - PDF generation (puppeteer, react-pdf, or jsPDF)
 - AI integration (OpenAI API)
+
+---
+
+### TASK 8: Campaign Management [P0] - Per PRD Sections 4, 5, 6, 7
+**Estimate**: 20-24 hours  
+**Priority**: Critical (required for MVP)
+
+**Campaign Lifecycle (PRD Section 4)**:
+- [ ] Status flow: draft → in_review → pitching → live → reporting → closed
+- [ ] Status gates with approvals
+- [ ] Campaign CRUD operations
+- [ ] Use human-readable IDs (TKT-YYYY-####)
+
+**Brief Intake (PRD Section 5)**:
+- [ ] Upload PDF or paste text
+- [ ] AI extraction (objectives, KPIs, audience, deliverables, budget)
+- [ ] Human review interface
+- [ ] Version history
+
+**Strategy Generation (PRD Section 5)**:
+- [ ] AI-generated campaign summary
+- [ ] Key messages
+- [ ] Content pillars
+- [ ] Matching criteria
+- [ ] Editable by humans
+- [ ] PDF export
+
+**Influencer Matching (PRD Section 6)**:
+- [ ] Managed influencer directory
+- [ ] Rate cards, niches, geo, language
+- [ ] AI scoring (assistive only)
+- [ ] Human override
+
+**Client Pitch (PRD Section 7)**:
+- [ ] Auto-generated pitch deck
+- [ ] Client portal view
+- [ ] Approve/request changes
+- [ ] Audit trail
+
+**Database Tables:**
+- `campaigns` (with campaign_code)
+- `briefs`
+- `brief_versions`
+- `strategies`
+- `influencer_matches`
+- `pitches`
+- `pitch_approvals`
+
+---
+
+### TASK 9: Client & Influencer Management [P1]
+**Estimate**: 12-16 hours
+
+**Clients**:
+- [ ] Client CRUD with CLI-#### IDs
+- [ ] Client portal access
+- [ ] Client-specific reports
+
+**Influencers**:
+- [ ] Influencer CRUD with INF-#### IDs
+- [ ] Rate cards
+- [ ] Niche/geo/language tags
+- [ ] Contract management
+- [ ] Instagram connection status
+
+**Database Tables:**
+- `clients` (with client_code)
+- `influencers` (with influencer_code)
+- `contracts`
+
+---
+
+### TASK 10: Finance & Invoicing [P1] - Per PRD Section 11
+**Estimate**: 10-12 hours  
+**Priority**: High (finance role requires this)
+
+- [ ] Invoice CRUD with INV-YYYY-#### IDs
+- [ ] Client invoices
+- [ ] Influencer invoices
+- [ ] Status: draft → sent → approved → paid
+- [ ] Finance-only permissions (finance role)
+- [ ] Director balance view
+- [ ] Payment tracking
+
+**Database Tables:**
+- `invoices` (with invoice_code)
+- `invoice_line_items`
+- `payments`
+
+**Pages:**
+- `/finance` - Finance dashboard (Finance + Director only)
+- `/invoices` - Invoice management
+- `/invoices/[id]` - Invoice detail
+
+---
+
+### TASK 11: Notifications [P1] - Per PRD Section 12
+**Estimate**: 6-8 hours
+
+- [ ] In-app notification center
+- [ ] Deadline reminders
+- [ ] Approval reminders
+- [ ] Email notifications (optional)
+- [ ] Notification preferences
+
+**Database Tables:**
+- `notifications`
+- `notification_preferences`
 
 ---
 
@@ -215,7 +321,21 @@ None currently.
 
 ## 📊 METRICS
 
-### Completed Tasks: 1/7
-### Progress: ~14%
-### Estimated Total Time: 60-80 hours
-### Time Spent: ~8 hours
+### Completed Tasks: 3/11 (Tasks 1, 2, 3)
+### Progress: ~30% (Foundation complete, P0 features remain)
+### Estimated Total Time: 100-130 hours
+### Time Spent: ~20 hours
+
+### PRD Compliance: ~30%
+- ✅ Authentication & Authorization (6-role model)
+- ✅ Human-readable IDs (implementation ready)
+- ❌ Campaign lifecycle & management
+- ❌ Content workflow
+- ❌ KPI system
+- ❌ Reporting
+- ❌ Finance tracking
+
+### Next Priority (Per PRD Section 15):
+1. Campaign Management (TASK 8) - Required for MVP
+2. Content Workflow (TASK 4) - P0
+3. KPI Manual + Instagram (TASKS 5 & 6) - P0

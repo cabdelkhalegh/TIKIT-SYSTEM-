@@ -24,8 +24,9 @@ TiKiT follows a modern JAMstack architecture with a serverless backend and a Rea
 
 ## Components
 
-### Frontend (Next.js 14)
-- **Framework**: Next.js 14 with App Router
+### Frontend (Next.js 15.6.3)
+- **Framework**: Next.js ^15.6.3 with App Router (security-hardened)
+- **Runtime**: React 19
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **State Management**: React Context (AuthContext)
@@ -36,10 +37,12 @@ TiKiT follows a modern JAMstack architecture with a serverless backend and a Rea
    - `contexts/AuthContext.tsx` - Global auth state
    - `components/ProtectedRoute.tsx` - Route protection
    - `components/RoleGate.tsx` - Component-level RBAC
+   - Helper components: DirectorOnly, FinanceOnly, CampaignManagerOnly, ReviewerOnly
 
-2. **RBAC System**
+2. **RBAC System (6-Role Model per PRD v1.2)**
    - `utils/rbac.ts` - Permission checking functions
    - `types/index.ts` - TypeScript type definitions
+   - Role hierarchy: director > finance > campaign_manager > reviewer > influencer > client
 
 3. **Pages**
    - `/login` - User login

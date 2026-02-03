@@ -9,16 +9,25 @@ This document tracks key architectural and implementation decisions made during 
 
 ### DEC-001: Technology Stack Selection
 **Date**: 2024-01-08  
+**Updated**: 2024-02-03 (Security hardening)  
 **Status**: Accepted  
 **Context**: Need to choose a modern, scalable stack for rapid MVP development  
 
-**Decision**: Use Next.js 14 + Supabase  
+**Decision**: Use Next.js ^15.6.3 + React 19 + Supabase  
 
 **Rationale**:
-- **Next.js 14**: Modern React framework with App Router, server components, and excellent TypeScript support
+- **Next.js ^15.6.3**: Security-hardened (zero vulnerabilities), modern React framework with App Router
+- **React 19**: Required for Next.js 15.6+ security fixes, backward compatible
 - **Supabase**: Provides authentication, PostgreSQL database, storage, and Row Level Security out of the box
 - **Tailwind CSS**: Rapid UI development with utility-first approach
 - **TypeScript**: Type safety and better developer experience
+
+**Security Update (2024-02-03)**:
+- Upgraded from Next.js 14.1.0 to ^15.6.3 to address critical vulnerabilities
+- Fixed RCE (Remote Code Execution) vulnerability
+- Fixed multiple DoS vulnerabilities
+- Fixed authorization bypass issues
+- Automatic security patches enabled via caret versioning
 
 **Alternatives Considered**:
 - Django + React: More complex setup, requires separate backend
@@ -29,6 +38,8 @@ This document tracks key architectural and implementation decisions made during 
 - ✅ Rapid development
 - ✅ Built-in authentication and security
 - ✅ Automatic API generation
+- ✅ Zero known security vulnerabilities
+- ✅ Auto-patching for security updates
 - ⚠️ Learning curve for Supabase-specific features
 - ⚠️ Dependency on Supabase platform
 
@@ -95,31 +106,104 @@ This document tracks key architectural and implementation decisions made during 
 
 ### DEC-004: User Roles Definition
 **Date**: 2024-01-08  
-**Status**: Accepted  
+**Status**: Deprecated → Superseded by DEC-008  
 **Context**: Need to define user roles for the influencer agency OS
 
-**Decision**: Four roles with hierarchical permissions:
+**Original Decision**: Four roles with hierarchical permissions:
 1. **Director**: Full system access, user management
 2. **Account Manager**: Campaign and client management
 3. **Influencer**: Own campaigns and content
 4. **Client**: View own campaigns and reports
 
+**Note**: This decision has been superseded by DEC-008 which aligns with PRD v1.2 requirements for six distinct roles.
+
+---
+
+### DEC-008: PRD v1.2 Alignment - Six-Role Model
+**Date**: 2024-02-03  
+**Status**: Accepted  
+**Context**: PRD v1.2 (canonical) specifies six distinct roles with clear separation of responsibilities. Previous 4-role model conflated multiple responsibilities into "account_manager".
+
+**Decision**: Implement six-role model per PRD v1.2 Section 2:
+1. **Director**: Super-user (global visibility, budget overrides, exception approvals)
+2. **Finance**: Financial control (create & approve invoices, mark paid)
+3. **Campaign Manager**: Runs campaigns (create/edit campaigns, manage workflows)
+4. **Reviewer**: Quality & approvals (approve briefs, content, reports)
+5. **Influencer**: External contributor (upload content, connect Instagram, view status)
+6. **Client**: External approver (view & approve shortlist, content, reports)
+
+**Role Hierarchy**: director > finance > campaign_manager > reviewer > influencer > client
+
 **Rationale**:
-- Maps to real agency structure
-- Clear permission boundaries
-- Scalable for future features
-- Simple enough for MVP
+- Aligns with PRD v1.2 canonical requirements
+- Clear separation of financial control from operational roles
+- Reviewer role enables dedicated quality assurance workflow
+- Campaign Manager focuses on campaign execution
+- Finance role has distinct permissions for invoicing and payment tracking
+- Supports future finance and approval workflows per PRD
+
+**Migration from 4-role model**:
+- `account_manager` deprecated but kept for backward compatibility
+- New deployments use 6-role model exclusively
+- Existing users must be migrated to appropriate new roles
+- See DB_SCHEMA.sql for migration commands
 
 **Alternatives Considered**:
-- More granular roles (e.g., separate content manager): Too complex for MVP
-- Fewer roles: Not enough separation of concerns
-- Permission-based instead of role-based: More flexible but harder to manage
+- Keep 4 roles, map to PRD: Not true compliance, technical debt
+- Add roles incrementally: Partial alignment, confusing state
+- Custom role permissions: More complex, not PRD-compliant
 
 **Consequences**:
-- ✅ Clear role definitions
-- ✅ Easy to understand and communicate
-- ✅ Room for expansion
-- ⚠️ May need role customization in future
+- ✅ Full PRD v1.2 compliance
+- ✅ Future-proof for finance workflows (Section 11)
+- ✅ Clear separation of concerns
+- ✅ Scalable for team growth
+- ⚠️ Breaking change for existing deployments
+- ⚠️ More complex RBAC logic
+- ⚠️ Requires user migration for existing systems
+
+---
+
+### DEC-009: Human-Readable ID System
+**Date**: 2024-02-03  
+**Status**: Accepted  
+**Context**: PRD v1.2 Section 3 mandates human-readable, immutable IDs for all core entities to improve communication and traceability.
+
+**Decision**: Implement formatted ID generation system:
+- **Campaign**: `TKT-YYYY-####` (e.g., TKT-2026-0007)
+- **Client**: `CLI-####` (e.g., CLI-0142)
+- **Influencer**: `INF-####` (e.g., INF-0901)
+- **Invoice**: `INV-YYYY-####` (e.g., INV-2026-0033)
+
+**Implementation**:
+- PostgreSQL sequences for auto-increment counters
+- Database functions for ID generation
+- Year component for campaigns and invoices (yearly reset)
+- 4-digit zero-padded sequential numbers
+- IDs assigned on record creation via DEFAULT
+- Immutable after creation
+
+**Rationale**:
+- Human-readable for communication (emails, reports, discussions)
+- Year-based for campaigns/invoices aids in organization
+- Sequential within year keeps IDs reasonably short
+- Immutable provides stable references
+- Database-level generation ensures consistency
+- Per PRD v1.2 requirement for all entities
+
+**Alternatives Considered**:
+- UUIDs only: Not human-friendly
+- Simple incrementing numbers: Less context
+- Custom format per entity type: Inconsistent
+- Client-side generation: Race conditions risk
+
+**Consequences**:
+- ✅ Easy to communicate and reference
+- ✅ Professional appearance in exports/PDFs
+- ✅ Yearly organization for campaigns/invoices
+- ✅ Database-enforced uniqueness
+- ⚠️ Sequences need maintenance (unlikely to overflow)
+- ⚠️ Year reset requires monitoring for campaigns/invoices
 
 ---
 
@@ -226,8 +310,9 @@ This document tracks key architectural and implementation decisions made during 
 
 ## Future Decisions Needed
 
-- ID generation strategy for campaigns, clients, etc. (TASK 3)
-- File storage structure for content uploads (TASK 4)
-- Instagram API rate limiting strategy (TASK 6)
-- PDF generation library selection (TASK 7)
-- AI provider selection for narrative generation (TASK 7)
+- File storage structure for content uploads (TASK 4 - Content Workflow)
+- Instagram API rate limiting strategy (TASK 6 - KPI Integration)
+- PDF generation library selection (TASK 7 - Reporting)
+- AI provider selection for narrative generation (TASK 7 - Reporting)
+- Campaign lifecycle state machine implementation (PRD Section 4)
+- Brief intake AI extraction provider (PRD Section 5)
