@@ -56,11 +56,31 @@ export function DirectorOnly({
 }
 
 /**
- * Helper component for account manager and above
+ * Helper component for finance role and above
  */
-export function AccountManagerOnly({ 
+export function FinanceOnly({ 
   children, 
   fallback = null 
 }: { children: React.ReactNode; fallback?: React.ReactNode }) {
-  return <RoleGate minimumRole="account_manager" fallback={fallback}>{children}</RoleGate>;
+  return <RoleGate minimumRole="finance" fallback={fallback}>{children}</RoleGate>;
+}
+
+/**
+ * Helper component for campaign manager and above
+ */
+export function CampaignManagerOnly({ 
+  children, 
+  fallback = null 
+}: { children: React.ReactNode; fallback?: React.ReactNode }) {
+  return <RoleGate minimumRole="campaign_manager" fallback={fallback}>{children}</RoleGate>;
+}
+
+/**
+ * Helper component for reviewer and above
+ */
+export function ReviewerOnly({ 
+  children, 
+  fallback = null 
+}: { children: React.ReactNode; fallback?: React.ReactNode }) {
+  return <RoleGate minimumRole="reviewer" fallback={fallback}>{children}</RoleGate>;
 }

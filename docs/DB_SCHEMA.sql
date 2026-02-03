@@ -1,6 +1,24 @@
 -- ============================================================================
 -- TiKiT MVP v1.2 Database Schema
 -- PostgreSQL / Supabase
+-- PRD v1.2 Compliant - 6-Role Model
+-- ============================================================================
+
+-- ============================================================================
+-- MIGRATION NOTES (from 4-role to 6-role model)
+-- ============================================================================
+-- If upgrading from existing 4-role system, run these commands FIRST:
+-- 
+-- ALTER TYPE user_role ADD VALUE 'campaign_manager';
+-- ALTER TYPE user_role ADD VALUE 'reviewer';
+-- ALTER TYPE user_role ADD VALUE 'finance';
+-- 
+-- Then migrate existing 'account_manager' users to appropriate new roles:
+-- UPDATE profiles SET role = 'campaign_manager' WHERE role = 'account_manager' AND <criteria>;
+-- UPDATE profiles SET role = 'reviewer' WHERE role = 'account_manager' AND <criteria>;
+-- UPDATE profiles SET role = 'finance' WHERE role = 'account_manager' AND <criteria>;
+-- 
+-- Note: 'account_manager' is deprecated but kept for backward compatibility
 -- ============================================================================
 
 -- Enable UUID extension
@@ -10,8 +28,16 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ENUMS
 -- ============================================================================
 
--- User roles for RBAC
-CREATE TYPE user_role AS ENUM ('director', 'account_manager', 'influencer', 'client');
+-- User roles for RBAC (PRD v1.2 Section 2)
+-- Note: In production, use ALTER TYPE to add new values to existing enum
+CREATE TYPE user_role AS ENUM (
+    'director',           -- Founder/Director - super-user (global visibility, budget overrides, exception approvals)
+    'campaign_manager',   -- Runs campaigns (create/edit campaigns, manage workflows)
+    'reviewer',           -- Quality & approvals (approve briefs, content, reports)
+    'finance',            -- Financial control (create & approve invoices, mark paid)
+    'client',             -- External approver (view & approve shortlist, content, reports)
+    'influencer'          -- External contributor (upload content, connect Instagram, view status)
+);
 
 -- Invitation status
 CREATE TYPE invitation_status AS ENUM ('pending', 'accepted', 'expired', 'revoked');
@@ -157,6 +183,50 @@ CREATE POLICY "Directors can update invitations"
     );
 
 -- ============================================================================
+-- ADDITIONAL ROLE-SPECIFIC POLICIES (for future tables)
+-- ============================================================================
+-- Note: These policies are templates for when Campaign, Content, Finance tables are added
+--
+-- Campaign Managers can view campaigns they manage
+-- Reviewers can view content that needs approval
+-- Finance can view all invoices and financial data
+-- 
+-- Example for future campaigns table:
+-- CREATE POLICY "Campaign managers can manage campaigns"
+--     ON campaigns FOR ALL
+--     USING (
+--         EXISTS (
+--             SELECT 1 FROM profiles
+--             WHERE id = auth.uid()
+--             AND role IN ('director', 'campaign_manager')
+--             AND role_approved = TRUE
+--         )
+--     );
+--
+-- CREATE POLICY "Reviewers can approve content"
+--     ON content FOR UPDATE
+--     USING (
+--         EXISTS (
+--             SELECT 1 FROM profiles
+--             WHERE id = auth.uid()
+--             AND role IN ('director', 'reviewer')
+--             AND role_approved = TRUE
+--         )
+--     );
+--
+-- CREATE POLICY "Finance can manage invoices"
+--     ON invoices FOR ALL
+--     USING (
+--         EXISTS (
+--             SELECT 1 FROM profiles
+--             WHERE id = auth.uid()
+--             AND role IN ('director', 'finance')
+--             AND role_approved = TRUE
+--         )
+--     );
+-- ============================================================================
+
+-- ============================================================================
 -- FUNCTIONS & TRIGGERS
 -- ============================================================================
 
@@ -202,3 +272,75 @@ $$ LANGUAGE plpgsql;
 -- ============================================================================
 -- Note: First director must be created manually or via bootstrap script
 -- after first user signs up through Supabase Auth UI
+
+-- ============================================================================
+-- HUMAN-READABLE IDs (PRD v1.2 Section 3)
+-- ============================================================================
+
+-- Sequences for human-readable IDs
+CREATE SEQUENCE IF NOT EXISTS campaign_id_seq START 1;
+CREATE SEQUENCE IF NOT EXISTS client_id_seq START 1;
+CREATE SEQUENCE IF NOT EXISTS influencer_id_seq START 1;
+CREATE SEQUENCE IF NOT EXISTS invoice_id_seq START 1;
+
+-- Function to generate campaign ID: TKT-YYYY-####
+CREATE OR REPLACE FUNCTION generate_campaign_id()
+RETURNS TEXT AS $$
+DECLARE
+    year_part TEXT;
+    seq_num TEXT;
+BEGIN
+    year_part := EXTRACT(YEAR FROM NOW())::TEXT;
+    seq_num := LPAD(nextval('campaign_id_seq')::TEXT, 4, '0');
+    RETURN 'TKT-' || year_part || '-' || seq_num;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to generate client ID: CLI-####
+CREATE OR REPLACE FUNCTION generate_client_id()
+RETURNS TEXT AS $$
+DECLARE
+    seq_num TEXT;
+BEGIN
+    seq_num := LPAD(nextval('client_id_seq')::TEXT, 4, '0');
+    RETURN 'CLI-' || seq_num;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to generate influencer ID: INF-####
+CREATE OR REPLACE FUNCTION generate_influencer_id()
+RETURNS TEXT AS $$
+DECLARE
+    seq_num TEXT;
+BEGIN
+    seq_num := LPAD(nextval('influencer_id_seq')::TEXT, 4, '0');
+    RETURN 'INF-' || seq_num;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to generate invoice ID: INV-YYYY-####
+CREATE OR REPLACE FUNCTION generate_invoice_id()
+RETURNS TEXT AS $$
+DECLARE
+    year_part TEXT;
+    seq_num TEXT;
+BEGIN
+    year_part := EXTRACT(YEAR FROM NOW())::TEXT;
+    seq_num := LPAD(nextval('invoice_id_seq')::TEXT, 4, '0');
+    RETURN 'INV-' || year_part || '-' || seq_num;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================================================
+-- FUTURE TABLES (To be added in later phases)
+-- ============================================================================
+-- These tables will be added as P0 features are implemented:
+--
+-- campaigns (with campaign_code TEXT DEFAULT generate_campaign_id())
+-- clients (with client_code TEXT DEFAULT generate_client_id())
+-- influencers (with influencer_code TEXT DEFAULT generate_influencer_id())
+-- invoices (with invoice_code TEXT DEFAULT generate_invoice_id())
+-- content_items
+-- kpis
+-- reports
+-- ============================================================================

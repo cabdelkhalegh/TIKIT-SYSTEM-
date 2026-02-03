@@ -1,4 +1,11 @@
-export type UserRole = 'director' | 'account_manager' | 'influencer' | 'client';
+// PRD v1.2 Section 2 - Six user roles for RBAC
+export type UserRole = 
+  | 'director'           // Founder/Director - super-user
+  | 'campaign_manager'   // Runs campaigns
+  | 'reviewer'           // Quality & approvals
+  | 'finance'            // Financial control
+  | 'client'             // External approver
+  | 'influencer';        // External contributor
 
 export interface Profile {
   id: string;

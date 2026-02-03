@@ -18,7 +18,7 @@ export default function InvitationsPage() {
 
   // Form state
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<UserRole>('account_manager');
+  const [role, setRole] = useState<UserRole>('campaign_manager');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -72,7 +72,7 @@ export default function InvitationsPage() {
 
       setSuccess(`Invitation sent to ${email} with code: ${inviteCode}`);
       setEmail('');
-      setRole('account_manager');
+      setRole('campaign_manager');
       setShowForm(false);
       fetchInvitations();
     } catch (err: any) {
@@ -231,8 +231,10 @@ export default function InvitationsPage() {
                           onChange={(e) => setRole(e.target.value as UserRole)}
                           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
                         >
-                          <option value="director">Director</option>
-                          <option value="account_manager">Account Manager</option>
+                          <option value="director">Director (Super-user)</option>
+                          <option value="campaign_manager">Campaign Manager</option>
+                          <option value="reviewer">Reviewer</option>
+                          <option value="finance">Finance</option>
                           <option value="influencer">Influencer</option>
                           <option value="client">Client</option>
                         </select>
