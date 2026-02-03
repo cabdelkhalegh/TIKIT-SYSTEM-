@@ -2,12 +2,15 @@
 node_modules/
 /.pnp
 .pnp.js
+package-lock.json
+**/package-lock.json
 
 # Testing
 /coverage
 
 # Next.js
-/.next/
+.next/
+**/.next/
 /out/
 
 # Production
@@ -26,6 +29,7 @@ yarn-error.log*
 # Local env files
 .env
 .env*.local
+**/.env.local
 
 # Vercel
 .vercel
