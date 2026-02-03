@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import { Campaign, ContentItem, Client, UserProfile, CampaignStatus, ContentStatus } from '@/types';
+import { supabase } from '@/lib/supabase';
+import { Campaign, ContentItem, Client, Profile, CampaignStatus, ContentStatus } from '@/types';
 import { isCampaignManagerOrHigher } from '@/utils/rbac';
 
 export default function CampaignDetailPage() {
@@ -20,12 +20,11 @@ function CampaignDetail() {
   const { user, profile } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const supabase = createClientComponentClient();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
-  const [campaignManager, setCampaignManager] = useState<UserProfile | null>(null);
-  const [reviewer, setReviewer] = useState<UserProfile | null>(null);
+  const [campaignManager, setCampaignManager] = useState<Profile | null>(null);
+  const [reviewer, setReviewer] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddContent, setShowAddContent] = useState(false);
   const [newContent, setNewContent] = useState({
@@ -38,7 +37,7 @@ function CampaignDetail() {
     assigned_influencer_id: '',
   });
 
-  const canEdit = profile && isCampaignManagerOrHigher(profile.role);
+  const canEdit = isCampaignManagerOrHigher(profile);
 
   useEffect(() => {
     loadCampaignData();

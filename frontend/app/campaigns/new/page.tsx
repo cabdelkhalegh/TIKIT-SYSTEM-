@@ -40,7 +40,7 @@ function NewCampaignContent() {
 
   useEffect(() => {
     // Check permissions
-    if (profile && !isCampaignManagerOrHigher(profile.role)) {
+    if (profile && !isCampaignManagerOrHigher(profile)) {
       router.push('/dashboard');
       return;
     }

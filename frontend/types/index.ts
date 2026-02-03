@@ -21,6 +21,9 @@ export interface Profile {
   updated_at: string;
 }
 
+// Alias for backward compatibility
+export type UserProfile = Profile;
+
 export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
 
 export interface Invitation {
@@ -108,12 +111,17 @@ export interface ContentItem {
   description: string | null;
   content_type: string | null;
   platform: string | null;
+  format: string | null;
   scheduled_date: string | null;
   current_version_id: string | null;
+  current_version: number;
   status: ContentStatus;
+  internal_deadline: string | null;
+  client_deadline: string | null;
   internal_review_deadline: string | null;
   client_review_deadline: string | null;
   publish_deadline: string | null;
+  assigned_influencer_id: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;

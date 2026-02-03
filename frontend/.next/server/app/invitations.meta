@@ -1,0 +1,15 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/invitations/layout,_N_T_/invitations/page,_N_T_/invitations"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/invitations/__PAGE__",
+    "/invitations",
+    "/_index",
+    "/_head"
+  ]
+}

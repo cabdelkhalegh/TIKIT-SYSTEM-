@@ -24,7 +24,7 @@ function ClientsContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showInactive, setShowInactive] = useState(false);
 
-  const canManageClients = profile && isCampaignManagerOrHigher(profile.role);
+  const canManageClients = isCampaignManagerOrHigher(profile);
 
   useEffect(() => {
     fetchClients();

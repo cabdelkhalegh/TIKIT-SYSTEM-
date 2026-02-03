@@ -25,7 +25,7 @@ function CampaignsContent() {
   const [filter, setFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const canManageCampaigns = profile && isCampaignManagerOrHigher(profile.role);
+  const canManageCampaigns = isCampaignManagerOrHigher(profile);
 
   useEffect(() => {
     fetchCampaigns();
