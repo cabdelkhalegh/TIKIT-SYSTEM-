@@ -2,7 +2,7 @@
 **Internal-first Influencer Agency Operating System**
 
 ## ⚠️ Security Notice
-**Latest Update**: Next.js upgraded to 14.2.35 to address multiple critical security vulnerabilities including DoS, authorization bypass, and SSRF. See [docs/SECURITY.md](docs/SECURITY.md) for details.
+**Latest Update**: Next.js upgraded to 15.0.8 to address all critical security vulnerabilities including DoS, authorization bypass, and SSRF. See [docs/SECURITY.md](docs/SECURITY.md) for details.
 
 ## Overview
 TiKiT is a comprehensive platform for managing influencer marketing campaigns, content workflows, and performance tracking. Designed specifically for influencer agencies to streamline their operations.
@@ -27,7 +27,7 @@ TiKiT is a comprehensive platform for managing influencer marketing campaigns, c
   - Protected routes and API endpoints
 
 ## Tech Stack
-- **Frontend**: Next.js 14.2.35 (security patched), React, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 15.0.8 (security patched), React, TypeScript, Tailwind CSS
 - **Backend**: Supabase (PostgreSQL, Auth, Storage)
 - **Database**: PostgreSQL with Row Level Security
 - **Deployment**: Vercel (frontend), Supabase Cloud (backend)
