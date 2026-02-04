@@ -1,5 +1,8 @@
+import js from '@eslint/js';
+
 // Simple ESLint configuration for Next.js App Router
 export default [
+  js.configs.recommended,
   {
     ignores: [
       '.next/**',
@@ -19,11 +22,20 @@ export default [
           jsx: true,
         },
       },
+      globals: {
+        // Node.js globals
+        process: 'readonly',
+        // Browser globals
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        // React globals
+        React: 'readonly',
+      },
     },
     rules: {
-      // Basic rules - extend as needed
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      // Relax some rules for Next.js/React patterns
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
   },
 ];
