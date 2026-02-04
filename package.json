@@ -1,7 +1,7 @@
 {
   "name": "tikit-system",
   "version": "1.0.0",
-  "description": "This the rep for the TIKIT APP",
+  "description": "This is the repo for the TIKIT APP",
   "private": true,
   "scripts": {
     "dev": "next dev",
