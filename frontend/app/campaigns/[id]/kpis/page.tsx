@@ -68,8 +68,8 @@ export default async function CampaignKPIsPage({ params }: { params: { id: strin
   );
 
   // Calculate cost per engagement if we have data
-  const costPerEngagement = campaignKPI && campaignKPI.total_interactions > 0
-    ? campaign.budget_amount / campaignKPI.total_interactions
+  const costPerEngagement = campaignKPI && campaignKPI.total_interactions && campaignKPI.total_interactions > 0
+    ? (campaign.budget_amount || 0) / campaignKPI.total_interactions
     : 0;
 
   return (

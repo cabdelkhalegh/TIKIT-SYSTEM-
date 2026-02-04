@@ -51,7 +51,8 @@ export default function ApprovalHistory({ contentItemId }: ApprovalHistoryProps)
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
@@ -62,17 +63,20 @@ export default function ApprovalHistory({ contentItemId }: ApprovalHistoryProps)
     }).format(date);
   };
 
-  const getStageLabel = (stage: string) => {
+  const getStageLabel = (stage: string | null) => {
+    if (!stage) return 'Unknown';
     return stage === 'internal' ? 'Internal Review' : 'Client Review';
   };
 
-  const getDecisionColor = (decision: string) => {
+  const getDecisionColor = (decision: string | null) => {
+    if (!decision) return 'bg-gray-100 text-gray-800 border-gray-200';
     return decision === 'approved'
       ? 'bg-green-100 text-green-800 border-green-200'
       : 'bg-red-100 text-red-800 border-red-200';
   };
 
-  const getDecisionIcon = (decision: string) => {
+  const getDecisionIcon = (decision: string | null) => {
+    if (!decision) return '?';
     return decision === 'approved' ? '✓' : '✗';
   };
 

@@ -508,9 +508,13 @@ function CampaignDetail() {
                       <ContentUploadForm
                         contentItemId={item.id}
                         campaignId={campaign!.id}
+                        currentVersion={item.current_version}
                         onUploadComplete={() => {
                           setUploadingContentId(null);
                           loadCampaignData();
+                        }}
+                        onCancel={() => {
+                          setUploadingContentId(null);
                         }}
                       />
                     </div>

@@ -45,13 +45,15 @@ export default function VersionHistory({ contentItemId, onClose }: VersionHistor
     }
   };
 
-  const formatFileSize = (bytes: number): string => {
+  const formatFileSize = (bytes: number | null): string => {
+    if (!bytes) return 'Unknown';
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  const formatDate = (dateString: string): string => {
+  const formatDate = (dateString: string | null): string => {
+    if (!dateString) return 'Unknown';
     const date = new Date(dateString);
     return date.toLocaleString('en-US', {
       month: 'short',
@@ -62,7 +64,8 @@ export default function VersionHistory({ contentItemId, onClose }: VersionHistor
     });
   };
 
-  const getFileIcon = (fileType: string): string => {
+  const getFileIcon = (fileType: string | null): string => {
+    if (!fileType) return '📎';
     if (fileType.startsWith('image/')) return '🖼️';
     if (fileType.startsWith('video/')) return '🎥';
     if (fileType === 'application/pdf') return '📄';

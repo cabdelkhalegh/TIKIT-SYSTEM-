@@ -257,7 +257,7 @@ async function aggregateDeliverables(campaignId: string) {
     };
   }
 
-  const statusCounts = contentItems!.reduce((acc: Record<string, number>, item: ContentItem) => {
+  const statusCounts = (contentItems as any[])!.reduce((acc: Record<string, number>, item: any) => {
     acc[item.status] = (acc[item.status] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -303,7 +303,7 @@ async function aggregateApprovals(campaignId: string) {
     };
   }
 
-  const contentItemIds = contentItems.map((item: ContentItem) => item.id);
+  const contentItemIds = (contentItems as any[]).map((item: any) => item.id);
 
   const { data: approvals, error } = await supabase
     .from('content_approvals')

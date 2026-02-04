@@ -172,7 +172,7 @@ export default function ApprovalControls({
 
           <div className="flex gap-3">
             <button
-              onClick={() => handleApproval(showConfirm)}
+              onClick={() => handleApproval(showConfirm === 'approve' ? 'approved' : 'rejected')}
               disabled={loading}
               className={`flex-1 px-4 py-2 rounded-md text-white disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors ${
                 showConfirm === 'approve'
