@@ -5,7 +5,7 @@
 Your TIKIT System repository now has:
 - ✅ Working Next.js 16.1.6 application
 - ✅ No security vulnerabilities
-- ✅ Proper Vercel deployment configuration
+- ✅ Optimized for Vercel deployment (auto-detected)
 - ✅ Clean build (no errors or warnings)
 
 ## 🚀 Step-by-Step Next Steps
@@ -21,10 +21,10 @@ Your TIKIT System repository now has:
    - Click "Import"
 
 3. **Configure Deployment**
-   - Framework Preset: **Next.js** (should auto-detect)
+   - Framework Preset: **Next.js** (will auto-detect)
    - Root Directory: `./` (leave as default)
-   - Build Command: `npm run build` (already configured)
-   - Output Directory: `.next` (already configured)
+   - Build Command: Leave as default (`next build`)
+   - Output Directory: Leave as default (auto-detected)
    - Click "Deploy"
 
 4. **Wait for Deployment**
