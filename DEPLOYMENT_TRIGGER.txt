@@ -1,0 +1,23 @@
+# Deployment Trigger
+
+This file forces Vercel to recognize updates.
+
+**Current Commit:** c0a9795 or newer  
+**Last Updated:** 2026-02-04T12:30:00Z
+
+**If deploying from commit ebebb89 - STOP!**
+- That commit is OLD and missing the application
+- Delete and re-import the project on Vercel
+- See VERCEL_OLD_COMMIT_FIX.md for instructions
+
+**Latest commit includes:**
+- ✅ Full login system
+- ✅ Complete dashboard
+- ✅ Director account ready
+- ✅ All features working
+
+**Verify your deployment:**
+```
+Login URL should show: Email/Password form
+NOT: Just a landing page or README
+```
