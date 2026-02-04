@@ -1,0 +1,46 @@
+================================================================================
+VERCEL DEPLOYMENT CONFIGURATION - TIKIT SYSTEM
+Repository: https://github.com/cabdelkhalegh/TIKIT-SYSTEM
+Branch: main
+Analysis Date: 2026-02-04
+================================================================================
+
+=== FRAMEWORK DETECTION ===
+Framework: Next.js 16.1.6 (App Router)
+App Type: Frontend-only (Supabase Backend)
+Uses Serverless API: No
+
+=== VERCEL CONFIGURATION ===
+Application Preset: Next.js
+Root Directory: frontend
+Install Command: npm install
+Build Command: npm run build
+Output Directory: .next
+
+=== ENVIRONMENT VARIABLES ===
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- OPENAI_API_KEY (optional)
+- GOOGLE_AI_API_KEY (optional)
+- ANTHROPIC_API_KEY (optional)
+- FACEBOOK_APP_ID (optional)
+- FACEBOOK_APP_SECRET (optional)
+- INSTAGRAM_REDIRECT_URI (optional)
+- ENCRYPTION_KEY (optional)
+
+=== DEPLOYMENT NOTES ===
+- Root directory MUST be set to "frontend" (app is in subdirectory)
+- NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are REQUIRED
+- Framework auto-detects as Next.js (do not override)
+- No custom build configuration needed
+- No API routes or serverless functions present
+- All backend operations handled by Supabase
+- React 19 and Next.js 16 are latest versions (well supported)
+- No Node.js version specified (will use Vercel default 18.x+)
+- Build output: Standard .next directory (not in git)
+- Expected build time: 2-3 minutes
+- All dependencies compatible with Vercel platform
+- No deployment blockers identified
+- Ready for immediate production deployment
+
+================================================================================
