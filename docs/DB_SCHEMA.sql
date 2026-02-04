@@ -453,6 +453,9 @@ CREATE TABLE content_items (
     client_review_deadline DATE,
     publish_deadline DATE,
     
+    -- Assignment
+    assigned_influencer_id UUID REFERENCES profiles(id),
+    
     -- Metadata
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
