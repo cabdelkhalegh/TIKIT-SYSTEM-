@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/supabase-js';
+import { createClientComponentClient } from '@/lib/supabase';
 import { ContentItem, KPISource } from '../types';
 
 interface KPIEntryFormProps {

@@ -1,4 +1,4 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -8,7 +8,7 @@ import MetricsCard from '../../../../components/MetricsCard';
 import { Campaign, Client, ContentItem, CampaignKPI } from '../../../../types';
 
 export default async function CampaignKPIsPage({ params }: { params: { id: string } }) {
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -51,7 +51,7 @@ export default async function CampaignKPIsPage({ params }: { params: { id: strin
 
   // Get KPIs for each content item
   const contentItemsWithKPIs = await Promise.all(
-    (contentItems || []).map(async (item) => {
+    (contentItems || []).map(async (item: ContentItem) => {
       const { data: kpis } = await supabase
         .from('kpis')
         .select('*')
@@ -140,7 +140,7 @@ export default async function CampaignKPIsPage({ params }: { params: { id: strin
             
             {contentItemsWithKPIs && contentItemsWithKPIs.length > 0 ? (
               <div className="space-y-4">
-                {contentItemsWithKPIs.map((item) => (
+                {contentItemsWithKPIs.map((item: any) => (
                   <div key={item.id} className="bg-white rounded-lg shadow p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">

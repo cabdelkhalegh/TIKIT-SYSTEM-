@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { createClientComponentClient } from '@supabase/supabase-js';
+import { createClientComponentClient } from '@/lib/supabase';
 
 interface ContentUploadFormProps {
   contentItemId: string;
   campaignId: string;
   currentVersion: number;
-  onUploadSuccess: () => void;
+  onUploadSuccess?: () => void;
+  onUploadComplete?: () => void; // Alias for compatibility
   onCancel: () => void;
 }
 
@@ -34,6 +35,7 @@ export default function ContentUploadForm({
   campaignId,
   currentVersion,
   onUploadSuccess,
+  onUploadComplete,
   onCancel,
 }: ContentUploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
@@ -186,7 +188,8 @@ export default function ContentUploadForm({
       
       // Success
       setTimeout(() => {
-        onUploadSuccess();
+        if (onUploadSuccess) onUploadSuccess();
+        if (onUploadComplete) onUploadComplete();
       }, 500);
       
     } catch (err: any) {

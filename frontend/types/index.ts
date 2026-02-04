@@ -138,22 +138,40 @@ export interface ContentVersion {
   file_type: string | null;
   thumbnail_url: string | null;
   change_description: string | null;
+  description: string | null; // Alias for change_description for component compatibility
   created_at: string;
   uploaded_by: string | null;
+  uploader?: { // Optional joined data
+    full_name: string;
+  };
 }
 
 export type ApprovalStage = 'internal' | 'client';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+export type ApprovalDecision = 'approved' | 'rejected'; // Decision type for clarity
 
 export interface ContentApproval {
   id: string;
   content_version_id: string;
+  content_item_id: string; // Added for easier querying
   approval_stage: ApprovalStage;
+  stage: ApprovalStage; // Alias for compatibility
   status: ApprovalStatus;
+  decision: ApprovalDecision | null; // Explicit decision field
   decision_notes: string | null;
+  notes: string | null; // Alias for decision_notes
   approver_id: string | null;
+  approved_by: string | null; // Alias for approver_id
   approved_at: string | null;
   created_at: string;
+}
+
+// Extended type with joined approver data
+export interface ApprovalWithApprover extends ContentApproval {
+  approver?: {
+    full_name: string;
+    role: UserRole;
+  };
 }
 
 export interface ContentFeedback {

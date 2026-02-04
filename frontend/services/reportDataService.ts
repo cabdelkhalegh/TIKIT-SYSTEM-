@@ -194,19 +194,19 @@ async function aggregateKPIs(campaignId: string) {
   }
 
   // Calculate totals
-  const totalReach = kpis.reduce((sum, kpi) => sum + (kpi.reach || 0), 0);
-  const totalLikes = kpis.reduce((sum, kpi) => sum + (kpi.likes || 0), 0);
-  const totalComments = kpis.reduce((sum, kpi) => sum + (kpi.comments || 0), 0);
-  const totalShares = kpis.reduce((sum, kpi) => sum + (kpi.shares || 0), 0);
-  const totalSaves = kpis.reduce((sum, kpi) => sum + (kpi.saves || 0), 0);
+  const totalReach = kpis.reduce((sum: number, kpi: KPI) => sum + (kpi.reach || 0), 0);
+  const totalLikes = kpis.reduce((sum: number, kpi: KPI) => sum + (kpi.likes || 0), 0);
+  const totalComments = kpis.reduce((sum: number, kpi: KPI) => sum + (kpi.comments || 0), 0);
+  const totalShares = kpis.reduce((sum: number, kpi: KPI) => sum + (kpi.shares || 0), 0);
+  const totalSaves = kpis.reduce((sum: number, kpi: KPI) => sum + (kpi.saves || 0), 0);
   const totalInteractions = totalLikes + totalComments + totalShares + totalSaves;
 
   // Calculate average engagement rate
   const engagementRates = kpis
-    .map(kpi => kpi.engagement_rate)
-    .filter(rate => rate !== null && rate !== undefined);
+    .map((kpi: KPI) => kpi.engagement_rate)
+    .filter((rate): rate is number => rate !== null && rate !== undefined);
   const avgEngagementRate = engagementRates.length > 0
-    ? engagementRates.reduce((sum, rate) => sum + rate, 0) / engagementRates.length
+    ? engagementRates.reduce((sum: number, rate: number) => sum + rate, 0) / engagementRates.length
     : calculateEngagementRate(totalInteractions, totalReach);
 
   // Calculate budget efficiency metrics
@@ -257,7 +257,7 @@ async function aggregateDeliverables(campaignId: string) {
     };
   }
 
-  const statusCounts = contentItems!.reduce((acc, item) => {
+  const statusCounts = contentItems!.reduce((acc: Record<string, number>, item: ContentItem) => {
     acc[item.status] = (acc[item.status] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -303,7 +303,7 @@ async function aggregateApprovals(campaignId: string) {
     };
   }
 
-  const contentItemIds = contentItems.map(item => item.id);
+  const contentItemIds = contentItems.map((item: ContentItem) => item.id);
 
   const { data: approvals, error } = await supabase
     .from('content_approvals')
@@ -323,15 +323,15 @@ async function aggregateApprovals(campaignId: string) {
     };
   }
 
-  const internalApprovals = approvals.filter(a => 
+  const internalApprovals = approvals.filter((a: any) => 
     a.stage === 'internal' && a.decision === 'approved'
   ).length;
 
-  const clientApprovals = approvals.filter(a => 
+  const clientApprovals = approvals.filter((a: any) => 
     a.stage === 'client' && a.decision === 'approved'
   ).length;
 
-  const rejectionCount = approvals.filter(a => 
+  const rejectionCount = approvals.filter((a: any) => 
     a.decision === 'rejected'
   ).length;
 
