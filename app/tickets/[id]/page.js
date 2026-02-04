@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function TicketDetail({ params }) {
@@ -17,13 +17,9 @@ export default function TicketDetail({ params }) {
     })
   }, [params])
 
-  useEffect(() => {
-    if (ticketId) {
-      fetchTicket()
-    }
-  }, [ticketId])
-
-  const fetchTicket = async () => {
+  const fetchTicket = useCallback(async () => {
+    if (!ticketId) return
+    
     try {
       const response = await fetch(`/api/tickets/${ticketId}`)
       if (!response.ok) throw new Error('Failed to fetch ticket')
@@ -34,7 +30,11 @@ export default function TicketDetail({ params }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [ticketId])
+
+  useEffect(() => {
+    fetchTicket()
+  }, [fetchTicket])
 
   const updateTicketStatus = async (newStatus) => {
     setUpdating(true)

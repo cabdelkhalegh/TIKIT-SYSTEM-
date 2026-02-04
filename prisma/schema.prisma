@@ -17,6 +17,7 @@ model User {
   role      String   @default("user") // user, agent, admin
   createdAt DateTime @default(now())
   tickets   Ticket[]
+  comments  Comment[]
 }
 
 model Ticket {
@@ -39,4 +40,5 @@ model Comment {
   ticketId  String
   ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   userId    String
+  user      User     @relation(fields: [userId], references: [id])
 }
