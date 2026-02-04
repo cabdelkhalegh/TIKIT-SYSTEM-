@@ -1,6 +1,15 @@
-# TIKIT-SYSTEM 🎫
+# TiKiT Agency Management System 🎬
 
-A modern ticket management system with a clean web interface for managing support tickets.
+A comprehensive campaign and influencer management system for TiKiT Agency. Manage the complete lifecycle of campaigns and influencers from A to Z, including payment tracking and delivery monitoring.
+
+## 🎯 Purpose
+
+This system is designed to manage the full end-to-end campaign lifecycle for TiKiT Agency, including:
+- **Campaign Management** - Create, track, and manage marketing campaigns
+- **Influencer Management** - Maintain influencer database with performance metrics
+- **Payment Tracking** - Monitor payment status for each campaign
+- **Delivery Tracking** - Track on-time delivery and campaign deadlines
+- **Full Lifecycle Management** - From campaign creation to completion
 
 ## 🚀 Quick Start
 
@@ -33,13 +42,13 @@ npm run dev
 
 ```
 TIKIT-SYSTEM-/
-├── public/              # Frontend files (main portal)
-│   ├── index.html       # Main portal page
+├── public/              # Frontend files
+│   ├── index.html       # Main portal (campaigns & influencers)
 │   ├── css/
 │   │   └── styles.css   # Application styles
 │   └── js/
-│       └── app.js       # Frontend JavaScript
-├── server.js            # Express backend server
+│       └── app.js       # Frontend JavaScript logic
+├── server.js            # Express backend server with APIs
 ├── package.json         # Node.js dependencies
 ├── Dockerfile           # Docker configuration
 └── docker-compose.yml   # Docker Compose configuration
@@ -47,19 +56,46 @@ TIKIT-SYSTEM-/
 
 ## 🔧 Features
 
-- ✅ Create, view, and delete tickets
-- ✅ Set ticket priority (Low, Medium, High)
-- ✅ Track ticket status
-- ✅ RESTful API
+### Campaign Management
+- ✅ Create and manage campaigns
+- ✅ Track campaign status (Active, Completed, Cancelled, Draft)
+- ✅ Assign influencers to campaigns
+- ✅ Set campaign budgets and priorities
+- ✅ Monitor delivery dates and deadlines
+- ✅ Define deliverables (posts, stories, videos, etc.)
+- ✅ Track payment status (Pending, Paid, Partial)
+
+### Influencer Management
+- ✅ Maintain influencer database
+- ✅ Track followers and engagement rates
+- ✅ Categorize influencers by niche
+- ✅ Store contact information (email, phone)
+- ✅ Monitor influencer performance
+- ✅ Multi-platform support (Instagram, TikTok, YouTube, etc.)
+
+### Additional Features
 - ✅ Responsive web interface
+- ✅ RESTful API
+- ✅ Real-time data updates
 - ✅ Docker deployment ready
+- ✅ Payment tracking
+- ✅ Delivery timeline monitoring
 
 ## 📡 API Endpoints
 
-- `GET /api/tickets` - Get all tickets
-- `POST /api/tickets` - Create a new ticket
-- `PUT /api/tickets/:id` - Update a ticket
-- `DELETE /api/tickets/:id` - Delete a ticket
+### Campaigns
+- `GET /api/campaigns` - Get all campaigns
+- `POST /api/campaigns` - Create a new campaign
+- `PUT /api/campaigns/:id` - Update a campaign
+- `DELETE /api/campaigns/:id` - Delete a campaign
+
+### Influencers
+- `GET /api/influencers` - Get all influencers
+- `POST /api/influencers` - Add a new influencer
+- `PUT /api/influencers/:id` - Update an influencer
+- `DELETE /api/influencers/:id` - Delete an influencer
+
+### System
 - `GET /health` - Health check endpoint
 
 ## 🛠️ Build & Deployment
@@ -96,7 +132,24 @@ docker-compose down
 
 Once deployed, access the main portal at:
 - **Local**: http://localhost:3000
-- **API**: http://localhost:3000/api/tickets
+- **Campaigns API**: http://localhost:3000/api/campaigns
+- **Influencers API**: http://localhost:3000/api/influencers
+
+### Using the Portal
+
+1. **Campaigns Tab**: Create and manage marketing campaigns
+   - Enter campaign name and description
+   - Assign influencer and select platform
+   - Set budget and delivery date
+   - Define deliverables
+   - Track payment and campaign status
+
+2. **Influencers Tab**: Manage your influencer database
+   - Add influencer details
+   - Track followers and engagement metrics
+   - Store contact information
+   - Categorize by niche/industry
+   - Monitor performance across platforms
 
 ## 📝 Requirements
 

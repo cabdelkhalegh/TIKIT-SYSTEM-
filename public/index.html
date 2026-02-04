@@ -3,48 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TIKIT System - Main Portal</title>
+    <title>TiKiT Agency - Campaign & Influencer Management</title>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🎫 TIKIT System</h1>
-            <p>Ticket Management Portal</p>
+            <h1>🎬 TiKiT Agency</h1>
+            <p>Campaign & Influencer Management System</p>
         </header>
 
-        <main>
-            <section class="create-ticket">
-                <h2>Create New Ticket</h2>
-                <form id="ticketForm">
-                    <div class="form-group">
-                        <label for="title">Title:</label>
-                        <input type="text" id="title" name="title" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="description">Description:</label>
-                        <textarea id="description" name="description" rows="4" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="priority">Priority:</label>
-                        <select id="priority" name="priority">
-                            <option value="low">Low</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="high">High</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Create Ticket</button>
-                </form>
-            </section>
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="campaigns">📊 Campaigns</button>
+            <button class="tab-btn" data-tab="influencers">👥 Influencers</button>
+        </nav>
 
-            <section class="tickets-list">
-                <h2>All Tickets</h2>
-                <div id="ticketsList"></div>
-            </section>
+        <main>
+            <!-- Campaigns Tab -->
+            <div id="campaigns-tab" class="tab-content active">
+                <section class="create-section">
+                    <h2>Create New Campaign</h2>
+                    <form id="campaignForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="campaignName">Campaign Name:</label>
+                                <input type="text" id="campaignName" name="campaignName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="priority">Priority:</label>
+                                <select id="priority" name="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Campaign Description:</label>
+                            <textarea id="description" name="description" rows="3" required></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="influencerName">Influencer Name:</label>
+                                <input type="text" id="influencerName" name="influencerName">
+                            </div>
+                            <div class="form-group">
+                                <label for="influencerPlatform">Platform:</label>
+                                <select id="influencerPlatform" name="influencerPlatform">
+                                    <option value="">Select Platform</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="TikTok">TikTok</option>
+                                    <option value="YouTube">YouTube</option>
+                                    <option value="Twitter">Twitter</option>
+                                    <option value="Facebook">Facebook</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="budget">Budget ($):</label>
+                                <input type="number" id="budget" name="budget" min="0" step="100">
+                            </div>
+                            <div class="form-group">
+                                <label for="deliveryDate">Delivery Date:</label>
+                                <input type="date" id="deliveryDate" name="deliveryDate">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="deliverables">Deliverables:</label>
+                            <input type="text" id="deliverables" name="deliverables" placeholder="e.g., 3 posts, 5 stories">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Create Campaign</button>
+                    </form>
+                </section>
+
+                <section class="list-section">
+                    <h2>All Campaigns</h2>
+                    <div id="campaignsList"></div>
+                </section>
+            </div>
+
+            <!-- Influencers Tab -->
+            <div id="influencers-tab" class="tab-content">
+                <section class="create-section">
+                    <h2>Add New Influencer</h2>
+                    <form id="influencerForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="infName">Name:</label>
+                                <input type="text" id="infName" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="infPlatform">Platform:</label>
+                                <select id="infPlatform" name="platform" required>
+                                    <option value="">Select Platform</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="TikTok">TikTok</option>
+                                    <option value="YouTube">YouTube</option>
+                                    <option value="Twitter">Twitter</option>
+                                    <option value="Facebook">Facebook</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="followers">Followers:</label>
+                                <input type="number" id="followers" name="followers" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="engagementRate">Engagement Rate (%):</label>
+                                <input type="number" id="engagementRate" name="engagementRate" min="0" max="100" step="0.1">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="category">Category:</label>
+                                <input type="text" id="category" name="category" placeholder="e.g., Fashion, Tech, Food">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email:</label>
+                                <input type="email" id="email" name="email">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone:</label>
+                            <input type="tel" id="phone" name="phone">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Influencer</button>
+                    </form>
+                </section>
+
+                <section class="list-section">
+                    <h2>All Influencers</h2>
+                    <div id="influencersList"></div>
+                </section>
+            </div>
         </main>
 
         <footer>
-            <p>TIKIT System v1.0.0 - Deployed and Running</p>
+            <p>TiKiT Agency Management System v2.0.0 - Campaign & Influencer Tracking</p>
         </footer>
     </div>
 

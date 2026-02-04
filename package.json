@@ -1,7 +1,7 @@
 {
-  "name": "tikit-system",
-  "version": "1.0.0",
-  "description": "TIKIT System - Ticket Management Application",
+  "name": "tikit-agency-system",
+  "version": "2.0.0",
+  "description": "TiKiT Agency - Campaign and Influencer Management System",
   "main": "server.js",
   "engines": {
     "node": ">=18.0.0",
@@ -13,8 +13,8 @@
     "build": "echo 'Build completed successfully'",
     "test": "echo 'Tests passed'"
   },
-  "keywords": ["ticket", "system", "management"],
-  "author": "",
+  "keywords": ["campaign", "influencer", "agency", "management", "tracking"],
+  "author": "TiKiT Agency",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",

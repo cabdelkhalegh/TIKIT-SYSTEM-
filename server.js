@@ -14,72 +14,170 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// In-memory storage for tickets
-let tickets = [
+// In-memory storage for campaigns
+let campaigns = [
   {
     id: 1,
-    title: 'Sample Ticket',
-    description: 'This is a sample ticket',
-    status: 'open',
-    priority: 'medium',
+    campaignName: 'Summer Product Launch',
+    description: 'Launch campaign for new summer collection',
+    influencerName: 'Jane Doe',
+    influencerPlatform: 'Instagram',
+    budget: 5000,
+    paymentStatus: 'pending',
+    deliveryDate: '2026-03-15',
+    status: 'active',
+    priority: 'high',
+    deliverables: '3 posts, 5 stories',
     createdAt: new Date().toISOString()
   }
 ];
 
-// API Routes
-app.get('/api/tickets', (req, res) => {
-  res.json({ success: true, tickets });
+// In-memory storage for influencers
+let influencers = [
+  {
+    id: 1,
+    name: 'Jane Doe',
+    platform: 'Instagram',
+    followers: 150000,
+    engagementRate: 4.5,
+    category: 'Fashion',
+    email: 'jane@example.com',
+    phone: '+1234567890',
+    status: 'active',
+    createdAt: new Date().toISOString()
+  }
+];
+
+// Campaign API Routes
+app.get('/api/campaigns', (req, res) => {
+  res.json({ success: true, campaigns });
 });
 
-app.post('/api/tickets', (req, res) => {
-  const { title, description, priority } = req.body;
+app.post('/api/campaigns', (req, res) => {
+  const { campaignName, description, influencerName, influencerPlatform, budget, deliveryDate, deliverables, priority } = req.body;
   
-  if (!title || !description) {
-    return res.status(400).json({ success: false, message: 'Title and description are required' });
+  if (!campaignName || !description) {
+    return res.status(400).json({ success: false, message: 'Campaign name and description are required' });
   }
 
-  const newTicket = {
-    id: tickets.length > 0 ? Math.max(...tickets.map(t => t.id)) + 1 : 1,
-    title,
+  const newCampaign = {
+    id: campaigns.length > 0 ? Math.max(...campaigns.map(c => c.id)) + 1 : 1,
+    campaignName,
     description,
-    status: 'open',
+    influencerName: influencerName || '',
+    influencerPlatform: influencerPlatform || '',
+    budget: budget || 0,
+    paymentStatus: 'pending',
+    deliveryDate: deliveryDate || '',
+    status: 'active',
     priority: priority || 'medium',
+    deliverables: deliverables || '',
     createdAt: new Date().toISOString()
   };
 
-  tickets.push(newTicket);
-  res.status(201).json({ success: true, ticket: newTicket });
+  campaigns.push(newCampaign);
+  res.status(201).json({ success: true, campaign: newCampaign });
 });
 
-app.put('/api/tickets/:id', (req, res) => {
+app.put('/api/campaigns/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  const ticketIndex = tickets.findIndex(t => t.id === id);
+  const campaignIndex = campaigns.findIndex(c => c.id === id);
 
-  if (ticketIndex === -1) {
-    return res.status(404).json({ success: false, message: 'Ticket not found' });
+  if (campaignIndex === -1) {
+    return res.status(404).json({ success: false, message: 'Campaign not found' });
   }
 
-  const { title, description, status, priority } = req.body;
+  const { campaignName, description, influencerName, influencerPlatform, budget, paymentStatus, deliveryDate, status, priority, deliverables } = req.body;
   const allowedUpdates = {};
-  if (title !== undefined) allowedUpdates.title = title;
+  if (campaignName !== undefined) allowedUpdates.campaignName = campaignName;
   if (description !== undefined) allowedUpdates.description = description;
+  if (influencerName !== undefined) allowedUpdates.influencerName = influencerName;
+  if (influencerPlatform !== undefined) allowedUpdates.influencerPlatform = influencerPlatform;
+  if (budget !== undefined) allowedUpdates.budget = budget;
+  if (paymentStatus !== undefined) allowedUpdates.paymentStatus = paymentStatus;
+  if (deliveryDate !== undefined) allowedUpdates.deliveryDate = deliveryDate;
   if (status !== undefined) allowedUpdates.status = status;
   if (priority !== undefined) allowedUpdates.priority = priority;
+  if (deliverables !== undefined) allowedUpdates.deliverables = deliverables;
   
-  tickets[ticketIndex] = { ...tickets[ticketIndex], ...allowedUpdates };
-  res.json({ success: true, ticket: tickets[ticketIndex] });
+  campaigns[campaignIndex] = { ...campaigns[campaignIndex], ...allowedUpdates };
+  res.json({ success: true, campaign: campaigns[campaignIndex] });
 });
 
-app.delete('/api/tickets/:id', (req, res) => {
+app.delete('/api/campaigns/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  const ticketIndex = tickets.findIndex(t => t.id === id);
+  const campaignIndex = campaigns.findIndex(c => c.id === id);
 
-  if (ticketIndex === -1) {
-    return res.status(404).json({ success: false, message: 'Ticket not found' });
+  if (campaignIndex === -1) {
+    return res.status(404).json({ success: false, message: 'Campaign not found' });
   }
 
-  tickets.splice(ticketIndex, 1);
-  res.json({ success: true, message: 'Ticket deleted' });
+  campaigns.splice(campaignIndex, 1);
+  res.json({ success: true, message: 'Campaign deleted' });
+});
+
+// Influencer API Routes
+app.get('/api/influencers', (req, res) => {
+  res.json({ success: true, influencers });
+});
+
+app.post('/api/influencers', (req, res) => {
+  const { name, platform, followers, engagementRate, category, email, phone } = req.body;
+  
+  if (!name || !platform) {
+    return res.status(400).json({ success: false, message: 'Name and platform are required' });
+  }
+
+  const newInfluencer = {
+    id: influencers.length > 0 ? Math.max(...influencers.map(i => i.id)) + 1 : 1,
+    name,
+    platform,
+    followers: followers || 0,
+    engagementRate: engagementRate || 0,
+    category: category || '',
+    email: email || '',
+    phone: phone || '',
+    status: 'active',
+    createdAt: new Date().toISOString()
+  };
+
+  influencers.push(newInfluencer);
+  res.status(201).json({ success: true, influencer: newInfluencer });
+});
+
+app.put('/api/influencers/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const influencerIndex = influencers.findIndex(i => i.id === id);
+
+  if (influencerIndex === -1) {
+    return res.status(404).json({ success: false, message: 'Influencer not found' });
+  }
+
+  const { name, platform, followers, engagementRate, category, email, phone, status } = req.body;
+  const allowedUpdates = {};
+  if (name !== undefined) allowedUpdates.name = name;
+  if (platform !== undefined) allowedUpdates.platform = platform;
+  if (followers !== undefined) allowedUpdates.followers = followers;
+  if (engagementRate !== undefined) allowedUpdates.engagementRate = engagementRate;
+  if (category !== undefined) allowedUpdates.category = category;
+  if (email !== undefined) allowedUpdates.email = email;
+  if (phone !== undefined) allowedUpdates.phone = phone;
+  if (status !== undefined) allowedUpdates.status = status;
+  
+  influencers[influencerIndex] = { ...influencers[influencerIndex], ...allowedUpdates };
+  res.json({ success: true, influencer: influencers[influencerIndex] });
+});
+
+app.delete('/api/influencers/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const influencerIndex = influencers.findIndex(i => i.id === id);
+
+  if (influencerIndex === -1) {
+    return res.status(404).json({ success: false, message: 'Influencer not found' });
+  }
+
+  influencers.splice(influencerIndex, 1);
+  res.json({ success: true, message: 'Influencer deleted' });
 });
 
 // Health check endpoint
@@ -93,7 +191,8 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`TIKIT System server running on port ${PORT}`);
+  console.log(`TiKiT Agency Management System running on port ${PORT}`);
   console.log(`Main portal: http://localhost:${PORT}`);
-  console.log(`API endpoint: http://localhost:${PORT}/api/tickets`);
+  console.log(`Campaigns API: http://localhost:${PORT}/api/campaigns`);
+  console.log(`Influencers API: http://localhost:${PORT}/api/influencers`);
 });
