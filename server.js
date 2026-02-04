@@ -39,7 +39,7 @@ app.post('/api/tickets', (req, res) => {
   }
 
   const newTicket = {
-    id: tickets.length + 1,
+    id: tickets.length > 0 ? Math.max(...tickets.map(t => t.id)) + 1 : 1,
     title,
     description,
     status: 'open',
@@ -59,7 +59,14 @@ app.put('/api/tickets/:id', (req, res) => {
     return res.status(404).json({ success: false, message: 'Ticket not found' });
   }
 
-  tickets[ticketIndex] = { ...tickets[ticketIndex], ...req.body };
+  const { title, description, status, priority } = req.body;
+  const allowedUpdates = {};
+  if (title !== undefined) allowedUpdates.title = title;
+  if (description !== undefined) allowedUpdates.description = description;
+  if (status !== undefined) allowedUpdates.status = status;
+  if (priority !== undefined) allowedUpdates.priority = priority;
+  
+  tickets[ticketIndex] = { ...tickets[ticketIndex], ...allowedUpdates };
   res.json({ success: true, ticket: tickets[ticketIndex] });
 });
 

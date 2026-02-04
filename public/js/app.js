@@ -31,22 +31,60 @@ function displayTickets(tickets) {
         return;
     }
     
-    ticketsList.innerHTML = tickets.map(ticket => `
-        <div class="ticket">
-            <div class="ticket-header">
-                <div class="ticket-title">#${ticket.id} - ${ticket.title}</div>
-                <span class="ticket-priority priority-${ticket.priority}">${ticket.priority.toUpperCase()}</span>
-            </div>
-            <div class="ticket-description">${ticket.description}</div>
-            <div class="ticket-meta">
-                <span class="ticket-status">${ticket.status.toUpperCase()}</span>
-                <span>${new Date(ticket.createdAt).toLocaleString()}</span>
-            </div>
-            <div class="ticket-actions">
-                <button class="btn btn-small btn-danger" onclick="deleteTicket(${ticket.id})">Delete</button>
-            </div>
-        </div>
-    `).join('');
+    ticketsList.innerHTML = '';
+    
+    tickets.forEach(ticket => {
+        const ticketEl = document.createElement('div');
+        ticketEl.className = 'ticket';
+        
+        const ticketHeader = document.createElement('div');
+        ticketHeader.className = 'ticket-header';
+        
+        const ticketTitle = document.createElement('div');
+        ticketTitle.className = 'ticket-title';
+        ticketTitle.textContent = `#${ticket.id} - ${ticket.title}`;
+        
+        const ticketPriority = document.createElement('span');
+        ticketPriority.className = `ticket-priority priority-${ticket.priority}`;
+        ticketPriority.textContent = ticket.priority.toUpperCase();
+        
+        ticketHeader.appendChild(ticketTitle);
+        ticketHeader.appendChild(ticketPriority);
+        
+        const ticketDesc = document.createElement('div');
+        ticketDesc.className = 'ticket-description';
+        ticketDesc.textContent = ticket.description;
+        
+        const ticketMeta = document.createElement('div');
+        ticketMeta.className = 'ticket-meta';
+        
+        const ticketStatus = document.createElement('span');
+        ticketStatus.className = 'ticket-status';
+        ticketStatus.textContent = ticket.status.toUpperCase();
+        
+        const ticketDate = document.createElement('span');
+        ticketDate.textContent = new Date(ticket.createdAt).toLocaleString();
+        
+        ticketMeta.appendChild(ticketStatus);
+        ticketMeta.appendChild(ticketDate);
+        
+        const ticketActions = document.createElement('div');
+        ticketActions.className = 'ticket-actions';
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-small btn-danger';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.addEventListener('click', () => deleteTicket(ticket.id));
+        
+        ticketActions.appendChild(deleteBtn);
+        
+        ticketEl.appendChild(ticketHeader);
+        ticketEl.appendChild(ticketDesc);
+        ticketEl.appendChild(ticketMeta);
+        ticketEl.appendChild(ticketActions);
+        
+        ticketsList.appendChild(ticketEl);
+    });
 }
 
 // Setup form submission handler
