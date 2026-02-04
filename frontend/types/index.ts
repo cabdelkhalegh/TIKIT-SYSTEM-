@@ -224,3 +224,105 @@ export interface CampaignKPI {
   created_at: string;
   updated_at: string;
 }
+
+// ============================================================================
+// REPORTING SYSTEM TYPES (TASK 7 - PRD Section 10)
+// ============================================================================
+
+export type ReportType = 
+  | 'campaign_summary'      // Complete campaign performance report
+  | 'campaign_brief'        // Campaign brief/strategy document
+  | 'strategy_document'     // Strategy and planning document
+  | 'performance_analysis'; // Detailed performance analysis
+
+export type ReportStatus = 
+  | 'draft'      // Being created/edited
+  | 'final'      // Finalized and ready
+  | 'sent'       // Sent to client
+  | 'archived';  // Archived report
+
+export interface Report {
+  id: string;
+  campaign_id: string;
+  report_type: ReportType;
+  title: string;
+  status: ReportStatus;
+  
+  // AI-generated narrative (editable)
+  ai_narrative: string | null;
+  ai_generated_at: string | null;
+  narrative_edited: boolean;
+  
+  // Report metadata
+  generated_date: string;
+  reporting_period_start: string | null;
+  reporting_period_end: string | null;
+  
+  // Snapshots of key metrics
+  snapshot_total_reach: number | null;
+  snapshot_total_engagement: number | null;
+  snapshot_avg_engagement_rate: number | null;
+  snapshot_cost_per_engagement: number | null;
+  snapshot_budget: number | null;
+  
+  // Tracking
+  created_by: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  sent_to_client_at: string | null;
+  
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportSection {
+  id: string;
+  report_id: string;
+  section_type: string;
+  title: string;
+  content: string | null;
+  display_order: number;
+  is_editable: boolean;
+  data_json: any | null; // JSONB data for dynamic sections
+  created_at: string;
+  updated_at: string;
+}
+
+// Report generation request
+export interface ReportGenerationRequest {
+  campaign_id: string;
+  report_type: ReportType;
+  title?: string;
+  include_sections?: string[];
+  reporting_period_start?: string;
+  reporting_period_end?: string;
+}
+
+// AI narrative generation request
+export interface AINarrativeRequest {
+  campaign_id: string;
+  section_type: 'executive_summary' | 'performance_analysis' | 'recommendations';
+  campaign_data: {
+    name: string;
+    code: string;
+    client_name: string;
+    start_date: string;
+    end_date: string;
+    budget: number;
+    kpis?: CampaignKPI;
+    deliverables_summary?: {
+      total: number;
+      completed: number;
+      approved: number;
+    };
+  };
+}
+
+// PDF export options
+export interface PDFExportOptions {
+  report_id: string;
+  include_logo?: boolean;
+  include_charts?: boolean;
+  page_size?: 'A4' | 'Letter';
+  orientation?: 'portrait' | 'landscape';
+}

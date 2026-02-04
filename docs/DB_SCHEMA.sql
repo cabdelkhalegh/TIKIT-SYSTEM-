@@ -1079,3 +1079,268 @@ CREATE TRIGGER update_campaign_kpis_updated_at
 -- reports
 -- notifications
 -- ============================================================================
+
+-- ============================================================================
+-- REPORTING SYSTEM (TASK 7 - PRD Section 10)
+-- ============================================================================
+
+-- Report types
+CREATE TYPE report_type AS ENUM (
+    'campaign_summary',    -- Complete campaign performance report
+    'campaign_brief',      -- Campaign brief/strategy document
+    'strategy_document',   -- Strategy and planning document
+    'performance_analysis' -- Detailed performance analysis
+);
+
+-- Report status
+CREATE TYPE report_status AS ENUM (
+    'draft',      -- Being created/edited
+    'final',      -- Finalized and ready
+    'sent',       -- Sent to client
+    'archived'    -- Archived report
+);
+
+-- Reports table
+CREATE TABLE reports (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    campaign_id UUID NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    report_type report_type NOT NULL,
+    title TEXT NOT NULL,
+    status report_status NOT NULL DEFAULT 'draft',
+    
+    -- AI-generated narrative (editable)
+    ai_narrative TEXT,
+    ai_generated_at TIMESTAMPTZ,
+    narrative_edited BOOLEAN DEFAULT FALSE,
+    
+    -- Report metadata
+    generated_date DATE DEFAULT CURRENT_DATE,
+    reporting_period_start DATE,
+    reporting_period_end DATE,
+    
+    -- Snapshots of key metrics at report generation
+    snapshot_total_reach BIGINT,
+    snapshot_total_engagement BIGINT,
+    snapshot_avg_engagement_rate DECIMAL(5,2),
+    snapshot_cost_per_engagement DECIMAL(10,2),
+    snapshot_budget DECIMAL(12,2),
+    
+    -- Tracking
+    created_by UUID REFERENCES profiles(id),
+    approved_by UUID REFERENCES profiles(id),
+    approved_at TIMESTAMPTZ,
+    sent_to_client_at TIMESTAMPTZ,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Report sections table (multiple sections per report)
+CREATE TABLE report_sections (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+    
+    section_type TEXT NOT NULL, -- 'executive_summary', 'overview', 'kpis', 'deliverables', 'recommendations', etc.
+    title TEXT NOT NULL,
+    content TEXT, -- Markdown or HTML content
+    display_order INTEGER NOT NULL DEFAULT 0,
+    
+    -- Whether this section can be edited
+    is_editable BOOLEAN DEFAULT TRUE,
+    
+    -- Optional data for dynamic sections
+    data_json JSONB,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for reports
+CREATE INDEX idx_reports_campaign ON reports(campaign_id);
+CREATE INDEX idx_reports_status ON reports(status);
+CREATE INDEX idx_reports_type ON reports(report_type);
+CREATE INDEX idx_reports_created_by ON reports(created_by);
+CREATE INDEX idx_report_sections_report ON report_sections(report_id);
+CREATE INDEX idx_report_sections_order ON report_sections(report_id, display_order);
+
+-- ============================================================================
+-- REPORTS RLS POLICIES
+-- ============================================================================
+
+-- Enable RLS
+ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE report_sections ENABLE ROW LEVEL SECURITY;
+
+-- Reports policies
+-- Directors: Full access
+CREATE POLICY "Directors can manage all reports"
+    ON reports FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid() AND role = 'director' AND role_approved = TRUE
+        )
+    );
+
+-- Campaign Managers: Manage reports for their campaigns
+CREATE POLICY "Campaign managers can manage their campaign reports"
+    ON reports FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM campaigns c
+            JOIN profiles p ON p.id = auth.uid()
+            WHERE c.id = reports.campaign_id
+            AND p.role IN ('campaign_manager', 'director')
+            AND p.role_approved = TRUE
+            AND (c.campaign_manager_id = auth.uid() OR p.role = 'director')
+        )
+    );
+
+-- Reviewers: View all reports
+CREATE POLICY "Reviewers can view all reports"
+    ON reports FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid() 
+            AND role IN ('reviewer', 'finance')
+            AND role_approved = TRUE
+        )
+    );
+
+-- Clients: View reports for their campaigns
+CREATE POLICY "Clients can view their campaign reports"
+    ON reports FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM campaigns c
+            JOIN clients cl ON cl.id = c.client_id
+            JOIN profiles p ON p.id = auth.uid()
+            WHERE c.id = reports.campaign_id
+            AND p.role = 'client'
+            AND p.role_approved = TRUE
+            -- Additional client verification logic here
+        )
+    );
+
+-- Report sections policies (inherit from report access)
+CREATE POLICY "Users with report access can view sections"
+    ON report_sections FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM reports r
+            WHERE r.id = report_sections.report_id
+            -- User has access to the parent report (handled by report policies)
+        )
+    );
+
+CREATE POLICY "Users with report edit access can manage sections"
+    ON report_sections FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM reports r
+            JOIN campaigns c ON c.id = r.campaign_id
+            JOIN profiles p ON p.id = auth.uid()
+            WHERE r.id = report_sections.report_id
+            AND p.role IN ('director', 'campaign_manager')
+            AND p.role_approved = TRUE
+            AND (c.campaign_manager_id = auth.uid() OR p.role = 'director')
+        )
+    );
+
+-- ============================================================================
+-- REPORTS HELPER FUNCTIONS
+-- ============================================================================
+
+-- Function to create default report sections
+CREATE OR REPLACE FUNCTION create_default_report_sections(p_report_id UUID, p_report_type report_type)
+RETURNS VOID AS $$
+BEGIN
+    IF p_report_type = 'campaign_summary' THEN
+        -- Executive Summary
+        INSERT INTO report_sections (report_id, section_type, title, display_order, is_editable)
+        VALUES (p_report_id, 'executive_summary', 'Executive Summary', 1, TRUE);
+        
+        -- Campaign Overview
+        INSERT INTO report_sections (report_id, section_type, title, display_order, is_editable)
+        VALUES (p_report_id, 'campaign_overview', 'Campaign Overview', 2, FALSE);
+        
+        -- KPI Performance
+        INSERT INTO report_sections (report_id, section_type, title, display_order, is_editable)
+        VALUES (p_report_id, 'kpi_performance', 'Key Performance Indicators', 3, FALSE);
+        
+        -- Deliverables Status
+        INSERT INTO report_sections (report_id, section_type, title, display_order, is_editable)
+        VALUES (p_report_id, 'deliverables_status', 'Deliverables Status', 4, FALSE);
+        
+        -- Performance Analysis
+        INSERT INTO report_sections (report_id, section_type, title, display_order, is_editable)
+        VALUES (p_report_id, 'performance_analysis', 'Performance Analysis', 5, TRUE);
+        
+        -- Recommendations
+        INSERT INTO report_sections (report_id, section_type, title, display_order, is_editable)
+        VALUES (p_report_id, 'recommendations', 'Recommendations', 6, TRUE);
+        
+    ELSIF p_report_type = 'campaign_brief' THEN
+        INSERT INTO report_sections (report_id, section_type, title, display_order, is_editable)
+        VALUES 
+            (p_report_id, 'campaign_goals', 'Campaign Goals', 1, TRUE),
+            (p_report_id, 'target_audience', 'Target Audience', 2, TRUE),
+            (p_report_id, 'content_strategy', 'Content Strategy', 3, TRUE),
+            (p_report_id, 'timeline', 'Timeline', 4, FALSE),
+            (p_report_id, 'budget', 'Budget Allocation', 5, FALSE);
+            
+    ELSIF p_report_type = 'strategy_document' THEN
+        INSERT INTO report_sections (report_id, section_type, title, display_order, is_editable)
+        VALUES 
+            (p_report_id, 'market_analysis', 'Market Analysis', 1, TRUE),
+            (p_report_id, 'influencer_selection', 'Influencer Selection Rationale', 2, TRUE),
+            (p_report_id, 'content_plan', 'Content Plan', 3, TRUE),
+            (p_report_id, 'expected_outcomes', 'Expected Outcomes', 4, TRUE),
+            (p_report_id, 'measurement_plan', 'Measurement Plan', 5, TRUE);
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to snapshot campaign metrics for a report
+CREATE OR REPLACE FUNCTION snapshot_campaign_metrics_for_report(p_campaign_id UUID)
+RETURNS TABLE (
+    total_reach BIGINT,
+    total_engagement BIGINT,
+    avg_engagement_rate DECIMAL(5,2),
+    cost_per_engagement DECIMAL(10,2),
+    budget DECIMAL(12,2)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        COALESCE(ck.total_reach, 0)::BIGINT,
+        COALESCE(ck.total_interactions, 0)::BIGINT,
+        COALESCE(ck.avg_engagement_rate, 0)::DECIMAL(5,2),
+        COALESCE(ck.cost_per_engagement, 0)::DECIMAL(10,2),
+        c.budget
+    FROM campaigns c
+    LEFT JOIN LATERAL (
+        SELECT * FROM campaign_kpis
+        WHERE campaign_id = p_campaign_id
+        ORDER BY snapshot_date DESC
+        LIMIT 1
+    ) ck ON TRUE
+    WHERE c.id = p_campaign_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Triggers for updated_at
+CREATE TRIGGER update_reports_updated_at
+    BEFORE UPDATE ON reports
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_report_sections_updated_at
+    BEFORE UPDATE ON report_sections
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
+-- END OF REPORTING SYSTEM
+-- ============================================================================
