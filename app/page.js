@@ -64,7 +64,7 @@ export default function Home() {
               lineHeight: '2',
               color: '#475569'
             }}>
-              <li>Deploy to Vercel (visit <a href="https://vercel.com" target="_blank" rel="noopener" style={{ color: '#0369a1' }}>vercel.com</a>)</li>
+              <li>Deploy to Vercel (visit <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" style={{ color: '#0369a1' }}>vercel.com</a>)</li>
               <li>Read NEXT_STEPS.md for detailed guidance</li>
               <li>Start building your ticket features</li>
               <li>Add authentication & database</li>
