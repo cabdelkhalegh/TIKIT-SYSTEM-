@@ -1,20 +1,25 @@
 {
-  "name": "@tikit/backend-core",
+  "name": "@tikit/monorepo",
   "version": "0.1.0",
-  "description": "TIKIT Influencer Marketing Platform - Backend Database Layer",
+  "description": "TIKIT Influencer Marketing Platform - Monorepo",
   "private": true,
   "workspaces": [
+    "backend",
+    "frontend",
     "packages/*"
   ],
   "scripts": {
-    "db:migrate:create": "prisma migrate dev",
-    "db:studio:open": "prisma studio",
-    "db:client:sync": "prisma generate",
-    "db:reset:dev": "prisma migrate reset",
-    "db:seed": "node prisma/seed.js"
-  },
-  "prisma": {
-    "seed": "node prisma/seed.js"
+    "dev": "npm run dev --workspace=backend & npm run dev --workspace=frontend",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "backend:dev": "npm run dev --workspace=backend",
+    "frontend:dev": "npm run dev --workspace=frontend",
+    "db:migrate": "npm run db:migrate --workspace=backend",
+    "db:studio": "npm run db:studio --workspace=backend",
+    "db:seed": "npm run db:seed --workspace=backend",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build"
   },
   "repository": {
     "type": "git",
@@ -25,10 +30,6 @@
     "npm": ">=9.0.0"
   },
   "devDependencies": {
-    "prisma": "^5.9.1",
     "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "@prisma/client": "^5.9.1"
   }
 }
