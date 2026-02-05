@@ -71,12 +71,14 @@ jobs:
         run: |
           cd backend
           npm start &
-          # Wait for backend to be ready
-          timeout 60 bash -c 'until curl -f http://localhost:3001/health 2>/dev/null; do sleep 2; done' || echo "Backend health check not available"
+          # Wait for backend to be ready (configurable timeout)
+          HEALTH_CHECK_TIMEOUT=${HEALTH_CHECK_TIMEOUT:-60}
+          timeout $HEALTH_CHECK_TIMEOUT bash -c 'until curl -f http://localhost:3001/health 2>/dev/null; do sleep 2; done' || echo "Backend health check not available"
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/tikitdb_test
           NODE_ENV: test
           PORT: 3001
+          HEALTH_CHECK_TIMEOUT: 60
       
       - name: Run E2E tests
         run: |
@@ -85,11 +87,14 @@ jobs:
             if grep -q '"test:e2e"' package.json; then
               npm run test:e2e
             else
-              echo "E2E tests not configured yet"
+              echo "ℹ️  E2E test script (test:e2e) not found in package.json."
+              echo "   Add the following to frontend/package.json scripts to enable E2E testing:"
+              echo '   "test:e2e": "playwright test"'
               exit 0
             fi
           else
-            echo "Frontend not set up yet, skipping E2E tests"
+            echo "ℹ️  Frontend directory or package.json not found."
+            echo "   E2E tests will be enabled once frontend is initialized."
             exit 0
           fi
         env:
