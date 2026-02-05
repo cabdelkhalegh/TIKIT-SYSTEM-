@@ -1,0 +1,55 @@
+// TIKIT System - Database Schema
+// PRD Section 4.2: Client Company Profile Entity
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Client Entity - Represents marketing client companies in TIKIT platform
+model Client {
+  clientId                 String   @id @default(uuid()) @map("client_id")
+  legalCompanyName         String   @map("legal_company_name")
+  brandDisplayName         String   @map("brand_display_name")
+  industryVertical         String?  @map("industry_vertical")
+  
+  // Contact information stored as JSON strings
+  primaryContactEmails     String   @map("primary_contact_emails")
+  billingContactEmails     String   @map("billing_contact_emails")
+  preferredCommChannels    String   @map("preferred_comm_channels")
+  
+  // Campaign relationships
+  activeCampaignList       Campaign[] @relation("ActiveClientCampaigns")
+  completedCampaignList    Campaign[] @relation("CompletedClientCampaigns")
+  
+  // Financial tracking
+  totalAdSpend             Float?   @default(0) @map("total_ad_spend")
+  performanceMetricsJson   String?  @map("performance_metrics_json")
+  
+  // Timestamps
+  accountCreatedAt         DateTime @default(now()) @map("account_created_at")
+  lastModifiedAt           DateTime @updatedAt @map("last_modified_at")
+
+  @@map("clients")
+}
+
+// Campaign Entity placeholder - will be defined in Phase 2.2
+model Campaign {
+  campaignId               String   @id @default(uuid()) @map("campaign_id")
+  campaignTitle            String   @map("campaign_title")
+  
+  // Client relationships
+  activeClientId           String?  @map("active_client_id")
+  activeClient             Client?  @relation("ActiveClientCampaigns", fields: [activeClientId], references: [clientId])
+  
+  completedClientId        String?  @map("completed_client_id")
+  completedClient          Client?  @relation("CompletedClientCampaigns", fields: [completedClientId], references: [clientId])
+  
+  recordCreatedAt          DateTime @default(now()) @map("record_created_at")
+
+  @@map("campaigns")
+}
