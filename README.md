@@ -46,7 +46,13 @@ Before you begin, ensure you have the following installed:
    cd TIKIT-SYSTEM-
    ```
 
-2. **Install dependencies**
+2. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   Edit the `.env` file and update the values as needed, especially the database password.
+
+3. **Install dependencies**
    ```bash
    npm run install:all
    ```
@@ -155,23 +161,52 @@ npm run test
 
 ## 🐳 Docker Services
 
+**Note:** Docker services use environment variables from the `.env` file. Make sure to create it from `.env.example` before running Docker Compose.
+
 ### Backend Service
 - **Port**: 3000
-- **Environment**: Development
+- **Environment**: Development (configurable via `.env`)
 - **Dependencies**: PostgreSQL
 
 ### Frontend Service
 - **Port**: 3001 (mapped to internal 3000)
-- **Environment**: Development
+- **Environment**: Development (configurable via `.env`)
 - **Dependencies**: Backend
 
 ### PostgreSQL Service
 - **Port**: 5432
-- **Database**: tikit_db
-- **User**: tikit_user
-- **Password**: tikit_password (change in production!)
+- **Database**: Configurable via `POSTGRES_DB` (default: tikit_db)
+- **User**: Configurable via `POSTGRES_USER` (default: tikit_user)
+- **Password**: Configurable via `POSTGRES_PASSWORD` (**MUST** change in production!)
 
 ## 🔧 Environment Variables
+
+The project uses a `.env` file for configuration. Copy the `.env.example` file to `.env` and update the values:
+
+```bash
+cp .env.example .env
+```
+
+**⚠️ Important:** Never commit the `.env` file to version control. It's already included in `.gitignore`.
+
+### Configuration Variables
+
+**Database:**
+- `POSTGRES_DB` - Database name (default: tikit_db)
+- `POSTGRES_USER` - Database user (default: tikit_user)
+- `POSTGRES_PASSWORD` - Database password (**MUST** change in production)
+
+**Backend:**
+- `NODE_ENV` - Environment (development/production)
+- `DATABASE_URL` - Full database connection string
+- `PORT` - Backend server port (default: 3000)
+
+**Frontend:**
+- `REACT_APP_API_URL` - Backend API URL (default: http://localhost:3000)
+
+### Legacy: Manual Environment Files
+
+Alternatively, you can create environment files in each workspace:
 
 ### Backend
 Create a `.env` file in the `backend/` directory:

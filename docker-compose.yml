@@ -6,9 +6,9 @@ services:
     container_name: tikit-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: tikit_db
-      POSTGRES_USER: tikit_user
-      POSTGRES_PASSWORD: tikit_password
+      POSTGRES_DB: ${POSTGRES_DB:-tikit_db}
+      POSTGRES_USER: ${POSTGRES_USER:-tikit_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_in_production}
     ports:
       - "5432:5432"
     volumes:
@@ -16,7 +16,7 @@ services:
     networks:
       - tikit-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tikit_user -d tikit_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tikit_user} -d ${POSTGRES_DB:-tikit_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,9 +28,9 @@ services:
     container_name: tikit-backend
     restart: unless-stopped
     environment:
-      NODE_ENV: development
-      DATABASE_URL: postgresql://tikit_user:tikit_password@postgres:5432/tikit_db
-      PORT: 3000
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://tikit_user:changeme_in_production@postgres:5432/tikit_db}
+      PORT: ${PORT:-3000}
     ports:
       - "3000:3000"
     volumes:
@@ -50,8 +50,8 @@ services:
     container_name: tikit-frontend
     restart: unless-stopped
     environment:
-      NODE_ENV: development
-      REACT_APP_API_URL: http://localhost:3000
+      NODE_ENV: ${NODE_ENV:-development}
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:3000}
     ports:
       - "3001:3000"
     volumes:
