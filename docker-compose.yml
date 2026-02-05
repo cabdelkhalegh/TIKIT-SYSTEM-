@@ -1,0 +1,22 @@
+# TIKIT Ticketing Platform - Database Service Configuration
+# Phase 1: Prisma ORM Foundation Setup
+# Custom infrastructure for ticket management system development
+
+name: tikit-ticketing-platform
+
+services:
+  tikit_db_service:
+    image: postgres:14-alpine
+    container_name: tikit_tickets_database
+    ports:
+      - 54320:5432
+    environment:
+      POSTGRES_DB: tikit_tickets_database
+      POSTGRES_USER: tikit_db_admin
+      POSTGRES_PASSWORD: TikitDev2024Pass
+    volumes:
+      - tikit_ticket_data:/var/lib/postgresql/data
+
+volumes:
+  tikit_ticket_data:
+    driver: local
