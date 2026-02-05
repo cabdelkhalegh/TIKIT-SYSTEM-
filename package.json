@@ -1,0 +1,36 @@
+{
+  "name": "tikit-system",
+  "version": "1.0.0",
+  "description": "TIKIT OS - Monorepo for backend (NestJS) and frontend (React+TS)",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "install:all": "npm install",
+    "backend:dev": "npm run start:dev --workspace=backend",
+    "backend:build": "npm run build --workspace=backend",
+    "backend:start": "npm run start --workspace=backend",
+    "backend:test": "npm run test --workspace=backend",
+    "frontend:dev": "npm start --workspace=frontend",
+    "frontend:build": "npm run build --workspace=frontend",
+    "frontend:start": "npm start --workspace=frontend",
+    "frontend:test": "npm run test --workspace=frontend",
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "build": "npm run backend:build && npm run frontend:build",
+    "test": "npm run backend:test && npm run frontend:test"
+  },
+  "keywords": [
+    "monorepo",
+    "nestjs",
+    "react",
+    "typescript",
+    "tikit"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
