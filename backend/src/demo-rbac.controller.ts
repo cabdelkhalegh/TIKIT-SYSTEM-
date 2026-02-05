@@ -1,9 +1,9 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { AccessTokenGuard } from '../authentication/guards/access-token.guard';
-import { PermissionCheckGuard } from '../authentication/guards/permission-check.guard';
-import { RequirePermissions } from '../authentication/decorators/permissions.decorator';
-import { CurrentAccount } from '../authentication/decorators/current-account.decorator';
-import { ValidatedAccountInfo } from '../authentication/interfaces/token.interface';
+import { AccessTokenGuard } from './authentication/guards/access-token.guard';
+import { PermissionCheckGuard } from './authentication/guards/permission-check.guard';
+import { RequirePermissions } from './authentication/decorators/permissions.decorator';
+import { CurrentAccount } from './authentication/decorators/current-account.decorator';
+import { ValidatedAccountInfo } from './authentication/interfaces/token.interface';
 
 @Controller('demo')
 @UseGuards(AccessTokenGuard, PermissionCheckGuard)
