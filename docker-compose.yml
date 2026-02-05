@@ -1,0 +1,76 @@
+services:
+  tikit-database:
+    image: postgres:16-alpine
+    container_name: tikit-postgres-db
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME:-tikitdb}
+      POSTGRES_USER: ${DB_USER:-tikitadmin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-tikitpass123}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - tikit-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-tikitadmin} -d ${DB_NAME:-tikitdb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tikit-network
+
+  tikit-backend:
+    build:
+      context: ./backend
+      target: development
+      dockerfile: Dockerfile
+    container_name: tikit-api-server
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3001
+      DATABASE_URL: postgresql://${DB_USER:-tikitadmin}:${DB_PASSWORD:-tikitpass123}@tikit-database:5432/${DB_NAME:-tikitdb}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    volumes:
+      - ./backend:/tikit-backend
+      - /tikit-backend/node_modules
+    depends_on:
+      tikit-database:
+        condition: service_healthy
+    networks:
+      - tikit-network
+    command: npm run dev
+
+  tikit-frontend:
+    build:
+      context: ./frontend
+      target: development
+      dockerfile: Dockerfile
+    container_name: tikit-web-app
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    volumes:
+      - ./frontend:/tikit-web
+      - /tikit-web/node_modules
+      - /tikit-web/.next
+    depends_on:
+      - tikit-backend
+    networks:
+      - tikit-network
+    command: npm run dev
+
+volumes:
+  tikit-postgres-data:
+    name: tikit-database-volume
+
+networks:
+  tikit-network:
+    name: tikit-app-network
+    driver: bridge
