@@ -1,0 +1,22 @@
+# Production Docker Compose Override
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  tikit-backend:
+    build:
+      target: production
+    environment:
+      NODE_ENV: production
+    restart: always
+
+  tikit-frontend:
+    build:
+      target: production
+    environment:
+      NODE_ENV: production
+    restart: always
+
+  tikit-database:
+    restart: always
+    # In production, consider using managed database service
+    # and remove this service from docker-compose

@@ -68,6 +68,16 @@ curl http://localhost:3001/health
 curl http://localhost:3001/api/info
 ```
 
+### Production Deployment
+
+```bash
+# Use production configuration
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# Note: In production, consider using managed database services
+# instead of running PostgreSQL in a container
+```
+
 ## 📁 Project Structure
 
 ```
