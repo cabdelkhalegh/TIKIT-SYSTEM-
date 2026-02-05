@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  CAMPAIGN_MANAGER
+  DIRECTOR
+  CLIENT
+  INFLUENCER
+}
+
+model Account {
+  id            String   @id @default(uuid())
+  emailAddress  String   @unique
+  passwordHash  String
+  fullName      String
+  accountRole   UserRole @default(CLIENT)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("accounts")
+}
+
+model RefreshToken {
+  id            String   @id @default(uuid())
+  tokenValue    String   @unique
+  accountId     String
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  isRevoked     Boolean  @default(false)
+
+  @@map("refresh_tokens")
+  @@index([accountId])
+}
