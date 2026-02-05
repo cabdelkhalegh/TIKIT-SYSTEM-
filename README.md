@@ -102,9 +102,16 @@ npm run docker:build     # Rebuild containers
 
 ### Backend API (Port 3001)
 
+**Client Endpoints:**
 - `GET /health` - Health check
 - `GET /` - API information
-- `GET /api/v1/clients` - List all clients
+- `GET /api/v1/clients` - List all clients (with campaign summaries)
+- `GET /api/v1/clients/:id` - Get single client with all campaigns
+
+**Campaign Endpoints:**
+- `GET /api/v1/campaigns` - List all campaigns (supports ?status=active&clientId={id})
+- `GET /api/v1/campaigns/:id` - Get single campaign with client details
+- `POST /api/v1/campaigns` - Create new campaign
 
 ### Testing
 
@@ -112,8 +119,17 @@ npm run docker:build     # Rebuild containers
 # Health check
 curl http://localhost:3001/health
 
-# Get clients
+# Get all clients
 curl http://localhost:3001/api/v1/clients
+
+# Get all campaigns
+curl http://localhost:3001/api/v1/campaigns
+
+# Get active campaigns only
+curl "http://localhost:3001/api/v1/campaigns?status=active"
+
+# Get campaigns for specific client
+curl "http://localhost:3001/api/v1/campaigns?clientId={client-id}"
 ```
 
 ## 🗄️ Database
@@ -126,8 +142,14 @@ curl http://localhost:3001/api/v1/clients
 - Financial tracking
 - Campaign relationships
 
-**Campaign Entity** (Placeholder for Phase 2.2)
-- Will be expanded in next phase
+**Campaign Entity** (Phase 2.2) ✨ NEW
+- Campaign metadata and objectives
+- Budget tracking (total, allocated, spent)
+- Timeline management (start, end, launch dates)
+- Target audience and platforms (JSON)
+- Campaign status (draft, active, paused, completed, cancelled)
+- Performance metrics and KPIs (JSON)
+- Client relationship
 
 ### Database Operations
 
@@ -146,12 +168,11 @@ npx prisma studio
 
 ## 🎯 What's Next
 
-**Phase 2.2: Campaign Entity Model** - Ready to start!
-- Expand Campaign model with full fields
-- Budget and timeline tracking
-- Campaign status workflow
-- Performance metrics
-- Link to clients and influencers
+**Phase 2.3: Influencer Entity Model** - Next up!
+- Influencer profiles and social media metrics
+- Campaign-Influencer relationships
+- Influencer discovery and search
+- Performance tracking
 
 See [ROADMAP.md](./ROADMAP.md) for complete development plan.
 
@@ -180,8 +201,9 @@ See [ROADMAP.md](./ROADMAP.md) for complete development plan.
 
 - **Phase 1**: ✅ Complete (Infrastructure)
 - **Phase 2.1**: ✅ Complete (Client Entity)
-- **Phase 2.2**: 🎯 Ready to start (Campaign Entity)
-- **Phase 2.3**: ⏳ Pending (Influencer Entity)
+- **Phase 2.2**: ✅ Complete (Campaign Entity)
+- **Phase 2.3**: 🎯 Ready to start (Influencer Entity)
+- **Phase 2.4**: ⏳ Pending (Content/Deliverables Entity)
 
 ---
 
