@@ -19,7 +19,27 @@ TIKIT-SYSTEM/
 
 ## Getting Started
 
-### 1. Start the Development Database
+### 1. Configure Environment Variables
+
+**Important:** Before starting the database, configure your environment variables.
+
+Copy the example environment file in the root directory:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` with your desired database credentials. The default development values are:
+
+```env
+POSTGRES_DB=tikit_tickets_database
+POSTGRES_USER=tikit_db_admin
+POSTGRES_PASSWORD=TikitDev2024Pass
+```
+
+**Security Note:** Never commit the `.env` file to version control. It's already in `.gitignore`.
+
+### 2. Start the Development Database
 
 The project uses PostgreSQL in a Docker container for local development:
 
@@ -36,7 +56,7 @@ docker compose logs tikit_db_service
 
 The PostgreSQL database will be available at `localhost:54320`.
 
-### 2. Backend Setup
+### 3. Backend Setup
 
 Navigate to the backend directory and install dependencies:
 
@@ -45,9 +65,9 @@ cd backend
 npm install
 ```
 
-### 3. Configure Environment Variables
+### 4. Configure Backend Environment Variables
 
-The `.env` file is already created with default development settings. For production or custom setups, copy `.env.example` and modify as needed:
+The backend `.env` file is already created with default development settings. For custom setups, copy `backend/.env.example` and modify as needed:
 
 ```bash
 cp .env.example .env
@@ -58,7 +78,7 @@ Database connection format:
 DATABASE_URL="postgresql://tikit_db_admin:TikitDev2024Pass@localhost:54320/tikit_tickets_database?schema=public"
 ```
 
-### 4. Prisma Setup and Database Migration
+### 5. Prisma Setup and Database Migration
 
 Generate the Prisma Client:
 
@@ -74,7 +94,7 @@ npm run prisma:migrate
 
 This will apply the database schema defined in `prisma/schema.prisma` to your PostgreSQL database.
 
-### 5. Verify Prisma Setup
+### 6. Verify Prisma Setup
 
 Test the Prisma Client connection:
 

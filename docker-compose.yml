@@ -11,9 +11,9 @@ services:
     ports:
       - 54320:5432
     environment:
-      POSTGRES_DB: tikit_tickets_database
-      POSTGRES_USER: tikit_db_admin
-      POSTGRES_PASSWORD: TikitDev2024Pass
+      POSTGRES_DB: ${POSTGRES_DB:-tikit_tickets_database}
+      POSTGRES_USER: ${POSTGRES_USER:-tikit_db_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-TikitDev2024Pass}
     volumes:
       - tikit_ticket_data:/var/lib/postgresql/data
 
