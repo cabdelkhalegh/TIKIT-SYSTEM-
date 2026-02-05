@@ -25,8 +25,7 @@ model Client {
   preferredCommChannels    String   @map("preferred_comm_channels")
   
   // Campaign relationships
-  activeCampaignList       Campaign[] @relation("ActiveClientCampaigns")
-  completedCampaignList    Campaign[] @relation("CompletedClientCampaigns")
+  campaigns                Campaign[]
   
   // Financial tracking
   totalAdSpend             Float?   @default(0) @map("total_ad_spend")
@@ -39,22 +38,56 @@ model Client {
   @@map("clients")
 }
 
-// Campaign Entity placeholder - will be defined in Phase 2.2
-// Note: The current design uses separate relations for active/completed campaigns
-// This allows tracking campaign lifecycle while maintaining client associations
-// A future enhancement could consolidate this with a status field
+// Campaign Entity - Represents marketing campaigns in TIKIT platform
+// PRD Section 4.3: Campaign Management
 model Campaign {
   campaignId               String   @id @default(uuid()) @map("campaign_id")
-  campaignTitle            String   @map("campaign_title")
   
-  // Client relationships - separate relations allow tracking campaign state transitions
-  activeClientId           String?  @map("active_client_id")
-  activeClient             Client?  @relation("ActiveClientCampaigns", fields: [activeClientId], references: [clientId])
+  // Campaign metadata
+  campaignName             String   @map("campaign_name")
+  campaignDescription      String?  @map("campaign_description")
+  campaignObjectives       String?  @map("campaign_objectives") // JSON array of objectives
   
-  completedClientId        String?  @map("completed_client_id")
-  completedClient          Client?  @relation("CompletedClientCampaigns", fields: [completedClientId], references: [clientId])
+  // Client relationship - simplified to single relation with status tracking
+  clientId                 String   @map("client_id")
+  client                   Client   @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
   
-  recordCreatedAt          DateTime @default(now()) @map("record_created_at")
+  // Campaign status tracking
+  // Possible values: "draft", "active", "paused", "completed", "cancelled"
+  status                   String   @default("draft") @map("status")
+  
+  // Budget and financial tracking
+  totalBudget              Float?   @map("total_budget")
+  allocatedBudget          Float?   @default(0) @map("allocated_budget")
+  spentBudget              Float?   @default(0) @map("spent_budget")
+  
+  // Timeline management
+  startDate                DateTime? @map("start_date")
+  endDate                  DateTime? @map("end_date")
+  launchDate               DateTime? @map("launch_date")
+  
+  // Target audience (stored as JSON)
+  // Expected format: JSON object with demographics, interests, locations, etc.
+  targetAudienceJson       String?  @map("target_audience_json")
+  
+  // Target platforms (stored as JSON array)
+  // Expected format: JSON array like ["instagram", "tiktok", "youtube"]
+  targetPlatformsJson      String?  @map("target_platforms_json")
+  
+  // Performance metrics and KPIs (stored as JSON)
+  // Expected format: JSON object with impressions, engagement, conversions, ROI, etc.
+  performanceKPIsJson      String?  @map("performance_kpis_json")
+  actualPerformanceJson    String?  @map("actual_performance_json")
+  
+  // Future relationships (to be added in Phase 2.3)
+  // influencers            Influencer[] @relation("CampaignInfluencers")
+  // content                Content[] @relation("CampaignContent")
+  
+  // Timestamps
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
 
   @@map("campaigns")
+  @@index([clientId])
+  @@index([status])
 }
