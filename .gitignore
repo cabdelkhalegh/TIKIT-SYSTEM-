@@ -8,8 +8,12 @@ node_modules/
 *.log
 
 # Production
+build/
+dist/
 /build
 /dist
+backend/dist/
+frontend/build/
 
 # Misc
 .DS_Store
