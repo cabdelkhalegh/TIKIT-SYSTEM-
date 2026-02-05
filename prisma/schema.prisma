@@ -18,8 +18,10 @@ model Client {
   industryVertical         String?  @map("industry_vertical")
   
   // Contact information stored as JSON strings
+  // Expected format: JSON array of strings, e.g., ["email1@example.com", "email2@example.com"]
   primaryContactEmails     String   @map("primary_contact_emails")
   billingContactEmails     String   @map("billing_contact_emails")
+  // Expected format: JSON array of channel names, e.g., ["email", "slack", "phone"]
   preferredCommChannels    String   @map("preferred_comm_channels")
   
   // Campaign relationships
@@ -38,11 +40,14 @@ model Client {
 }
 
 // Campaign Entity placeholder - will be defined in Phase 2.2
+// Note: The current design uses separate relations for active/completed campaigns
+// This allows tracking campaign lifecycle while maintaining client associations
+// A future enhancement could consolidate this with a status field
 model Campaign {
   campaignId               String   @id @default(uuid()) @map("campaign_id")
   campaignTitle            String   @map("campaign_title")
   
-  // Client relationships
+  // Client relationships - separate relations allow tracking campaign state transitions
   activeClientId           String?  @map("active_client_id")
   activeClient             Client?  @relation("ActiveClientCampaigns", fields: [activeClientId], references: [clientId])
   
