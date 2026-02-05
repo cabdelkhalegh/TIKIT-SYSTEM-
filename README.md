@@ -21,7 +21,7 @@ TIKIT-SYSTEM-/
 - **Database**: PostgreSQL 16
 
 ### Frontend
-- **Framework**: React 18
+- **Framework**: React 19
 - **Language**: TypeScript
 - **Build Tool**: Create React App
 
