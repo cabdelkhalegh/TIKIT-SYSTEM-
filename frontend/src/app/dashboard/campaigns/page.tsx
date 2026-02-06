@@ -7,8 +7,9 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Filter, Target, Calendar, DollarSign, TrendingUp } from 'lucide-react';
+import { Search, Target, Calendar, DollarSign } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { CreateCampaignButton } from '@/components/campaigns/CampaignFormModal';
 
 interface Campaign {
   campaignId: string;
@@ -70,10 +71,7 @@ export default function CampaignsPage() {
                 Manage and track your influencer marketing campaigns
               </p>
             </div>
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Campaign
-            </Button>
+            <CreateCampaignButton />
           </div>
         </div>
 
@@ -244,10 +242,7 @@ export default function CampaignsPage() {
                         ? 'Try adjusting your filters'
                         : 'Get started by creating your first campaign'}
                     </p>
-                    <Button className="bg-purple-600 hover:bg-purple-700">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Campaign
-                    </Button>
+                    <CreateCampaignButton />
                   </CardContent>
                 </Card>
               </div>
