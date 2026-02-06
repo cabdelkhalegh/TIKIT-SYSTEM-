@@ -13,14 +13,28 @@
             <p>Campaign & Influencer Management System</p>
         </header>
 
-        <nav class="tabs">
-            <button class="tab-btn active" data-tab="campaigns">📊 Campaigns</button>
-            <button class="tab-btn" data-tab="influencers">👥 Influencers</button>
+        <nav class="tabs" role="tablist">
+            <button
+                id="tab-campaigns"
+                class="tab-btn active"
+                data-tab="campaigns"
+                role="tab"
+                aria-selected="true"
+                aria-controls="campaigns-tab"
+            >📊 Campaigns</button>
+            <button
+                id="tab-influencers"
+                class="tab-btn"
+                data-tab="influencers"
+                role="tab"
+                aria-selected="false"
+                aria-controls="influencers-tab"
+            >👥 Influencers</button>
         </nav>
 
         <main>
             <!-- Campaigns Tab -->
-            <div id="campaigns-tab" class="tab-content active">
+            <div id="campaigns-tab" class="tab-content active" role="tabpanel" aria-labelledby="tab-campaigns">
                 <section class="create-section">
                     <h2>Create New Campaign</h2>
                     <form id="campaignForm">
