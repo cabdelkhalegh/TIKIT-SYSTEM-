@@ -3,6 +3,14 @@
 import { useCallback, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
+/**
+ * Custom hook for managing URL state in Next.js 14+ without Suspense boundary issues.
+ * Uses window.location.search to avoid the need for wrapping components in Suspense.
+ * 
+ * Note: This implementation reads from window.location.search which may be slightly
+ * out of sync with Next.js router state during transitions. For server-side rendering,
+ * pass searchParamsString from the server component.
+ */
 export function useUrlState(searchParamsString?: string) {
   const router = useRouter();
   const pathname = usePathname();

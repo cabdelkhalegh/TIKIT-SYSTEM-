@@ -159,11 +159,18 @@ export default function InfluencersPage() {
     }
   };
 
+  const { data: allInfluencersData } = useQuery({
+    queryKey: ['influencers-all'],
+    queryFn: async () => {
+      const response = await apiClient.get('/influencers');
+      return response.data.data as Influencer[];
+    },
+  });
+
   const availableNiches = useMemo(() => {
-    if (!data) return [];
-    const allData = data.data;
-    return Array.from(new Set(allData.map(i => i.niche)));
-  }, [data]);
+    if (!allInfluencersData) return [];
+    return Array.from(new Set(allInfluencersData.map(i => i.niche)));
+  }, [allInfluencersData]);
 
   const getTotalFollowers = (platforms: Influencer['platforms']) => {
     return platforms.reduce((sum, p) => sum + p.followersCount, 0);

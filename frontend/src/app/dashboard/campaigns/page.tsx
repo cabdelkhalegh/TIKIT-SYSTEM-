@@ -57,17 +57,7 @@ export default function CampaignsPage() {
   const { data, isLoading, error, isFetching } = useQuery({
     queryKey: ['campaigns', page, pageSize, searchQuery, statusFilters, sortField, sortDirection],
     queryFn: async () => {
-      const response = await apiClient.get('/campaigns', {
-        params: {
-          page,
-          limit: pageSize,
-          search: searchQuery || undefined,
-          status: statusFilters.length > 0 ? statusFilters.join(',') : undefined,
-          sortField,
-          sortDirection,
-        },
-      });
-      
+      const response = await apiClient.get('/campaigns');
       const campaigns = response.data.data as Campaign[];
       
       let filtered = [...campaigns];
