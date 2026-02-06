@@ -41,10 +41,76 @@ export default function InfluencerDetailPage() {
     },
   });
 
-  const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this influencer?')) {
-      deleteMutation.mutate();
+  const showDeleteConfirmation = (onConfirm: () => void) => {
+    if (typeof document === 'undefined') {
+      // Fallback for non-browser environments: execute immediately
+      onConfirm();
+      return;
     }
+
+    const overlay = document.createElement('div');
+    overlay.className =
+      'fixed inset-0 z-50 flex items-center justify-center bg-black/50';
+
+   const dialog = document.createElement('div');
+    dialog.className =
+      'w-full max-w-sm rounded-lg bg-white p-6 shadow-lg dark:bg-slate-900';
+
+    dialog.innerHTML = `
+      <h2 class="mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+        Delete influencer
+      </h2>
+      <p class="mb-6 text-sm text-slate-600 dark:text-slate-300">
+        Are you sure you want to delete this influencer? This action cannot be undone.
+      </p>
+      <div class="flex justify-end gap-3">
+        <button
+          type="button"
+          data-role="cancel"
+          class="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          data-role="confirm"
+          class="inline-flex items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+        >
+          Delete
+        </button>
+      </div>
+    `;
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    const removeOverlay = () => {
+      if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+    };
+
+    const cancelButton = dialog.querySelector<HTMLButtonElement>(
+      'button[data-role="cancel"]',
+    );
+    const confirmButton = dialog.querySelector<HTMLButtonElement>(
+      'button[data-role="confirm"]',
+    );
+
+    cancelButton?.addEventListener('click', () => {
+      removeOverlay();
+    });
+
+    confirmButton?.addEventListener('click', () => {
+      removeOverlay();
+      onConfirm();
+    });
+  };
+
+  const handleDelete = () => {
+    showDeleteConfirmation(() => {
+      deleteMutation.mutate();
+    });
   };
 
   if (isLoading) {
