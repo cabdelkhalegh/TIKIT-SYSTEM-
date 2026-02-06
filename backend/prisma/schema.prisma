@@ -44,6 +44,10 @@ model User {
   passwordResetExpires     DateTime? @map("password_reset_expires")
   emailVerificationToken   String?  @map("email_verification_token")
   
+  // Relations
+  notifications            Notification[] @relation("UserNotifications")
+  notificationPreferences  NotificationPreferences? @relation("UserNotificationPreferences")
+  
   // Timestamps
   createdAt                DateTime @default(now()) @map("created_at")
   updatedAt                DateTime @updatedAt @map("updated_at")
@@ -243,4 +247,61 @@ model CampaignInfluencer {
   @@index([campaignId])
   @@index([influencerId])
   @@index([collaborationStatus])
+}
+
+// Notification Entity - In-app and email notifications for users
+// Phase 4.2: Notifications System
+model Notification {
+  notificationId   String   @id @default(uuid()) @map("notification_id")
+  userId           String   @map("user_id")
+  user             User     @relation("UserNotifications", fields: [userId], references: [userId], onDelete: Cascade)
+  
+  // Notification details
+  notificationType String   @map("notification_type") // campaign, collaboration, payment, system
+  category         String   @map("category") // info, warning, success, error
+  title            String   @map("title")
+  message          String   @map("message")
+  metadata         String?  @map("metadata") // JSON with additional data
+  
+  // Action and priority
+  actionUrl        String?  @map("action_url")
+  priority         String   @default("normal") @map("priority") // low, normal, high, urgent
+  
+  // Status
+  isRead           Boolean  @default(false) @map("is_read")
+  readAt           DateTime? @map("read_at")
+  
+  // Timestamps
+  createdAt        DateTime @default(now()) @map("created_at")
+  
+  @@map("notifications")
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// NotificationPreferences Entity - User preferences for notifications
+// Phase 4.2: Notifications System
+model NotificationPreferences {
+  preferenceId         String   @id @default(uuid()) @map("preference_id")
+  userId               String   @unique @map("user_id")
+  user                 User     @relation("UserNotificationPreferences", fields: [userId], references: [userId], onDelete: Cascade)
+  
+  // Email preferences
+  emailCampaign        Boolean  @default(true) @map("email_campaign")
+  emailCollaboration   Boolean  @default(true) @map("email_collaboration")
+  emailPayment         Boolean  @default(true) @map("email_payment")
+  emailSystem          Boolean  @default(true) @map("email_system")
+  
+  // In-app preferences
+  inAppCampaign        Boolean  @default(true) @map("inapp_campaign")
+  inAppCollaboration   Boolean  @default(true) @map("inapp_collaboration")
+  inAppPayment         Boolean  @default(true) @map("inapp_payment")
+  inAppSystem          Boolean  @default(true) @map("inapp_system")
+  
+  // Timestamps
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  
+  @@map("notification_preferences")
 }
