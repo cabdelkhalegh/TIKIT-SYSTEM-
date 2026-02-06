@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIKIT System - UI Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .App {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .App-header {
+            padding: 2rem;
+            text-align: center;
+            color: white;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .App-header h1 {
+            margin: 0;
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .App-main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .status-card,
+        .tickets-card,
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-card h2,
+        .tickets-card h2,
+        .info-card h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        .status-item {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #eee;
+            font-size: 1.1rem;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .empty-state {
+            color: #666;
+            font-style: italic;
+            padding: 2rem;
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .info-card ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .info-card li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .info-card li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .App-footer {
+            padding: 1.5rem;
+            text-align: center;
+            color: white;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .App-footer p {
+            margin: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .badge-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .badge-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="App">
+        <header class="App-header">
+            <h1>🎫 TIKIT System</h1>
+            <p class="subtitle">Ticket Management Application</p>
+        </header>
+        
+        <main class="App-main">
+            <div class="status-card">
+                <h2>System Status</h2>
+                <div class="status-item">
+                    <strong>Frontend:</strong> ✅ Running on port 3000
+                    <span class="badge badge-success">ACTIVE</span>
+                </div>
+                <div class="status-item">
+                    <strong>Backend:</strong> ✅ TIKIT Backend - healthy
+                    <span class="badge badge-success">CONNECTED</span>
+                </div>
+                <div class="status-item">
+                    <strong>Database:</strong> ✅ PostgreSQL configured
+                    <span class="badge badge-success">READY</span>
+                </div>
+            </div>
+
+            <div class="tickets-card">
+                <h2>Tickets Dashboard</h2>
+                <p class="empty-state">No tickets yet. The system is ready to create tickets!</p>
+            </div>
+
+            <div class="info-card">
+                <h3>🚀 Development Environment Ready!</h3>
+                <p style="margin-bottom: 1rem;">All Docker services are configured and running:</p>
+                <ul>
+                    <li>Frontend (React) - Port 3000</li>
+                    <li>Backend (Express) - Port 3001</li>
+                    <li>Database (PostgreSQL) - Port 5432</li>
+                </ul>
+            </div>
+        </main>
+
+        <footer class="App-footer">
+            <p>TIKIT System v1.0.0 | Docker Development Environment</p>
+        </footer>
+    </div>
+
+    <script>
+        // Simulate API call animation
+        setTimeout(() => {
+            console.log('Frontend initialized');
+            console.log('Backend connection: healthy');
+            console.log('Database: PostgreSQL ready');
+            console.log('All systems operational ✅');
+        }, 100);
+    </script>
+</body>
+</html>
