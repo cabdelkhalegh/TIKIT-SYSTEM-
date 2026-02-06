@@ -75,7 +75,7 @@ const influencerFormSchema = z.object({
   primaryPlatform: z.enum(['instagram', 'youtube', 'tiktok', 'twitter', 'facebook'], {
     required_error: 'Please select a primary platform',
   }),
-  profileImageUrl: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
+  profileImageUrl: z.string().url('Please enter a valid URL').nullable().optional().or(z.literal('')),
   location: z.string().optional(),
   // Social media handles
   instagramHandle: z.string().optional(),

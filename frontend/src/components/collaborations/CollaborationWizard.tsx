@@ -211,6 +211,13 @@ export function CollaborationWizard({ campaignId, children, onSuccess }: Collabo
   const applyToAll = () => {
     if (collaborations.length === 0) return;
     const template = collaborations[0];
+    
+    // Validate that template has at least the agreed amount
+    if (!template.agreedAmount || template.agreedAmount < 0) {
+      toast.error('Please set a valid agreed amount in the first collaboration before applying to all');
+      return;
+    }
+    
     const newCollaborations = collaborations.map((c) => ({
       ...c,
       role: template.role,
