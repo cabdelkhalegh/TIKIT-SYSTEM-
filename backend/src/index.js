@@ -6,6 +6,9 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const { PrismaClient } = require('@prisma/client');
 
+// Import authentication routes
+const authRoutes = require('./routes/auth-routes');
+
 // Load environment variables
 dotenv.config();
 
@@ -17,13 +20,16 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Authentication routes (public)
+app.use('/api/v1/auth', authRoutes);
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     service: 'TIKIT Backend API',
     timestamp: new Date().toISOString(),
-    version: '0.1.0'
+    version: '0.3.1'
   });
 });
 
@@ -359,9 +365,16 @@ app.post('/api/v1/collaborations', async (req, res) => {
 app.get('/', (req, res) => {
   res.json({
     message: 'TIKIT Backend API',
-    version: '0.3.0',
+    version: '0.3.1',
     endpoints: {
       health: '/health',
+      auth: {
+        register: 'POST /api/v1/auth/register',
+        login: 'POST /api/v1/auth/login',
+        profile: 'GET /api/v1/auth/profile (protected)',
+        updateProfile: 'PUT /api/v1/auth/profile (protected)',
+        changePassword: 'POST /api/v1/auth/change-password (protected)'
+      },
       clients: '/api/v1/clients',
       campaigns: '/api/v1/campaigns',
       influencers: '/api/v1/influencers',
@@ -375,6 +388,7 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 TIKIT Backend API running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔐 Auth API: http://localhost:${PORT}/api/v1/auth`);
   console.log(`👥 Clients API: http://localhost:${PORT}/api/v1/clients`);
   console.log(`🎯 Campaigns API: http://localhost:${PORT}/api/v1/campaigns`);
   console.log(`⭐ Influencers API: http://localhost:${PORT}/api/v1/influencers`);

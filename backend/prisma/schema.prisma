@@ -10,6 +10,51 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// User Entity - Represents platform users with authentication and authorization
+// PRD Section 5.1: User Authentication & Authorization
+model User {
+  userId                   String   @id @default(uuid()) @map("user_id")
+  
+  // Authentication
+  email                    String   @unique @map("email")
+  passwordHash             String   @map("password_hash")
+  
+  // Profile
+  fullName                 String   @map("full_name")
+  displayName              String?  @map("display_name")
+  profileImageUrl          String?  @map("profile_image_url")
+  
+  // Authorization
+  role                     String   @default("client_manager") @map("role") // admin, client_manager, influencer_manager
+  isActive                 Boolean  @default(true) @map("is_active")
+  isEmailVerified          Boolean  @default(false) @map("is_email_verified")
+  
+  // Optional relationships
+  // Link to client if user is a client manager
+  managedClientId          String?  @map("managed_client_id")
+  managedClient            Client?  @relation(fields: [managedClientId], references: [clientId])
+  
+  // Link to influencer if user is an influencer
+  managedInfluencerId      String?  @map("managed_influencer_id")
+  managedInfluencer        Influencer? @relation(fields: [managedInfluencerId], references: [influencerId])
+  
+  // Security
+  lastLoginAt              DateTime? @map("last_login_at")
+  passwordResetToken       String?  @map("password_reset_token")
+  passwordResetExpires     DateTime? @map("password_reset_expires")
+  emailVerificationToken   String?  @map("email_verification_token")
+  
+  // Timestamps
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+  @@index([email])
+  @@index([role])
+  @@index([managedClientId])
+  @@index([managedInfluencerId])
+}
+
 // Client Entity - Represents marketing client companies in TIKIT platform
 model Client {
   clientId                 String   @id @default(uuid()) @map("client_id")
@@ -26,6 +71,9 @@ model Client {
   
   // Campaign relationships
   campaigns                Campaign[]
+  
+  // User relationships (managers who can access this client)
+  managers                 User[]
   
   // Financial tracking
   totalAdSpend             Float?   @default(0) @map("total_ad_spend")
@@ -143,6 +191,9 @@ model Influencer {
   
   // Campaign relationships (many-to-many)
   campaignInfluencers      CampaignInfluencer[]
+  
+  // User relationships (if this influencer has a user account)
+  users                    User[]
   
   // Timestamps
   createdAt                DateTime @default(now()) @map("created_at")
