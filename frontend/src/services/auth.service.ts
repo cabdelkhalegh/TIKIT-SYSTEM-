@@ -1,6 +1,17 @@
 import { apiClient } from '@/lib/api-client';
 import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, User } from '@/types/auth.types';
 
+// Helper function to transform backend user account to frontend user type
+const transformUserAccount = (userAccount: any) => ({
+  id: userAccount.userId,
+  email: userAccount.email,
+  fullName: userAccount.fullName,
+  role: userAccount.role,
+  profileImage: userAccount.profileImageUrl,
+  createdAt: userAccount.createdAt,
+  updatedAt: userAccount.updatedAt,
+});
+
 export const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await apiClient.post('/auth/login', credentials);
@@ -8,15 +19,7 @@ export const authService = {
     // Transform to match LoginResponse {token, user}
     return {
       token: response.data.data.authToken,
-      user: {
-        id: response.data.data.userAccount.userId,
-        email: response.data.data.userAccount.email,
-        fullName: response.data.data.userAccount.fullName,
-        role: response.data.data.userAccount.role,
-        profileImage: response.data.data.userAccount.profileImageUrl,
-        createdAt: response.data.data.userAccount.createdAt,
-        updatedAt: response.data.data.userAccount.updatedAt,
-      },
+      user: transformUserAccount(response.data.data.userAccount),
     };
   },
 
@@ -26,15 +29,7 @@ export const authService = {
     // Transform to match RegisterResponse {token, user}
     return {
       token: response.data.data.authToken,
-      user: {
-        id: response.data.data.userAccount.userId,
-        email: response.data.data.userAccount.email,
-        fullName: response.data.data.userAccount.fullName,
-        role: response.data.data.userAccount.role,
-        profileImage: response.data.data.userAccount.profileImageUrl,
-        createdAt: response.data.data.userAccount.createdAt,
-        updatedAt: response.data.data.userAccount.updatedAt,
-      },
+      user: transformUserAccount(response.data.data.userAccount),
     };
   },
 
@@ -45,30 +40,12 @@ export const authService = {
 
   async getCurrentUser(): Promise<User> {
     const response = await apiClient.get('/auth/profile');
-    const userData = response.data.data.userAccount;
-    return {
-      id: userData.userId,
-      email: userData.email,
-      fullName: userData.fullName,
-      role: userData.role,
-      profileImage: userData.profileImageUrl,
-      createdAt: userData.createdAt,
-      updatedAt: userData.updatedAt,
-    };
+    return transformUserAccount(response.data.data.userAccount);
   },
 
   async updateProfile(data: Partial<User>): Promise<User> {
     const response = await apiClient.put('/auth/profile', data);
-    const userData = response.data.data.userAccount;
-    return {
-      id: userData.userId,
-      email: userData.email,
-      fullName: userData.fullName,
-      role: userData.role,
-      profileImage: userData.profileImageUrl,
-      createdAt: userData.createdAt,
-      updatedAt: userData.updatedAt,
-    };
+    return transformUserAccount(response.data.data.userAccount);
   },
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {

@@ -5,6 +5,9 @@ import type { AuthStore, User } from '@/types/auth.types';
 import { apiClient } from '@/lib/api-client';
 
 // Custom storage that syncs to both localStorage and cookies
+// Note: Cookies are not httpOnly because client-side JavaScript needs access
+// for Zustand state management. For production, consider implementing server-side
+// session management with httpOnly cookies for enhanced security.
 const cookieStorage: StateStorage = {
   getItem: (name: string): string | null => {
     // Try to get from cookies first (server-side accessible)
