@@ -10,7 +10,8 @@ const cookieStorage = {
     return Cookies.get(name) ?? null;
   },
   setItem: (name: string, value: string) => {
-    Cookies.set(name, value, { expires: 7 }); // 7 days
+    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    Cookies.set(name, value, { expires: 7, secure: isHttps, sameSite: 'lax' }); // 7 days
   },
   removeItem: (name: string) => {
     Cookies.remove(name);
