@@ -6,13 +6,17 @@ async function main() {
   console.log('🌱 Starting database seed...');
 
   // Create sample users
+  // WARNING: These passwords are plaintext for development ONLY
+  // In production, ALWAYS use bcrypt or similar to hash passwords:
+  // const bcrypt = require('bcrypt');
+  // const hashedPassword = await bcrypt.hash(plainPassword, 10);
   const user1 = await prisma.user.upsert({
     where: { email: 'admin@tikit.com' },
     update: {},
     create: {
       email: 'admin@tikit.com',
       name: 'Admin User',
-      password: 'hashed_password_here', // In production, use proper password hashing
+      password: 'dev_password_only', // NEVER use plaintext passwords in production!
       role: 'admin',
     },
   });
@@ -23,7 +27,7 @@ async function main() {
     create: {
       email: 'user@tikit.com',
       name: 'Regular User',
-      password: 'hashed_password_here', // In production, use proper password hashing
+      password: 'dev_password_only', // NEVER use plaintext passwords in production!
       role: 'user',
     },
   });

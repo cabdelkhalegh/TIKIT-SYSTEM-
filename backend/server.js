@@ -1,6 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const prisma = require('./prismaClient');
+const { validateId, validateUserData, validateTicketData } = require('./validators');
 require('dotenv').config();
 
 const app = express();
@@ -94,8 +95,13 @@ app.get('/api/users', async (req, res) => {
 
 app.get('/api/users/:id', async (req, res) => {
   try {
+    const id = validateId(req.params.id);
+    if (!id) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(req.params.id) },
+      where: { id },
       include: { tickets: true }
     });
     if (!user) {
@@ -107,13 +113,28 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
+// Note: In production, passwords should be hashed using bcrypt before storage
+// This endpoint is for development only and should be secured before production use
 app.post('/api/users', async (req, res) => {
   try {
     const { email, name, password, role } = req.body;
+    
+    // Validate input
+    const validation = validateUserData({ email, name, password, role });
+    if (!validation.valid) {
+      return res.status(400).json({ error: 'Validation failed', details: validation.errors });
+    }
+    
+    // TODO: Hash password with bcrypt before storing
+    // const hashedPassword = await bcrypt.hash(password, 10);
+    
     const user = await prisma.user.create({
-      data: { email, name, password, role }
+      data: { email, name, password, role } // In production: use hashedPassword
     });
-    res.status(201).json(user);
+    
+    // Don't send password back
+    const { password: _, ...userWithoutPassword } = user;
+    res.status(201).json(userWithoutPassword);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -142,8 +163,13 @@ app.get('/api/tickets', async (req, res) => {
 
 app.get('/api/tickets/:id', async (req, res) => {
   try {
+    const id = validateId(req.params.id);
+    if (!id) {
+      return res.status(400).json({ error: 'Invalid ticket ID' });
+    }
+    
     const ticket = await prisma.ticket.findUnique({
-      where: { id: parseInt(req.params.id) },
+      where: { id },
       include: { user: true }
     });
     if (!ticket) {
@@ -158,6 +184,19 @@ app.get('/api/tickets/:id', async (req, res) => {
 app.post('/api/tickets', async (req, res) => {
   try {
     const { title, description, status, priority, userId } = req.body;
+    
+    // Validate input
+    const validation = validateTicketData({ 
+      title, 
+      description, 
+      status, 
+      priority, 
+      userId: parseInt(userId) 
+    });
+    if (!validation.valid) {
+      return res.status(400).json({ error: 'Validation failed', details: validation.errors });
+    }
+    
     const ticket = await prisma.ticket.create({
       data: { title, description, status, priority, userId: parseInt(userId) },
       include: { user: true }
@@ -170,9 +209,21 @@ app.post('/api/tickets', async (req, res) => {
 
 app.put('/api/tickets/:id', async (req, res) => {
   try {
+    const id = validateId(req.params.id);
+    if (!id) {
+      return res.status(400).json({ error: 'Invalid ticket ID' });
+    }
+    
     const { title, description, status, priority } = req.body;
+    
+    // Validate input
+    const validation = validateTicketData({ title, description, status, priority }, true);
+    if (!validation.valid) {
+      return res.status(400).json({ error: 'Validation failed', details: validation.errors });
+    }
+    
     const ticket = await prisma.ticket.update({
-      where: { id: parseInt(req.params.id) },
+      where: { id },
       data: { title, description, status, priority },
       include: { user: true }
     });
@@ -184,8 +235,13 @@ app.put('/api/tickets/:id', async (req, res) => {
 
 app.delete('/api/tickets/:id', async (req, res) => {
   try {
+    const id = validateId(req.params.id);
+    if (!id) {
+      return res.status(400).json({ error: 'Invalid ticket ID' });
+    }
+    
     await prisma.ticket.delete({
-      where: { id: parseInt(req.params.id) }
+      where: { id }
     });
     res.status(204).send();
   } catch (error) {
