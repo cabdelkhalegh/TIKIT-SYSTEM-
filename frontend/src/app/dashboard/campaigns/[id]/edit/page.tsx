@@ -33,8 +33,21 @@ export default function EditCampaignPage() {
       toast.success('Campaign updated successfully');
       router.push(`/dashboard/campaigns/${campaignId}`);
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update campaign');
+    onError: (error: unknown) => {
+      let message = 'Failed to update campaign';
+
+      if (error instanceof Error && error.message) {
+        message = error.message;
+      } else if (
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        (error as { response?: { data?: { message?: string } } }).response?.data?.message
+      ) {
+        message = (error as { response?: { data?: { message?: string } } }).response!.data!.message as string;
+      }
+
+      toast.error(message);
     },
   });
 
