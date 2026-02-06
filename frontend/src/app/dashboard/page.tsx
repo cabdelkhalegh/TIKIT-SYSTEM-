@@ -11,13 +11,23 @@ import {
   BudgetUtilizationChart, 
   EngagementTrendChart 
 } from '@/components/charts';
+import { toast } from 'sonner';
+import { useEffect } from 'react';
 
 export default function DashboardPage() {
-  const { data: summary, isLoading } = useQuery({
+  const { data: summary, isLoading, error } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: () => analyticsService.getDashboardSummary(),
     staleTime: 60000, // 1 minute
+    retry: 2,
   });
+
+  useEffect(() => {
+    if (error) {
+      console.error('Failed to load dashboard analytics:', error);
+      toast.error('Failed to load dashboard data. Using fallback data.');
+    }
+  }, [error]);
 
   // Sample data for charts - replace with actual API data when available
   const campaignPerformanceData = [
@@ -75,7 +85,7 @@ export default function DashboardPage() {
           <StatCard
             title="Budget Utilized"
             value={isLoading ? '...' : formatCurrency(summary?.budgetOverview.spentBudget || 0)}
-            change={`${summary?.budgetOverview.utilizationPercentage || 0}% of total`}
+            change={`${(summary?.budgetOverview.utilizationPercentage || 0).toFixed(1)}% of total`}
             trend="neutral"
             icon={DollarSign}
             color="orange"
@@ -169,7 +179,7 @@ export default function DashboardPage() {
               <div className="h-[300px] bg-gray-100 rounded animate-pulse" />
             ) : (
               <BudgetUtilizationChart
-                allocated={summary?.budgetOverview.totalBudget || 100000}
+                allocated={summary?.budgetOverview.totalBudget || 0}
                 spent={summary?.budgetOverview.spentBudget || 0}
                 title=""
               />
