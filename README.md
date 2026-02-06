@@ -113,6 +113,15 @@ npm run docker:build     # Rebuild containers
 - `GET /api/v1/campaigns/:id` - Get single campaign with client details
 - `POST /api/v1/campaigns` - Create new campaign
 
+**Influencer Endpoints:** ✨ NEW
+- `GET /api/v1/influencers` - List all influencers (supports ?platform=instagram&status=available&verified=true)
+- `GET /api/v1/influencers/:id` - Get single influencer with campaign history
+- `POST /api/v1/influencers` - Create new influencer
+
+**Collaboration Endpoints:** ✨ NEW
+- `GET /api/v1/collaborations` - List campaign-influencer collaborations (supports ?campaignId={id}&influencerId={id}&status=active)
+- `POST /api/v1/collaborations` - Create new collaboration
+
 ### Testing
 
 ```bash
@@ -130,6 +139,21 @@ curl "http://localhost:3001/api/v1/campaigns?status=active"
 
 # Get campaigns for specific client
 curl "http://localhost:3001/api/v1/campaigns?clientId={client-id}"
+
+# Get all influencers
+curl http://localhost:3001/api/v1/influencers
+
+# Get Instagram influencers
+curl "http://localhost:3001/api/v1/influencers?platform=instagram"
+
+# Get available verified influencers
+curl "http://localhost:3001/api/v1/influencers?status=available&verified=true"
+
+# Get all collaborations
+curl http://localhost:3001/api/v1/collaborations
+
+# Get collaborations for a campaign
+curl "http://localhost:3001/api/v1/collaborations?campaignId={campaign-id}"
 ```
 
 ## 🗄️ Database
@@ -142,7 +166,7 @@ curl "http://localhost:3001/api/v1/campaigns?clientId={client-id}"
 - Financial tracking
 - Campaign relationships
 
-**Campaign Entity** (Phase 2.2) ✨ NEW
+**Campaign Entity** (Phase 2.2)
 - Campaign metadata and objectives
 - Budget tracking (total, allocated, spent)
 - Timeline management (start, end, launch dates)
@@ -150,6 +174,22 @@ curl "http://localhost:3001/api/v1/campaigns?clientId={client-id}"
 - Campaign status (draft, active, paused, completed, cancelled)
 - Performance metrics and KPIs (JSON)
 - Client relationship
+
+**Influencer Entity** (Phase 2.3) ✨ NEW
+- Influencer profiles and bios
+- Social media handles (JSON - Instagram, TikTok, YouTube, etc.)
+- Audience metrics per platform (followers, engagement rates)
+- Content categories and niches
+- Availability status and rates (per post/video/story)
+- Quality score and verification
+- Performance history
+
+**CampaignInfluencer** (Phase 2.3) ✨ NEW
+- Many-to-many relationship (Campaign ↔ Influencer)
+- Collaboration details (role, status, deliverables)
+- Payment tracking (agreed amount, payment status)
+- Performance metrics per collaboration
+- Timeline (invited, accepted, completed)
 
 ### Database Operations
 
@@ -168,11 +208,15 @@ npx prisma studio
 
 ## 🎯 What's Next
 
-**Phase 2.3: Influencer Entity Model** - Next up!
-- Influencer profiles and social media metrics
-- Campaign-Influencer relationships
+**Phase 2.4: Content & Deliverables Entity** - Optional next step
+- Track specific content pieces within collaborations
+- Content approval workflows
+- Performance metrics per content item
+
+**Phase 3: API & Business Logic**
+- Campaign management features
 - Influencer discovery and search
-- Performance tracking
+- Analytics and reporting
 
 See [ROADMAP.md](./ROADMAP.md) for complete development plan.
 
@@ -202,8 +246,9 @@ See [ROADMAP.md](./ROADMAP.md) for complete development plan.
 - **Phase 1**: ✅ Complete (Infrastructure)
 - **Phase 2.1**: ✅ Complete (Client Entity)
 - **Phase 2.2**: ✅ Complete (Campaign Entity)
-- **Phase 2.3**: 🎯 Ready to start (Influencer Entity)
-- **Phase 2.4**: ⏳ Pending (Content/Deliverables Entity)
+- **Phase 2.3**: ✅ Complete (Influencer Entity)
+- **Phase 2.4**: ⏳ Optional (Content/Deliverables Entity)
+- **Phase 3**: 🎯 Ready to start (API & Business Logic)
 
 ---
 
