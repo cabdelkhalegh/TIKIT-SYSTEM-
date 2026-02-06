@@ -133,25 +133,60 @@ Once all containers are running, the frontend will display:
 
 All three should show "ok" or "connected" status if everything is working correctly.
 
+### Test Authentication
+
+**Login with seeded users:**
+```bash
+# Admin user
+curl -X POST http://localhost:3001/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@tikit.com", "password": "admin123"}'
+
+# Regular user
+curl -X POST http://localhost:3001/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@tikit.com", "password": "user123"}'
+```
+
 ## 📚 API Endpoints
 
-### Health & Testing
+### 🔓 Authentication (Public)
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - Login and get JWT token
+- `POST /auth/logout` - Logout (requires auth)
+- `GET /auth/me` - Get current user profile (requires auth)
+
+### Health & Testing (Public)
 - `GET /health` - Backend health check
 - `GET /db-test` - Database connectivity test
 - `GET /prisma-test` - Prisma ORM connectivity and stats
 - `GET /api/info` - API information
 
-### Users API (Prisma)
-- `GET /api/users` - List all users
-- `GET /api/users/:id` - Get user by ID
-- `POST /api/users` - Create new user
+### 🔒 Users API (Protected)
+- `GET /api/users` - List all users (Admin only)
+- `GET /api/users/:id` - Get user by ID (Own profile or Admin)
 
-### Tickets API (Prisma)
-- `GET /api/tickets` - List all tickets
-- `GET /api/tickets/:id` - Get ticket by ID
-- `POST /api/tickets` - Create new ticket
-- `PUT /api/tickets/:id` - Update ticket
-- `DELETE /api/tickets/:id` - Delete ticket
+### 🔒 Tickets API (Protected)
+- `GET /api/tickets` - List tickets (Own tickets for users, all for admin)
+- `GET /api/tickets/:id` - Get ticket by ID (Own tickets or admin)
+- `POST /api/tickets` - Create new ticket (Authenticated)
+- `PUT /api/tickets/:id` - Update ticket (Own tickets or admin)
+- `DELETE /api/tickets/:id` - Delete ticket (Own tickets or admin)
+
+**Note:** 🔒 = Requires `Authorization: Bearer <token>` header
+
+### Authentication Example
+```bash
+# 1. Register or Login to get token
+TOKEN=$(curl -X POST http://localhost:3001/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@tikit.com", "password": "user123"}' \
+  | jq -r '.token')
+
+# 2. Use token for authenticated requests
+curl http://localhost:3001/api/tickets \
+  -H "Authorization: Bearer $TOKEN"
+```
 
 ## 🐳 Docker Configuration
 
@@ -162,11 +197,13 @@ All three should show "ok" or "connected" status if everything is working correc
    - User: admin
    - Password: admin123
 
-2. **Backend (Node.js + Prisma ORM)**
+2. **Backend (Node.js + Prisma ORM + JWT Auth)**
    - Port: 3001
    - Framework: Express
    - ORM: Prisma
+   - Authentication: JWT with bcrypt
    - Database Models: User, Ticket
+   - Features: Role-based access control (RBAC)
 
 3. **Frontend (React + Nginx)**
    - Port: 3000
