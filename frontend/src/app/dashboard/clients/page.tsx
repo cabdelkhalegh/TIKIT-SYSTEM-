@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Building2, TrendingUp, Calendar } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Search, Building2 } from 'lucide-react';
 import Link from 'next/link';
 import { clientService } from '@/services/client.service';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -14,7 +14,6 @@ import type { Client } from '@/types/client.types';
 export default function ClientsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['clients', { page, search }],

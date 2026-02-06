@@ -12,10 +12,6 @@ import InfluencerCard from '@/components/influencers/InfluencerCard';
 import type { Platform, InfluencerStatus, ContentCategory } from '@/types/influencer.types';
 
 const platforms: Platform[] = ['instagram', 'tiktok', 'youtube', 'twitter', 'facebook', 'linkedin'];
-const categories: ContentCategory[] = [
-  'lifestyle', 'beauty', 'fitness', 'tech', 'fashion', 'food',
-  'travel', 'gaming', 'business', 'education'
-];
 
 export default function InfluencersPage() {
   const [search, setSearch] = useState('');

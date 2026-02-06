@@ -85,7 +85,10 @@ export default function EditCampaignPage() {
     if (typeof field === 'string') {
       try {
         return JSON.parse(field);
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Failed to parse JSON field:', field, error);
+        }
         return fallback;
       }
     }

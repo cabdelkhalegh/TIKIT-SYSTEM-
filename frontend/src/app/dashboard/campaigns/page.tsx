@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, TrendingUp, DollarSign, Calendar, Users } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Search, TrendingUp, Users } from 'lucide-react';
 import Link from 'next/link';
 import { campaignService } from '@/services/campaign.service';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import CampaignStatusBadge from '@/components/campaigns/CampaignStatusBadge';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { Campaign, CampaignStatus } from '@/types/campaign.types';
-import { toast } from 'sonner';
 
 const STATUS_FILTERS: Array<{ value: string; label: string }> = [
   { value: 'all', label: 'All' },
@@ -26,7 +25,6 @@ export default function CampaignsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
-  const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['campaigns', { page, status: statusFilter }],

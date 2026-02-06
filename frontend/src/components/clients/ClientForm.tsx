@@ -30,7 +30,7 @@ const clientFormSchema = z.object({
   companyLegalName: z.string().min(1, 'Company legal name is required'),
   brandName: z.string().min(1, 'Brand name is required'),
   industry: z.string().optional(),
-  websiteUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  websiteUrl: z.string().url('Invalid URL').optional(),
   primaryContacts: z.array(contactSchema).min(1, 'At least one primary contact is required'),
   billingContacts: z.array(contactSchema).optional(),
   communicationPreferences: z.array(communicationPreferenceSchema).optional(),

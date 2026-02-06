@@ -1,4 +1,4 @@
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import type { Influencer } from '@/types/influencer.types';
 import { formatNumber } from '@/lib/utils';

@@ -6,7 +6,6 @@ import { ArrowLeft, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 import { influencerService } from '@/services/influencer.service';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import QualityScoreIndicator from '@/components/influencers/QualityScoreIndicator';

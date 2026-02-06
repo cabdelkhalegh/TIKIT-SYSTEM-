@@ -12,6 +12,13 @@ import { Card } from '@/components/ui/card';
 import InfluencerCard from '@/components/influencers/InfluencerCard';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
+// SVG Circle Progress Constants
+// Circle radius = 32px, circumference = 2πr ≈ 201px
+const CIRCLE_RADIUS = 32;
+const CIRCLE_CENTER = 40; // SVG viewbox center
+const CIRCLE_CIRCUMFERENCE = 201; // 2 * Math.PI * CIRCLE_RADIUS ≈ 201
+const CIRCLE_STROKE_WIDTH = 6;
+
 export default function CampaignMatchPage() {
   const params = useParams();
   const campaignId = params.campaignId as string;
@@ -162,26 +169,29 @@ export default function CampaignMatchPage() {
                           <div className="flex-shrink-0 text-center">
                             <div className="relative inline-flex items-center justify-center">
                               <svg className="w-20 h-20">
+                                {/* Background circle */}
                                 <circle
                                   className="text-gray-200"
-                                  strokeWidth="6"
+                                  strokeWidth={CIRCLE_STROKE_WIDTH}
                                   stroke="currentColor"
                                   fill="transparent"
-                                  r="32"
-                                  cx="40"
-                                  cy="40"
+                                  r={CIRCLE_RADIUS}
+                                  cx={CIRCLE_CENTER}
+                                  cy={CIRCLE_CENTER}
                                 />
+                                {/* Progress circle - strokeDasharray creates the progress effect */}
+                                {/* First value: progress length, Second value: total circumference */}
                                 <circle
                                   className="text-purple-600"
-                                  strokeWidth="6"
-                                  strokeDasharray={`${match.matchScore * 2.01} 201`}
+                                  strokeWidth={CIRCLE_STROKE_WIDTH}
+                                  strokeDasharray={`${match.matchScore * 2.01} ${CIRCLE_CIRCUMFERENCE}`}
                                   strokeLinecap="round"
                                   stroke="currentColor"
                                   fill="transparent"
-                                  r="32"
-                                  cx="40"
-                                  cy="40"
-                                  transform="rotate(-90 40 40)"
+                                  r={CIRCLE_RADIUS}
+                                  cx={CIRCLE_CENTER}
+                                  cy={CIRCLE_CENTER}
+                                  transform={`rotate(-90 ${CIRCLE_CENTER} ${CIRCLE_CENTER})`}
                                 />
                               </svg>
                               <span className="absolute text-xl font-bold text-purple-600">

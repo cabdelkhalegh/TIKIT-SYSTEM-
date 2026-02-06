@@ -5,6 +5,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
   ChevronRight,
   ChevronLeft,
@@ -162,8 +163,13 @@ export default function CampaignForm({
   const handleFormSubmit = async (data: CampaignFormData) => {
     try {
       await onSubmit(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Form submission error:', error);
+      const message =
+        error?.message ||
+        error?.response?.data?.message ||
+        'Failed to submit campaign. Please try again.';
+      toast.error(message);
     }
   };
 

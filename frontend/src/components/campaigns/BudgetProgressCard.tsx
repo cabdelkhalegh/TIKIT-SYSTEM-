@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card';
-import { DollarSign, TrendingUp, AlertCircle } from 'lucide-react';
+import { DollarSign, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 interface BudgetProgressCardProps {
