@@ -234,6 +234,18 @@ export default function CampaignDetailPage() {
   const allocatedBudget = campaign.allocatedBudget || 0;
   const duration = calculateDuration(campaign.startDate, campaign.endDate);
 
+  // Generate consistent mock metrics based on campaign ID
+  const getMockMetric = (seed: number, max: number) => {
+    const hash = campaign.campaignId.split('').reduce((acc, char) => {
+      return acc + char.charCodeAt(0);
+    }, seed);
+    return Math.floor((hash % max) + max * 0.5);
+  };
+
+  const mockReach = getMockMetric(1, 100000);
+  const mockEngagement = getMockMetric(2, 50000);
+  const mockImpressions = getMockMetric(3, 200000);
+
   // Mock data for charts (in real app, this would come from API)
   const performanceData = [
     { date: 'Week 1', value: 1200, label: 'Engagement' },
@@ -441,7 +453,7 @@ export default function CampaignDetailPage() {
                     <Eye className="h-8 w-8 text-blue-600" />
                   </div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {formatNumber(Math.floor(Math.random() * 100000))}
+                    {formatNumber(mockReach)}
                   </p>
                   <p className="text-sm text-gray-600">Total Reach</p>
                 </CardContent>
@@ -452,7 +464,7 @@ export default function CampaignDetailPage() {
                     <Heart className="h-8 w-8 text-pink-600" />
                   </div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {formatNumber(Math.floor(Math.random() * 50000))}
+                    {formatNumber(mockEngagement)}
                   </p>
                   <p className="text-sm text-gray-600">Total Engagement</p>
                 </CardContent>
@@ -463,7 +475,7 @@ export default function CampaignDetailPage() {
                     <TrendingUp className="h-8 w-8 text-green-600" />
                   </div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {formatNumber(Math.floor(Math.random() * 200000))}
+                    {formatNumber(mockImpressions)}
                   </p>
                   <p className="text-sm text-gray-600">Impressions</p>
                 </CardContent>
