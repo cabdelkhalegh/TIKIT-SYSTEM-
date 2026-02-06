@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -48,6 +49,7 @@ const deliverableStatusConfig = {
 };
 
 export default function CollaborationsPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -178,6 +180,7 @@ export default function CollaborationsPage() {
                   <Card
                     key={collab.collaborationId}
                     className="hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => router.push(`/dashboard/collaborations/${collab.collaborationId}`)}
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between">
