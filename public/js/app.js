@@ -287,31 +287,46 @@ function displayInfluencers(influencers) {
         
         if (influencer.followers > 0) {
             const followersDetail = document.createElement('div');
-            followersDetail.innerHTML = `<strong>Followers:</strong> ${influencer.followers.toLocaleString()}`;
+            const followersLabel = document.createElement('strong');
+            followersLabel.textContent = 'Followers:';
+            followersDetail.appendChild(followersLabel);
+            followersDetail.append(' ' + influencer.followers.toLocaleString());
             details.appendChild(followersDetail);
         }
         
         if (influencer.engagementRate > 0) {
             const engagementDetail = document.createElement('div');
-            engagementDetail.innerHTML = `<strong>Engagement:</strong> ${influencer.engagementRate}%`;
+            const engagementLabel = document.createElement('strong');
+            engagementLabel.textContent = 'Engagement:';
+            engagementDetail.appendChild(engagementLabel);
+            engagementDetail.append(' ' + influencer.engagementRate + '%');
             details.appendChild(engagementDetail);
         }
         
         if (influencer.category) {
             const categoryDetail = document.createElement('div');
-            categoryDetail.innerHTML = `<strong>Category:</strong> ${influencer.category}`;
+            const categoryLabel = document.createElement('strong');
+            categoryLabel.textContent = 'Category:';
+            categoryDetail.appendChild(categoryLabel);
+            categoryDetail.append(' ' + influencer.category);
             details.appendChild(categoryDetail);
         }
         
         if (influencer.email) {
             const emailDetail = document.createElement('div');
-            emailDetail.innerHTML = `<strong>Email:</strong> ${influencer.email}`;
+            const emailLabel = document.createElement('strong');
+            emailLabel.textContent = 'Email:';
+            emailDetail.appendChild(emailLabel);
+            emailDetail.append(' ' + influencer.email);
             details.appendChild(emailDetail);
         }
         
         if (influencer.phone) {
             const phoneDetail = document.createElement('div');
-            phoneDetail.innerHTML = `<strong>Phone:</strong> ${influencer.phone}`;
+            const phoneLabel = document.createElement('strong');
+            phoneLabel.textContent = 'Phone:';
+            phoneDetail.appendChild(phoneLabel);
+            phoneDetail.append(' ' + influencer.phone);
             details.appendChild(phoneDetail);
         }
         
