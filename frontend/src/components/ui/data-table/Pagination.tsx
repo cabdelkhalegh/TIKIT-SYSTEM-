@@ -1,0 +1,105 @@
+'use client';
+
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  totalItems: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+  pageSizeOptions?: number[];
+  isLoading?: boolean;
+}
+
+export function Pagination({
+  currentPage,
+  totalPages,
+  pageSize,
+  totalItems,
+  onPageChange,
+  onPageSizeChange,
+  pageSizeOptions = [10, 25, 50, 100],
+  isLoading = false,
+}: PaginationProps) {
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-2">
+      <div className="flex items-center gap-4">
+        <div className="text-sm text-gray-600">
+          Showing {startItem}-{endItem} of {totalItems}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">Items per page:</span>
+          <Select
+            value={pageSize.toString()}
+            onValueChange={(value) => onPageSizeChange(Number(value))}
+            disabled={isLoading}
+          >
+            <SelectTrigger className="w-[70px] h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {pageSizeOptions.map((size) => (
+                <SelectItem key={size} value={size.toString()}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(1)}
+          disabled={currentPage === 1 || isLoading}
+          className="h-8 w-8 p-0"
+          aria-label="First page"
+        >
+          <ChevronsLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1 || isLoading}
+          className="h-8 w-8 p-0"
+          aria-label="Previous page"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <div className="text-sm text-gray-600 min-w-[100px] text-center">
+          Page {currentPage} of {totalPages || 1}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages || isLoading}
+          className="h-8 w-8 p-0"
+          aria-label="Next page"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(totalPages)}
+          disabled={currentPage >= totalPages || isLoading}
+          className="h-8 w-8 p-0"
+          aria-label="Last page"
+        >
+          <ChevronsRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
