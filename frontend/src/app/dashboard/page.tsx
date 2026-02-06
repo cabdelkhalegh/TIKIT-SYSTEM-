@@ -19,7 +19,7 @@ export default function DashboardPage() {
       <div className="p-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-          <p className="mt-2 text-gray-600">Welcome back! Here's what's happening with your campaigns.</p>
+          <p className="mt-2 text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your campaigns.</p>
         </div>
 
         {/* Stats Grid */}
