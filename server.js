@@ -6,8 +6,29 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS configuration
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(origin => origin.length > 0);
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (e.g., mobile apps, curl) or in non-production environments
+    if (!origin || process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  }
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -15,16 +36,17 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // In-memory storage for campaigns
+let campaignIdCounter = 1;
 let campaigns = [
   {
-    id: 1,
+    id: campaignIdCounter++,
     campaignName: 'Summer Product Launch',
     description: 'Launch campaign for new summer collection',
     influencerName: 'Jane Doe',
     influencerPlatform: 'Instagram',
     budget: 5000,
     paymentStatus: 'pending',
-    deliveryDate: '2026-03-15',
+    deliveryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
     status: 'active',
     priority: 'high',
     deliverables: '3 posts, 5 stories',
@@ -33,9 +55,10 @@ let campaigns = [
 ];
 
 // In-memory storage for influencers
+let influencerIdCounter = 1;
 let influencers = [
   {
-    id: 1,
+    id: influencerIdCounter++,
     name: 'Jane Doe',
     platform: 'Instagram',
     followers: 150000,
@@ -60,17 +83,39 @@ app.post('/api/campaigns', (req, res) => {
     return res.status(400).json({ success: false, message: 'Campaign name and description are required' });
   }
 
+  // Validate budget
+  let parsedBudget = 0;
+  if (budget !== undefined && budget !== null && budget !== '') {
+    parsedBudget = Number(budget);
+    if (!Number.isFinite(parsedBudget) || parsedBudget < 0 || parsedBudget > 1000000000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Budget must be a non-negative number and less than or equal to 1,000,000,000'
+      });
+    }
+  }
+
+  // Validate priority
+  const validPriorities = ['low', 'medium', 'high'];
+  const campaignPriority = priority || 'medium';
+  if (!validPriorities.includes(campaignPriority)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Priority must be one of: low, medium, high'
+    });
+  }
+
   const newCampaign = {
-    id: campaigns.length > 0 ? Math.max(...campaigns.map(c => c.id)) + 1 : 1,
+    id: campaignIdCounter++,
     campaignName,
     description,
     influencerName: influencerName || '',
     influencerPlatform: influencerPlatform || '',
-    budget: budget || 0,
+    budget: parsedBudget,
     paymentStatus: 'pending',
     deliveryDate: deliveryDate || '',
     status: 'active',
-    priority: priority || 'medium',
+    priority: campaignPriority,
     deliverables: deliverables || '',
     createdAt: new Date().toISOString()
   };
@@ -89,15 +134,62 @@ app.put('/api/campaigns/:id', (req, res) => {
 
   const { campaignName, description, influencerName, influencerPlatform, budget, paymentStatus, deliveryDate, status, priority, deliverables } = req.body;
   const allowedUpdates = {};
+  
   if (campaignName !== undefined) allowedUpdates.campaignName = campaignName;
   if (description !== undefined) allowedUpdates.description = description;
   if (influencerName !== undefined) allowedUpdates.influencerName = influencerName;
   if (influencerPlatform !== undefined) allowedUpdates.influencerPlatform = influencerPlatform;
-  if (budget !== undefined) allowedUpdates.budget = budget;
-  if (paymentStatus !== undefined) allowedUpdates.paymentStatus = paymentStatus;
+  
+  // Validate budget
+  if (budget !== undefined) {
+    const parsedBudget = Number(budget);
+    if (!Number.isFinite(parsedBudget) || parsedBudget < 0 || parsedBudget > 1000000000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Budget must be a non-negative number and less than or equal to 1,000,000,000'
+      });
+    }
+    allowedUpdates.budget = parsedBudget;
+  }
+  
+  // Validate paymentStatus
+  if (paymentStatus !== undefined) {
+    const validPaymentStatuses = ['pending', 'paid', 'partial'];
+    if (!validPaymentStatuses.includes(paymentStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Payment status must be one of: pending, paid, partial'
+      });
+    }
+    allowedUpdates.paymentStatus = paymentStatus;
+  }
+  
   if (deliveryDate !== undefined) allowedUpdates.deliveryDate = deliveryDate;
-  if (status !== undefined) allowedUpdates.status = status;
-  if (priority !== undefined) allowedUpdates.priority = priority;
+  
+  // Validate status
+  if (status !== undefined) {
+    const validStatuses = ['active', 'completed', 'cancelled', 'draft'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status must be one of: active, completed, cancelled, draft'
+      });
+    }
+    allowedUpdates.status = status;
+  }
+  
+  // Validate priority
+  if (priority !== undefined) {
+    const validPriorities = ['low', 'medium', 'high'];
+    if (!validPriorities.includes(priority)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Priority must be one of: low, medium, high'
+      });
+    }
+    allowedUpdates.priority = priority;
+  }
+  
   if (deliverables !== undefined) allowedUpdates.deliverables = deliverables;
   
   campaigns[campaignIndex] = { ...campaigns[campaignIndex], ...allowedUpdates };
@@ -128,12 +220,36 @@ app.post('/api/influencers', (req, res) => {
     return res.status(400).json({ success: false, message: 'Name and platform are required' });
   }
 
+  // Validate followers
+  let parsedFollowers = 0;
+  if (followers !== undefined && followers !== null && followers !== '') {
+    parsedFollowers = Number(followers);
+    if (!Number.isFinite(parsedFollowers) || parsedFollowers < 0 || parsedFollowers > 1000000000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Followers must be a non-negative number and less than or equal to 1,000,000,000'
+      });
+    }
+  }
+
+  // Validate engagement rate
+  let parsedEngagementRate = 0;
+  if (engagementRate !== undefined && engagementRate !== null && engagementRate !== '') {
+    parsedEngagementRate = Number(engagementRate);
+    if (!Number.isFinite(parsedEngagementRate) || parsedEngagementRate < 0 || parsedEngagementRate > 100) {
+      return res.status(400).json({
+        success: false,
+        message: 'Engagement rate must be between 0 and 100'
+      });
+    }
+  }
+
   const newInfluencer = {
-    id: influencers.length > 0 ? Math.max(...influencers.map(i => i.id)) + 1 : 1,
+    id: influencerIdCounter++,
     name,
     platform,
-    followers: followers || 0,
-    engagementRate: engagementRate || 0,
+    followers: parsedFollowers,
+    engagementRate: parsedEngagementRate,
     category: category || '',
     email: email || '',
     phone: phone || '',
@@ -155,14 +271,49 @@ app.put('/api/influencers/:id', (req, res) => {
 
   const { name, platform, followers, engagementRate, category, email, phone, status } = req.body;
   const allowedUpdates = {};
+  
   if (name !== undefined) allowedUpdates.name = name;
   if (platform !== undefined) allowedUpdates.platform = platform;
-  if (followers !== undefined) allowedUpdates.followers = followers;
-  if (engagementRate !== undefined) allowedUpdates.engagementRate = engagementRate;
+  
+  // Validate followers
+  if (followers !== undefined) {
+    const parsedFollowers = Number(followers);
+    if (!Number.isFinite(parsedFollowers) || parsedFollowers < 0 || parsedFollowers > 1000000000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Followers must be a non-negative number and less than or equal to 1,000,000,000'
+      });
+    }
+    allowedUpdates.followers = parsedFollowers;
+  }
+  
+  // Validate engagement rate
+  if (engagementRate !== undefined) {
+    const parsedEngagementRate = Number(engagementRate);
+    if (!Number.isFinite(parsedEngagementRate) || parsedEngagementRate < 0 || parsedEngagementRate > 100) {
+      return res.status(400).json({
+        success: false,
+        message: 'Engagement rate must be between 0 and 100'
+      });
+    }
+    allowedUpdates.engagementRate = parsedEngagementRate;
+  }
+  
   if (category !== undefined) allowedUpdates.category = category;
   if (email !== undefined) allowedUpdates.email = email;
   if (phone !== undefined) allowedUpdates.phone = phone;
-  if (status !== undefined) allowedUpdates.status = status;
+  
+  // Validate status
+  if (status !== undefined) {
+    const validStatuses = ['active', 'inactive'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status must be one of: active, inactive'
+      });
+    }
+    allowedUpdates.status = status;
+  }
   
   influencers[influencerIndex] = { ...influencers[influencerIndex], ...allowedUpdates };
   res.json({ success: true, influencer: influencers[influencerIndex] });

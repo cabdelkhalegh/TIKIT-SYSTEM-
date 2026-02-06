@@ -108,7 +108,10 @@ function displayCampaigns(campaigns) {
         
         if (campaign.budget > 0) {
             const budgetDetail = document.createElement('div');
-            budgetDetail.innerHTML = `<strong>Budget:</strong> $${campaign.budget.toLocaleString()}`;
+            const budgetLabel = document.createElement('strong');
+            budgetLabel.textContent = 'Budget:';
+            budgetDetail.appendChild(budgetLabel);
+            budgetDetail.appendChild(document.createTextNode(` $${campaign.budget.toLocaleString()}`));
             details.appendChild(budgetDetail);
         }
         
@@ -124,7 +127,10 @@ function displayCampaigns(campaigns) {
         
         if (campaign.deliverables) {
             const deliverablesDetail = document.createElement('div');
-            deliverablesDetail.innerHTML = `<strong>Deliverables:</strong> ${campaign.deliverables}`;
+            const deliverablesLabel = document.createElement('strong');
+            deliverablesLabel.textContent = 'Deliverables:';
+            deliverablesDetail.appendChild(deliverablesLabel);
+            deliverablesDetail.appendChild(document.createTextNode(` ${campaign.deliverables}`));
             details.appendChild(deliverablesDetail);
         }
         
@@ -427,18 +433,37 @@ async function deleteInfluencer(id) {
 
 // Utility Functions
 function showAlert(message, type) {
-    let alert = document.querySelector('.alert');
+    const main = document.querySelector('main');
+
+    // Ensure there is a dedicated container for alerts
+    let alertContainer = main ? main.querySelector('.alert-container') : null;
+    if (!alertContainer) {
+        alertContainer = document.createElement('div');
+        alertContainer.className = 'alert-container';
+
+        if (main) {
+            // Insert the container once in a predictable location within <main>
+            main.insertBefore(alertContainer, main.firstChild);
+        } else {
+            // Fallback: attach to body if <main> is not present
+            document.body.insertBefore(alertContainer, document.body.firstChild);
+        }
+    }
+
+    // Reuse existing alert element within the container, or create a new one
+    let alert = alertContainer.querySelector('.alert');
     if (!alert) {
         alert = document.createElement('div');
-        alert.className = 'alert';
-        document.querySelector('main').insertBefore(alert, document.querySelector('main').firstChild);
+        alertContainer.appendChild(alert);
     }
-    
+
     alert.className = `alert alert-${type}`;
     alert.textContent = message;
     alert.style.display = 'block';
     
     setTimeout(() => {
-        alert.style.display = 'none';
+        if (alert && alert.style) {
+            alert.style.display = 'none';
+        }
     }, 3000);
 }
