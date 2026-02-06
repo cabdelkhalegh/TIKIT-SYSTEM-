@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import EngagementTrendChart from '@/components/charts/EngagementTrendChart';
 import { formatCurrency, formatDate, formatNumber, formatRelativeTime } from '@/lib/utils';
+import { InfluencerFormModal } from '@/components/influencers';
 import {
   ArrowLeft,
   Mail,
@@ -356,10 +357,12 @@ export default function InfluencerDetailPage() {
               )}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
+              <InfluencerFormModal influencerId={influencerId}>
+                <Button variant="outline" size="sm">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              </InfluencerFormModal>
               <Button variant="outline" size="sm" onClick={handleContact}>
                 <MessageCircle className="h-4 w-4 mr-2" />
                 Contact

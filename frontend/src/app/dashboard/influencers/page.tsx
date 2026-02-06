@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Search, Users, Instagram, Youtube, TrendingUp, MapPin, Filter } from 'lucide-react';
 import { formatNumber } from '@/lib/utils';
+import { CreateInfluencerButton } from '@/components/influencers';
 
 interface Influencer {
   influencerId: string;
@@ -74,10 +75,7 @@ export default function InfluencersPage() {
                 Browse and connect with influencers for your campaigns
               </p>
             </div>
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              <Users className="h-4 w-4 mr-2" />
-              Add Influencer
-            </Button>
+            <CreateInfluencerButton />
           </div>
         </div>
 
@@ -245,10 +243,7 @@ export default function InfluencersPage() {
                         ? 'Try adjusting your filters'
                         : 'Get started by adding influencers to your network'}
                     </p>
-                    <Button className="bg-purple-600 hover:bg-purple-700">
-                      <Users className="h-4 w-4 mr-2" />
-                      Add Influencer
-                    </Button>
+                    <CreateInfluencerButton />
                   </CardContent>
                 </Card>
               </div>

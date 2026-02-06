@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Search, Handshake, CheckCircle2, Clock, AlertCircle, User, Target } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { CreateCollaborationButton } from '@/components/collaborations';
 
 interface Collaboration {
   collaborationId: string;
@@ -88,10 +89,7 @@ export default function CollaborationsPage() {
                 Manage influencer collaborations and track deliverables
               </p>
             </div>
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              <Handshake className="h-4 w-4 mr-2" />
-              New Collaboration
-            </Button>
+            <CreateCollaborationButton />
           </div>
         </div>
 
@@ -304,10 +302,7 @@ export default function CollaborationsPage() {
                       ? 'Try adjusting your filters'
                       : 'Start collaborating with influencers on your campaigns'}
                   </p>
-                  <Button className="bg-purple-600 hover:bg-purple-700">
-                    <Handshake className="h-4 w-4 mr-2" />
-                    New Collaboration
-                  </Button>
+                  <CreateCollaborationButton />
                 </CardContent>
               </Card>
             )}
