@@ -57,10 +57,11 @@ export default function RegisterPage() {
       const { confirmPassword, ...registerData } = data;
       const response = await authService.register(registerData);
       login(response.token, response.user);
-      router.push('/dashboard');
+      
+      // Use window.location for hard redirect to ensure cookie is set before middleware checks
+      window.location.href = '/dashboard';
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };

@@ -42,10 +42,11 @@ export default function LoginPage() {
     try {
       const response = await authService.login(data);
       login(response.token, response.user);
-      router.push('/dashboard');
+      
+      // Use window.location for hard redirect to ensure cookie is set before middleware checks
+      window.location.href = '/dashboard';
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };
