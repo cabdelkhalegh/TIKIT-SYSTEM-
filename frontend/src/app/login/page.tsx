@@ -42,10 +42,11 @@ export default function LoginPage() {
     try {
       const response = await authService.login(data);
       login(response.token, response.user);
-      router.push('/dashboard');
+      
+      // Use window.location for hard redirect to ensure cookie is set before middleware checks
+      window.location.href = '/dashboard';
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -98,7 +99,7 @@ export default function LoginPage() {
             </Button>
 
             <p className="text-center text-sm text-gray-600">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/register" className="text-indigo-600 hover:text-indigo-500 font-medium">
                 Sign up
               </Link>

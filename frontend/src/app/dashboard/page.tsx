@@ -6,20 +6,54 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import { Target, Handshake, Users, DollarSign } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/utils';
+import { 
+  CampaignPerformanceChart, 
+  BudgetUtilizationChart, 
+  EngagementTrendChart 
+} from '@/components/charts';
+import { toast } from 'sonner';
+import { useEffect } from 'react';
 
 export default function DashboardPage() {
-  const { data: summary, isLoading } = useQuery({
+  const { data: summary, isLoading, error } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: () => analyticsService.getDashboardSummary(),
     staleTime: 60000, // 1 minute
+    retry: 2,
   });
+
+  useEffect(() => {
+    if (error) {
+      console.error('Failed to load dashboard analytics:', error);
+      toast.error('Failed to load dashboard data. Using fallback data.');
+    }
+  }, [error]);
+
+  // Sample data for charts - replace with actual API data when available
+  const campaignPerformanceData = [
+    { date: 'Jan', value: 4000, label: 'Reach' },
+    { date: 'Feb', value: 5200, label: 'Reach' },
+    { date: 'Mar', value: 4800, label: 'Reach' },
+    { date: 'Apr', value: 6200, label: 'Reach' },
+    { date: 'May', value: 7500, label: 'Reach' },
+    { date: 'Jun', value: 8900, label: 'Reach' },
+  ];
+
+  const engagementData = [
+    { date: 'Week 1', engagement: 2400 },
+    { date: 'Week 2', engagement: 3200 },
+    { date: 'Week 3', engagement: 2800 },
+    { date: 'Week 4', engagement: 4100 },
+    { date: 'Week 5', engagement: 3900 },
+    { date: 'Week 6', engagement: 5200 },
+  ];
 
   return (
     <DashboardLayout>
       <div className="p-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-          <p className="mt-2 text-gray-600">Welcome back! Here's what's happening with your campaigns.</p>
+          <p className="mt-2 text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your campaigns.</p>
         </div>
 
         {/* Stats Grid */}
@@ -51,7 +85,7 @@ export default function DashboardPage() {
           <StatCard
             title="Budget Utilized"
             value={isLoading ? '...' : formatCurrency(summary?.budgetOverview.spentBudget || 0)}
-            change={`${summary?.budgetOverview.utilizationPercentage || 0}% of total`}
+            change={`${(summary?.budgetOverview.utilizationPercentage || 0).toFixed(1)}% of total`}
             trend="neutral"
             icon={DollarSign}
             color="orange"
@@ -59,7 +93,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Campaign Status</h2>
             {isLoading ? (
@@ -123,6 +157,47 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Campaign Performance</h2>
+            {isLoading ? (
+              <div className="h-[300px] bg-gray-100 rounded animate-pulse" />
+            ) : (
+              <CampaignPerformanceChart 
+                data={campaignPerformanceData}
+                title=""
+              />
+            )}
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Budget Allocation</h2>
+            {isLoading ? (
+              <div className="h-[300px] bg-gray-100 rounded animate-pulse" />
+            ) : (
+              <BudgetUtilizationChart
+                allocated={summary?.budgetOverview.totalBudget || 0}
+                spent={summary?.budgetOverview.spentBudget || 0}
+                title=""
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Engagement Chart - Full Width */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Engagement Trends</h2>
+          {isLoading ? (
+            <div className="h-[300px] bg-gray-100 rounded animate-pulse" />
+          ) : (
+            <EngagementTrendChart 
+              data={engagementData}
+              title=""
+            />
+          )}
         </div>
       </div>
     </DashboardLayout>

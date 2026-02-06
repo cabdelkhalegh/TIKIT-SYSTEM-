@@ -1,7 +1,22 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { AuthStore, User } from '@/types/auth.types';
 import { apiClient } from '@/lib/api-client';
+import Cookies from 'js-cookie';
+
+// Custom cookie storage for zustand
+const cookieStorage = {
+  getItem: (name: string) => {
+    return Cookies.get(name) ?? null;
+  },
+  setItem: (name: string, value: string) => {
+    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    Cookies.set(name, value, { expires: 7, secure: isHttps, sameSite: 'lax' }); // 7 days
+  },
+  removeItem: (name: string) => {
+    Cookies.remove(name);
+  },
+};
 
 export const useAuthStore = create<AuthStore>()(
   persist(
@@ -46,6 +61,7 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'tikit-auth-storage',
+      storage: createJSONStorage(() => cookieStorage),
     }
   )
 );
