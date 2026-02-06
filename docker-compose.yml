@@ -6,13 +6,13 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: tikitdb
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: ${POSTGRES_DB:-tikitdb}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin123}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d tikitdb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-tikitdb}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,11 +25,11 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://admin:admin123@db:5432/tikitdb
-      PORT: 3001
-      NODE_ENV: development
+      DATABASE_URL: ${DATABASE_URL:-postgres://admin:admin123@db:5432/tikitdb}
+      PORT: ${PORT:-3001}
+      NODE_ENV: ${NODE_ENV:-development}
     ports:
-      - "3001:3001"
+      - "${PORT:-3001}:3001"
     volumes:
       - ./backend:/app
       - /app/node_modules
@@ -47,8 +47,8 @@ services:
       backend:
         condition: service_healthy
     environment:
-      REACT_APP_API_URL: http://localhost:3001
-      REACT_APP_ENV: development
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:3001}
+      REACT_APP_ENV: ${REACT_APP_ENV:-development}
     ports:
       - "3000:3000"
 

@@ -45,4 +45,6 @@ app.get('/api/info', (req, res) => {
 
 app.listen(port, '0.0.0.0', () => {
   console.log(`TIKIT Backend running on port ${port}`);
+  // Note: Binding to 0.0.0.0 is required for Docker containers to accept
+  // connections from outside the container. This is standard Docker practice.
 });

@@ -13,19 +13,30 @@ function App() {
     fetch(`${apiUrl}/health`)
       .then(res => res.json())
       .then(data => setBackendStatus(data))
-      .catch(err => setBackendStatus({ status: 'error', message: err.message }));
+      .catch(err => setBackendStatus({ 
+        status: 'error', 
+        message: err.message,
+        hint: 'Is the backend service running on port 3001?' 
+      }));
 
     // Test database connectivity
     fetch(`${apiUrl}/db-test`)
       .then(res => res.json())
       .then(data => setDbStatus(data))
-      .catch(err => setDbStatus({ status: 'error', message: err.message }));
+      .catch(err => setDbStatus({ 
+        status: 'error', 
+        message: err.message,
+        hint: 'Check if database is accessible and backend is connected' 
+      }));
 
     // Get API info
     fetch(`${apiUrl}/api/info`)
       .then(res => res.json())
       .then(data => setApiInfo(data))
-      .catch(err => setApiInfo({ error: err.message }));
+      .catch(err => setApiInfo({ 
+        error: err.message,
+        hint: 'Verify backend API is accessible' 
+      }));
   }, [apiUrl]);
 
   return (

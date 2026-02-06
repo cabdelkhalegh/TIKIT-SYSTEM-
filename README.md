@@ -16,9 +16,17 @@ This is the repository for the TIKIT APP - A modern ticket management system.
    cd TIKIT-SYSTEM-
    ```
 
-2. **Start all services**
+2. **Configure environment variables (optional)**
    ```bash
-   docker-compose up --build
+   cp .env.example .env
+   # Edit .env to customize settings (database password, ports, etc.)
+   ```
+   
+   **Note**: The system will work with default values if you skip this step.
+
+3. **Start all services**
+   ```bash
+   docker compose up --build
    ```
 
    This command will:
@@ -26,7 +34,7 @@ This is the repository for the TIKIT APP - A modern ticket management system.
    - Build and start the backend API server
    - Build and start the frontend application
 
-3. **Access the application**
+4. **Access the application**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:3001
    - Database: localhost:5432
