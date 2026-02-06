@@ -174,16 +174,199 @@ app.post('/api/v1/campaigns', async (req, res) => {
   }
 });
 
+// API v1 routes - Influencers
+app.get('/api/v1/influencers', async (req, res) => {
+  try {
+    const { platform, status, verified } = req.query;
+    
+    const where = {};
+    if (platform) where.primaryPlatform = platform;
+    if (status) where.availabilityStatus = status;
+    if (verified !== undefined) where.isVerified = verified === 'true';
+    
+    const influencers = await prisma.influencer.findMany({
+      where,
+      include: {
+        campaignInfluencers: {
+          include: {
+            campaign: {
+              select: {
+                campaignId: true,
+                campaignName: true,
+                status: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        qualityScore: 'desc'
+      }
+    });
+    
+    res.json({
+      success: true,
+      data: influencers,
+      count: influencers.length
+    });
+  } catch (error) {
+    console.error('Error fetching influencers:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch influencers'
+    });
+  }
+});
+
+app.get('/api/v1/influencers/:id', async (req, res) => {
+  try {
+    const influencer = await prisma.influencer.findUnique({
+      where: { influencerId: req.params.id },
+      include: {
+        campaignInfluencers: {
+          include: {
+            campaign: {
+              include: {
+                client: {
+                  select: {
+                    clientId: true,
+                    brandDisplayName: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    if (!influencer) {
+      return res.status(404).json({
+        success: false,
+        error: 'Influencer not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: influencer
+    });
+  } catch (error) {
+    console.error('Error fetching influencer:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch influencer'
+    });
+  }
+});
+
+app.post('/api/v1/influencers', async (req, res) => {
+  try {
+    const influencer = await prisma.influencer.create({
+      data: req.body
+    });
+    
+    res.status(201).json({
+      success: true,
+      data: influencer
+    });
+  } catch (error) {
+    console.error('Error creating influencer:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create influencer'
+    });
+  }
+});
+
+// API v1 routes - Campaign-Influencer Collaborations
+app.get('/api/v1/collaborations', async (req, res) => {
+  try {
+    const { campaignId, influencerId, status } = req.query;
+    
+    const where = {};
+    if (campaignId) where.campaignId = campaignId;
+    if (influencerId) where.influencerId = influencerId;
+    if (status) where.collaborationStatus = status;
+    
+    const collaborations = await prisma.campaignInfluencer.findMany({
+      where,
+      include: {
+        campaign: {
+          select: {
+            campaignId: true,
+            campaignName: true,
+            status: true,
+            client: {
+              select: {
+                brandDisplayName: true
+              }
+            }
+          }
+        },
+        influencer: {
+          select: {
+            influencerId: true,
+            displayName: true,
+            fullName: true,
+            primaryPlatform: true
+          }
+        }
+      },
+      orderBy: {
+        invitedAt: 'desc'
+      }
+    });
+    
+    res.json({
+      success: true,
+      data: collaborations,
+      count: collaborations.length
+    });
+  } catch (error) {
+    console.error('Error fetching collaborations:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch collaborations'
+    });
+  }
+});
+
+app.post('/api/v1/collaborations', async (req, res) => {
+  try {
+    const collaboration = await prisma.campaignInfluencer.create({
+      data: req.body,
+      include: {
+        campaign: true,
+        influencer: true
+      }
+    });
+    
+    res.status(201).json({
+      success: true,
+      data: collaboration
+    });
+  } catch (error) {
+    console.error('Error creating collaboration:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create collaboration'
+    });
+  }
+});
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
     message: 'TIKIT Backend API',
-    version: '0.2.0',
+    version: '0.3.0',
     endpoints: {
       health: '/health',
       clients: '/api/v1/clients',
       campaigns: '/api/v1/campaigns',
-      'campaigns (filter)': '/api/v1/campaigns?status=active&clientId={id}'
+      influencers: '/api/v1/influencers',
+      collaborations: '/api/v1/collaborations',
+      'filters': 'All endpoints support filtering via query params'
     }
   });
 });
@@ -194,6 +377,8 @@ app.listen(PORT, () => {
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`👥 Clients API: http://localhost:${PORT}/api/v1/clients`);
   console.log(`🎯 Campaigns API: http://localhost:${PORT}/api/v1/campaigns`);
+  console.log(`⭐ Influencers API: http://localhost:${PORT}/api/v1/influencers`);
+  console.log(`🤝 Collaborations API: http://localhost:${PORT}/api/v1/collaborations`);
 });
 
 // Graceful shutdown

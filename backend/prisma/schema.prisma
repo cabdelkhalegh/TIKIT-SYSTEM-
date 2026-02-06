@@ -79,9 +79,8 @@ model Campaign {
   performanceKPIsJson      String?  @map("performance_kpis_json")
   actualPerformanceJson    String?  @map("actual_performance_json")
   
-  // Future relationships (to be added in Phase 2.3)
-  // influencers            Influencer[] @relation("CampaignInfluencers")
-  // content                Content[] @relation("CampaignContent")
+  // Influencer relationships (many-to-many)
+  campaignInfluencers      CampaignInfluencer[]
   
   // Timestamps
   createdAt                DateTime @default(now()) @map("created_at")
@@ -90,4 +89,107 @@ model Campaign {
   @@map("campaigns")
   @@index([clientId])
   @@index([status])
+}
+
+// Influencer Entity - Represents content creators and influencers in TIKIT platform
+// PRD Section 4.4: Influencer Profiles
+model Influencer {
+  influencerId             String   @id @default(uuid()) @map("influencer_id")
+  
+  // Profile information
+  fullName                 String   @map("full_name")
+  displayName              String   @map("display_name")
+  email                    String   @unique @map("email")
+  phone                    String?  @map("phone")
+  bio                      String?  @map("bio")
+  profileImageUrl          String?  @map("profile_image_url")
+  
+  // Location
+  city                     String?  @map("city")
+  country                  String?  @map("country")
+  
+  // Social media handles (stored as JSON)
+  // Expected format: JSON object like {"instagram": "@handle", "tiktok": "@handle", "youtube": "channel_id"}
+  socialMediaHandles       String?  @map("social_media_handles")
+  
+  // Primary platform for collaboration
+  primaryPlatform          String?  @map("primary_platform")
+  
+  // Audience metrics (stored as JSON)
+  // Expected format: JSON object with platform-specific metrics
+  // Example: {"instagram": {"followers": 150000, "engagement_rate": 4.5, "avg_likes": 6000}}
+  audienceMetrics          String?  @map("audience_metrics")
+  
+  // Content categories and niches (stored as JSON array)
+  // Expected format: ["fashion", "lifestyle", "beauty", "travel"]
+  contentCategories        String?  @map("content_categories")
+  
+  // Performance history (stored as JSON)
+  // Expected format: JSON object with historical campaign data, avg performance, etc.
+  performanceHistory       String?  @map("performance_history")
+  
+  // Availability and rates
+  availabilityStatus       String   @default("available") @map("availability_status") // available, busy, unavailable
+  ratePerPost              Float?   @map("rate_per_post")
+  ratePerVideo             Float?   @map("rate_per_video")
+  ratePerStory             Float?   @map("rate_per_story")
+  
+  // Verification and quality
+  isVerified               Boolean  @default(false) @map("is_verified")
+  qualityScore             Float?   @map("quality_score") // 0-100 score
+  
+  // Notes for internal use
+  internalNotes            String?  @map("internal_notes")
+  
+  // Campaign relationships (many-to-many)
+  campaignInfluencers      CampaignInfluencer[]
+  
+  // Timestamps
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  @@map("influencers")
+  @@index([primaryPlatform])
+  @@index([availabilityStatus])
+  @@index([isVerified])
+}
+
+// CampaignInfluencer - Junction table for many-to-many relationship
+// Tracks influencer participation in campaigns with collaboration details
+model CampaignInfluencer {
+  id                       String   @id @default(uuid())
+  
+  // Relationships
+  campaignId               String   @map("campaign_id")
+  campaign                 Campaign @relation(fields: [campaignId], references: [campaignId], onDelete: Cascade)
+  
+  influencerId             String   @map("influencer_id")
+  influencer               Influencer @relation(fields: [influencerId], references: [influencerId], onDelete: Cascade)
+  
+  // Collaboration details
+  role                     String?  @map("role") // ambassador, content creator, reviewer, etc.
+  collaborationStatus      String   @default("invited") @map("collaboration_status") // invited, accepted, declined, active, completed
+  
+  // Deliverables (stored as JSON array)
+  // Expected format: ["2 Instagram posts", "1 YouTube video", "3 Stories"]
+  agreedDeliverables       String?  @map("agreed_deliverables")
+  deliveredContent         String?  @map("delivered_content") // JSON array of delivered items
+  
+  // Payment
+  agreedPayment            Float?   @map("agreed_payment")
+  paymentStatus            String   @default("pending") @map("payment_status") // pending, paid, partial
+  
+  // Performance for this collaboration
+  performanceMetrics       String?  @map("performance_metrics") // JSON with views, engagement, etc.
+  
+  // Timestamps
+  invitedAt                DateTime @default(now()) @map("invited_at")
+  acceptedAt               DateTime? @map("accepted_at")
+  completedAt              DateTime? @map("completed_at")
+  
+  @@map("campaign_influencers")
+  @@unique([campaignId, influencerId])
+  @@index([campaignId])
+  @@index([influencerId])
+  @@index([collaborationStatus])
 }
