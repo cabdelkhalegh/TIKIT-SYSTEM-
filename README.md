@@ -22,7 +22,7 @@ Documentation for setup and deployment will be added as the project develops.
 
 ## Contributing
 
-This is a private project. Please contact the repository owner for contribution guidelines.
+This is a private project. Please contact the repository owner via their GitHub profile for contribution guidelines.
 
 ## License
 
