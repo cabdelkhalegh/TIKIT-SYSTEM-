@@ -27,7 +27,7 @@ function transformAuthResponse(backendResponse: BackendAuthResponse): LoginRespo
       email: backendResponse.data.userAccount.email,
       fullName: backendResponse.data.userAccount.fullName,
       role: backendResponse.data.userAccount.role,
-      profileImage: backendResponse.data.userAccount.profileImageUrl,
+      profileImage: backendResponse.data.userAccount.profileImageUrl ?? undefined,
       createdAt: backendResponse.data.userAccount.createdAt,
       updatedAt: backendResponse.data.userAccount.updatedAt,
     }
