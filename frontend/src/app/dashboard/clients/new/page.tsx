@@ -7,7 +7,7 @@ import Link from 'next/link';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import ClientForm from '@/components/clients/ClientForm';
 import { clientService } from '@/services/client.service';
-import type { CreateClientRequest } from '@/types/client.types';
+import type { CreateClientRequest, UpdateClientRequest } from '@/types/client.types';
 
 export default function NewClientPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,10 +16,10 @@ export default function NewClientPage() {
     mutationFn: (data: CreateClientRequest) => clientService.create(data),
   });
 
-  const handleSubmit = async (data: CreateClientRequest) => {
+  const handleSubmit = async (data: CreateClientRequest | UpdateClientRequest) => {
     setIsSubmitting(true);
     try {
-      await createMutation.mutateAsync(data);
+      await createMutation.mutateAsync(data as CreateClientRequest);
     } finally {
       setIsSubmitting(false);
     }

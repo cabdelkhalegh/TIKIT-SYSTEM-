@@ -13,7 +13,8 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  Building2
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -23,6 +24,7 @@ interface DashboardLayoutProps {
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Clients', href: '/dashboard/clients', icon: Building2 },
   { name: 'Campaigns', href: '/dashboard/campaigns', icon: Target },
   { name: 'Influencers', href: '/dashboard/influencers', icon: Users },
   { name: 'Collaborations', href: '/dashboard/collaborations', icon: Handshake },
