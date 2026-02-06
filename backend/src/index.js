@@ -13,6 +13,11 @@ const campaignRoutes = require('./routes/campaign-routes');
 const influencerRoutes = require('./routes/influencer-routes');
 const collaborationRoutes = require('./routes/collaboration-routes');
 
+// Import middleware
+const requestLogger = require('./middleware/request-logger');
+const createRateLimiter = require('./middleware/rate-limiter');
+const globalErrorHandler = require('./middleware/error-handler');
+
 // Load environment variables
 dotenv.config();
 
@@ -20,9 +25,18 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Global middleware
 app.use(cors());
 app.use(express.json());
+app.use(requestLogger);
+
+// Rate limiting (100 requests per 15 minutes)
+const generalRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  maxRequests: 100,
+  message: 'Too many requests from this IP, please try again later'
+});
+app.use('/api', generalRateLimiter);
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
@@ -37,7 +51,7 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     service: 'TIKIT Backend API',
     timestamp: new Date().toISOString(),
-    version: '0.4.0'
+    version: '0.5.0'
   });
 });
 
@@ -45,7 +59,7 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res) => {
   res.json({
     message: 'TIKIT Backend API',
-    version: '0.4.0',
+    version: '0.5.0',
     features: {
       authentication: 'JWT-based authentication with role-based access control',
       campaignLifecycle: 'Campaign status transitions (draft → active → paused/completed)',
@@ -103,16 +117,30 @@ app.get('/', (req, res) => {
   });
 });
 
+// 404 handler for unknown routes
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    error: 'NotFound',
+    message: `Route ${req.method} ${req.path} not found`,
+    statusCode: 404
+  });
+});
+
+// Global error handler (must be last)
+app.use(globalErrorHandler);
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 TIKIT Backend API v0.4.0 running on port ${PORT}`);
+  console.log(`🚀 TIKIT Backend API v0.5.0 running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🔐 Auth API: http://localhost:${PORT}/api/v1/auth`);
   console.log(`👥 Clients API: http://localhost:${PORT}/api/v1/clients (protected)`);
   console.log(`🎯 Campaigns API: http://localhost:${PORT}/api/v1/campaigns (protected, with lifecycle)`);
-  console.log(`⭐ Influencers API: http://localhost:${PORT}/api/v1/influencers (protected)`);
-  console.log(`🤝 Collaborations API: http://localhost:${PORT}/api/v1/collaborations (protected, with workflow)`);
-  console.log(`\n✨ Features: Authentication, Campaign Lifecycle, Collaboration Workflow`);
+  console.log(`⭐ Influencers API: http://localhost:${PORT}/api/v1/influencers (protected, with discovery)`);
+  console.log(`🤝 Collaborations API: http://localhost:${PORT}/api/v1/collaborations (protected, enhanced workflow)`);
+  console.log(`\n✨ Features: Auth, Lifecycle, Discovery, Enhanced Collaboration, Validation & Error Handling`);
+  console.log(`🛡️ Security: Rate limiting (100 req/15min), Input validation, Error handling`);
 });
 
 // Graceful shutdown
