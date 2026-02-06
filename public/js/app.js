@@ -115,7 +115,10 @@ function displayCampaigns(campaigns) {
         if (campaign.deliveryDate) {
             const dateDetail = document.createElement('div');
             const date = new Date(campaign.deliveryDate);
-            dateDetail.innerHTML = `<strong>Delivery:</strong> ${date.toLocaleDateString()}`;
+            const deliveryLabel = document.createElement('strong');
+            deliveryLabel.textContent = 'Delivery:';
+            dateDetail.appendChild(deliveryLabel);
+            dateDetail.appendChild(document.createTextNode(' ' + date.toLocaleDateString()));
             details.appendChild(dateDetail);
         }
         
