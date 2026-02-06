@@ -187,9 +187,11 @@ export default function InfluencerDetailPage() {
       ? platforms.reduce((sum, p) => sum + (p.engagementRate || 0), 0) / platforms.length
       : 0;
     
-    const topPlatform = platforms.reduce((prev, current) => {
-      return (current.followersCount || 0) > (prev.followersCount || 0) ? current : prev;
-    }, platforms[0]);
+    const topPlatform = platforms.length > 0
+      ? platforms.reduce((prev, current) => {
+          return (current.followersCount || 0) > (prev.followersCount || 0) ? current : prev;
+        })
+      : null;
 
     const campaignData = influencer.campaignInfluencers || [];
     const completedCampaigns = campaignData.filter(c => c.status === 'completed').length;
@@ -209,7 +211,8 @@ export default function InfluencerDetailPage() {
 
   const metrics = calculateMetrics();
 
-  // Mock engagement trend data
+  // TODO: Replace with actual engagement trend data from API
+  // Mock engagement trend data for visualization
   const engagementTrendData = [
     { date: 'Jan', engagement: 4.2 },
     { date: 'Feb', engagement: 4.5 },
@@ -655,9 +658,9 @@ export default function InfluencerDetailPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {campaigns.map((collab, index) => (
+                        {campaigns.map((collab) => (
                           <tr
-                            key={index}
+                            key={`${collab.campaign.campaignId}-${influencer.influencerId}`}
                             className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
                             onClick={() =>
                               router.push(`/dashboard/campaigns/${collab.campaign.campaignId}`)
