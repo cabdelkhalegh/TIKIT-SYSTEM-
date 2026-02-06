@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:14
+    container_name: tikit-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tikitdb}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-tikitdb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: tikit-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://admin:admin123@db:5432/tikitdb}
+      PORT: ${PORT:-3001}
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "${PORT:-3001}:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build: ./frontend
+    container_name: tikit-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:3001}
+      REACT_APP_ENV: ${REACT_APP_ENV:-development}
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:
