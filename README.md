@@ -102,6 +102,13 @@ npm run docker:build     # Rebuild containers
 
 ### Backend API (Port 3001)
 
+**Authentication Endpoints:** 🆕
+- `POST /api/v1/auth/register` - Register new user
+- `POST /api/v1/auth/login` - Login and get JWT token
+- `GET /api/v1/auth/profile` - Get user profile (protected)
+- `PUT /api/v1/auth/profile` - Update user profile (protected)
+- `POST /api/v1/auth/change-password` - Change password (protected)
+
 **Client Endpoints:**
 - `GET /health` - Health check
 - `GET /` - API information
@@ -247,8 +254,9 @@ See [ROADMAP.md](./ROADMAP.md) for complete development plan.
 - **Phase 2.1**: ✅ Complete (Client Entity)
 - **Phase 2.2**: ✅ Complete (Campaign Entity)
 - **Phase 2.3**: ✅ Complete (Influencer Entity)
-- **Phase 2.4**: ⏳ Optional (Content/Deliverables Entity)
-- **Phase 3**: 🎯 Ready to start (API & Business Logic)
+- **Phase 3.1**: 🚧 In Progress (Authentication & Authorization - Core Complete)
+- **Phase 3.2**: ⏳ Next (Campaign Management Enhancement)
+- **Phase 3.3**: ⏳ Pending (Influencer Discovery)
 
 ---
 
