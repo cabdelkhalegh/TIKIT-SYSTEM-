@@ -23,7 +23,7 @@ interface Influencer {
   }[];
 }
 
-const platformIcons: Record<string, any> = {
+const platformIcons: Record<string, typeof Instagram> = {
   instagram: Instagram,
   youtube: Youtube,
   tiktok: TrendingUp,

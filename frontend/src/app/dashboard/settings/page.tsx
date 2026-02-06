@@ -31,6 +31,7 @@ export default function SettingsPage() {
     newPassword: '',
     confirmPassword: '',
   });
+  const [passwordError, setPasswordError] = useState('');
 
   const [showPasswordSuccess, setShowPasswordSuccess] = useState(false);
   const [showProfileSuccess, setShowProfileSuccess] = useState(false);
@@ -84,8 +85,9 @@ export default function SettingsPage() {
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordError('');
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('New passwords do not match');
+      setPasswordError('New passwords do not match');
       return;
     }
     updatePasswordMutation.mutate(passwordData);
@@ -286,6 +288,12 @@ export default function SettingsPage() {
                   </div>
                 )}
 
+                {passwordError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800">{passwordError}</p>
+                  </div>
+                )}
+
                 {updatePasswordMutation.isError && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-sm text-red-800">
@@ -316,12 +324,12 @@ export default function SettingsPage() {
                 Notification Preferences
               </CardTitle>
               <CardDescription>
-                Manage how you receive notifications
+                Manage how you receive notifications (Coming soon)
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg opacity-60">
                   <div>
                     <p className="font-medium text-gray-900">Email Notifications</p>
                     <p className="text-sm text-gray-600">Receive updates about your campaigns via email</p>
@@ -330,9 +338,10 @@ export default function SettingsPage() {
                     type="checkbox"
                     className="h-5 w-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
                     defaultChecked
+                    disabled
                   />
                 </div>
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg opacity-60">
                   <div>
                     <p className="font-medium text-gray-900">Collaboration Updates</p>
                     <p className="text-sm text-gray-600">Get notified when influencers respond to collaborations</p>
@@ -341,9 +350,10 @@ export default function SettingsPage() {
                     type="checkbox"
                     className="h-5 w-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
                     defaultChecked
+                    disabled
                   />
                 </div>
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg opacity-60">
                   <div>
                     <p className="font-medium text-gray-900">Weekly Reports</p>
                     <p className="text-sm text-gray-600">Receive weekly performance summaries</p>
@@ -351,13 +361,13 @@ export default function SettingsPage() {
                   <input
                     type="checkbox"
                     className="h-5 w-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                    disabled
                   />
                 </div>
-                <div className="flex justify-end pt-4">
-                  <Button variant="outline" disabled>
-                    <SettingsIcon className="h-4 w-4 mr-2" />
-                    Save Preferences
-                  </Button>
+                <div className="pt-4 text-center">
+                  <p className="text-sm text-gray-500">
+                    Notification preferences will be available in a future update
+                  </p>
                 </div>
               </div>
             </CardContent>

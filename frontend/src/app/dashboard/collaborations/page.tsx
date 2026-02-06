@@ -70,7 +70,8 @@ export default function CollaborationsPage() {
   });
 
   const getCompletedDeliverables = (deliverables: Collaboration['deliverables']) => {
-    return deliverables.filter(d => d.status === 'approved' || d.status === 'submitted').length;
+    // Count approved deliverables as completed
+    return deliverables.filter(d => d.status === 'approved').length;
   };
 
   return (

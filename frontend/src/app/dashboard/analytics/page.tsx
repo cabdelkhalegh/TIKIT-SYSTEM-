@@ -48,28 +48,8 @@ export default function AnalyticsPage() {
   const { data: analytics, isLoading, error } = useQuery({
     queryKey: ['analytics-dashboard'],
     queryFn: async () => {
-      try {
-        const response = await apiClient.get('/analytics/dashboard');
-        return response.data as AnalyticsData;
-      } catch (err) {
-        // Return mock data if API fails
-        return {
-          totalCampaigns: 12,
-          activeCampaigns: 5,
-          totalInfluencers: 48,
-          totalCollaborations: 32,
-          totalBudget: 150000,
-          spentBudget: 87500,
-          performance: {
-            totalReach: 2450000,
-            totalEngagement: 185000,
-            totalImpressions: 3200000,
-            avgEngagementRate: 7.55,
-          },
-          topCampaigns: [],
-          topInfluencers: [],
-        } as AnalyticsData;
-      }
+      const response = await apiClient.get('/analytics/dashboard');
+      return response.data as AnalyticsData;
     },
     retry: false,
   });
@@ -130,7 +110,7 @@ export default function AnalyticsPage() {
           <Card className="border-yellow-200 bg-yellow-50 mb-8">
             <CardContent className="pt-6">
               <p className="text-yellow-800">
-                Using cached analytics data. Some metrics may not be up to date.
+                Unable to load analytics data. Please try again later or contact support if the issue persists.
               </p>
             </CardContent>
           </Card>
