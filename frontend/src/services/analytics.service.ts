@@ -127,8 +127,8 @@ class AnalyticsService {
       },
       platformDistribution: backendData.platformDistribution || {},
       trends: {
-        campaigns: '+12%',
-        collaborations: '+8%',
+        campaigns: 'N/A',
+        collaborations: 'N/A',
         budget: `${Math.round((spentBudget / totalBudget) * 100) || 0}%`
       }
     };
