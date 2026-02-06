@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -25,6 +26,7 @@ interface Campaign {
 }
 
 export default function CampaignsPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -158,6 +160,7 @@ export default function CampaignsPage() {
                 <Card
                   key={campaign.campaignId}
                   className="hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => router.push(`/dashboard/campaigns/${campaign.campaignId}`)}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
