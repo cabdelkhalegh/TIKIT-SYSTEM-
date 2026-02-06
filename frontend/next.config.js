@@ -19,11 +19,19 @@ const nextConfig = {
     ],
   },
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    // Use NEXT_PUBLIC_API_BASE_URL or NEXT_PUBLIC_API_URL, fallback to localhost
+    // Ensure we always have a valid URL (not undefined)
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
+                   process.env.NEXT_PUBLIC_API_URL || 
+                   'http://localhost:3001';
+    
+    // Validate the URL is not "undefined" string
+    const validApiUrl = apiUrl === 'undefined' || !apiUrl ? 'http://localhost:3001' : apiUrl;
+    
     return [
       {
         source: '/api/:path*',
-        destination: `${apiUrl}/:path*`,
+        destination: `${validApiUrl}/:path*`,
       },
     ]
   },
