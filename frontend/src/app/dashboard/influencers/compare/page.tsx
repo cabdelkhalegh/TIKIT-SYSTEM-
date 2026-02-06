@@ -127,7 +127,7 @@ export default function CompareInfluencersPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">
                     Metric
                   </th>
                   {influencers.map((influencer) => (
@@ -145,7 +145,7 @@ export default function CompareInfluencersPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {/* Platform */}
                 <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">
                     Primary Platform
                   </td>
                   {influencers.map((influencer) => (
@@ -157,7 +157,7 @@ export default function CompareInfluencersPage() {
 
                 {/* Followers */}
                 <tr className="bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-50 z-10">
                     Followers
                   </td>
                   {influencers.map((influencer) => (
@@ -169,7 +169,7 @@ export default function CompareInfluencersPage() {
 
                 {/* Engagement Rate */}
                 <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">
                     Engagement Rate
                   </td>
                   {influencers.map((influencer) => (
@@ -181,7 +181,7 @@ export default function CompareInfluencersPage() {
 
                 {/* Avg Views */}
                 <tr className="bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-50 z-10">
                     Avg Views
                   </td>
                   {influencers.map((influencer) => (
@@ -193,7 +193,7 @@ export default function CompareInfluencersPage() {
 
                 {/* Quality Score */}
                 <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">
                     Quality Score
                   </td>
                   {influencers.map((influencer) => (
@@ -205,7 +205,7 @@ export default function CompareInfluencersPage() {
 
                 {/* Rate per Post */}
                 <tr className="bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-50 z-10">
                     Rate per Post
                   </td>
                   {influencers.map((influencer) => (
@@ -217,7 +217,7 @@ export default function CompareInfluencersPage() {
 
                 {/* Rate per Video */}
                 <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">
                     Rate per Video
                   </td>
                   {influencers.map((influencer) => (
@@ -229,7 +229,7 @@ export default function CompareInfluencersPage() {
 
                 {/* Location */}
                 <tr className="bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-50 z-10">
                     Location
                   </td>
                   {influencers.map((influencer) => (
@@ -241,7 +241,7 @@ export default function CompareInfluencersPage() {
 
                 {/* Verified */}
                 <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">
                     Verified
                   </td>
                   {influencers.map((influencer) => (
@@ -257,7 +257,7 @@ export default function CompareInfluencersPage() {
 
                 {/* Status */}
                 <tr className="bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-50 z-10">
                     Status
                   </td>
                   {influencers.map((influencer) => (
@@ -277,7 +277,7 @@ export default function CompareInfluencersPage() {
 
                 {/* Categories */}
                 <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900 sticky left-0 bg-white">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">
                     Categories
                   </td>
                   {influencers.map((influencer) => (
@@ -298,7 +298,7 @@ export default function CompareInfluencersPage() {
 
                 {/* Actions */}
                 <tr className="bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-50 z-10">
                     Actions
                   </td>
                   {influencers.map((influencer) => (
