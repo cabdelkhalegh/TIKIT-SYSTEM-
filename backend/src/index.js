@@ -12,6 +12,7 @@ const clientRoutes = require('./routes/client-routes');
 const campaignRoutes = require('./routes/campaign-routes');
 const influencerRoutes = require('./routes/influencer-routes');
 const collaborationRoutes = require('./routes/collaboration-routes');
+const analyticsRoutes = require('./routes/analytics-routes');
 
 // Import middleware
 const requestLogger = require('./middleware/request-logger');
@@ -44,6 +45,7 @@ app.use('/api/v1/clients', clientRoutes);
 app.use('/api/v1/campaigns', campaignRoutes);
 app.use('/api/v1/influencers', influencerRoutes);
 app.use('/api/v1/collaborations', collaborationRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
