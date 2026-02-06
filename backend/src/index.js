@@ -14,6 +14,7 @@ const influencerRoutes = require('./routes/influencer-routes');
 const collaborationRoutes = require('./routes/collaboration-routes');
 const analyticsRoutes = require('./routes/analytics-routes');
 const notificationRoutes = require('./routes/notification-routes');
+const mediaRoutes = require('./routes/media-routes');
 
 // Import middleware
 const requestLogger = require('./middleware/request-logger');
@@ -40,6 +41,9 @@ const generalRateLimiter = createRateLimiter({
 });
 app.use('/api', generalRateLimiter);
 
+// Serve static files (uploaded media)
+app.use('/uploads', express.static('uploads'));
+
 // API Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/clients', clientRoutes);
@@ -48,6 +52,7 @@ app.use('/api/v1/influencers', influencerRoutes);
 app.use('/api/v1/collaborations', collaborationRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/media', mediaRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

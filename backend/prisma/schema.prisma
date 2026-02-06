@@ -47,6 +47,7 @@ model User {
   // Relations
   notifications            Notification[] @relation("UserNotifications")
   notificationPreferences  NotificationPreferences? @relation("UserNotificationPreferences")
+  media                    Media[] @relation("UserMedia")
   
   // Timestamps
   createdAt                DateTime @default(now()) @map("created_at")
@@ -304,4 +305,44 @@ model NotificationPreferences {
   updatedAt            DateTime @updatedAt @map("updated_at")
   
   @@map("notification_preferences")
+}
+
+// Media Entity - File uploads and media management
+// Phase 4.3: File Upload & Media Management
+model Media {
+  mediaId              String   @id @default(uuid()) @map("media_id")
+  userId               String   @map("user_id")
+  user                 User     @relation("UserMedia", fields: [userId], references: [userId], onDelete: Cascade)
+  
+  // File information
+  filename             String   @map("filename")
+  originalName         String   @map("original_name")
+  mimeType             String   @map("mime_type")
+  size                 Int      @map("size") // in bytes
+  
+  // URLs
+  url                  String   @map("url")
+  thumbnailUrl         String?  @map("thumbnail_url")
+  
+  // Association (polymorphic)
+  entityType           String?  @map("entity_type") // campaign, influencer, collaboration, user
+  entityId             String?  @map("entity_id")
+  
+  // Purpose
+  purpose              String   @default("general") @map("purpose") // profile, campaign, deliverable, general
+  
+  // Access control
+  isPublic             Boolean  @default(false) @map("is_public")
+  
+  // Metadata (JSON)
+  metadata             String?  @map("metadata") // width, height, duration, etc.
+  
+  // Timestamps
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  
+  @@map("media")
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([purpose])
 }
