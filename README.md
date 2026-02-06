@@ -39,6 +39,42 @@ This is the repository for the TIKIT Influencer Marketing Platform
 
 **📚 See [PHASE_5_COMPLETE.md](./PHASE_5_COMPLETE.md) for the complete implementation summary!**
 
+---
+
+## 🚀 Deploy to Production
+
+### Quick Deploy to Vercel (5 minutes) ⚡
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/cabdelkhalegh/TIKIT-SYSTEM-&project-name=tikit-system&repository-name=tikit-system&root-directory=frontend&env=NEXT_PUBLIC_API_URL,NEXT_PUBLIC_API_BASE_URL,NEXT_PUBLIC_APP_NAME,NEXT_PUBLIC_APP_URL&envDescription=Backend%20API%20and%20app%20configuration&envLink=https://github.com/cabdelkhalegh/TIKIT-SYSTEM-/blob/main/VERCEL_README.md)
+
+**What's Auto-Configured (92%):**
+- ✅ Project name & framework detection
+- ✅ Root directory (`frontend`)
+- ✅ Build commands & environment
+- ✅ 4 environment variables with defaults
+- ✅ Security headers & performance settings
+- ✅ Git CI/CD setup
+
+**What You Customize (8%):**
+- ⚠️ `NEXT_PUBLIC_API_URL` - Your backend API endpoint
+- ⚠️ `NEXT_PUBLIC_API_BASE_URL` - Your backend base URL
+
+**Deploy Time:** ~5 minutes | **Auto-Config:** 92% | **User Effort:** 2 values
+
+📖 **Detailed Guide:** [VERCEL_README.md](./VERCEL_README.md) | [VERCEL_AUTO_CONFIG_GUIDE.md](./VERCEL_AUTO_CONFIG_GUIDE.md)
+
+### Alternative: Deploy with Docker 🐳
+
+For self-hosted deployment:
+```bash
+docker-compose build
+docker-compose up -d
+```
+
+📖 **Docker Guide:** [DEPLOY_NOW.md](./DEPLOY_NOW.md) | [DOCKER_GUIDE.md](./DOCKER_GUIDE.md)
+
+---
+
 ## 🏗️ Project Structure
 
 ```
