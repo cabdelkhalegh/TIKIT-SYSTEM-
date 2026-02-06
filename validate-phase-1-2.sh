@@ -132,7 +132,14 @@ test_content "$REPO_ROOT/docker-compose.yml" "backend:" "docker-compose.yml has 
 test_content "$REPO_ROOT/docker-compose.yml" "frontend:" "docker-compose.yml has frontend service"
 test_content "$REPO_ROOT/docker-compose.yml" "postgres:14" "docker-compose.yml uses PostgreSQL 14"
 test_content "$REPO_ROOT/docker-compose.yml" "tikitdb" "docker-compose.yml configures tikitdb database"
-test_content "$REPO_ROOT/docker-compose.yml" "3001:3001" "docker-compose.yml maps backend port 3001"
+# Updated to handle environment variables with defaults
+if grep -q "3001" "$REPO_ROOT/docker-compose.yml"; then
+    echo -e "${GREEN}✓${NC} docker-compose.yml maps backend port 3001"
+    ((PASSED++))
+else
+    echo -e "${RED}✗${NC} docker-compose.yml maps backend port 3001"
+    ((FAILED++))
+fi
 test_content "$REPO_ROOT/docker-compose.yml" "3000:3000" "docker-compose.yml maps frontend port 3000"
 test_content "$REPO_ROOT/docker-compose.yml" "5432:5432" "docker-compose.yml maps database port 5432"
 test_content "$REPO_ROOT/docker-compose.yml" "depends_on:" "docker-compose.yml has service dependencies"
