@@ -1,7 +1,43 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
+import Cookies from 'js-cookie';
 import type { AuthStore, User } from '@/types/auth.types';
 import { apiClient } from '@/lib/api-client';
+
+// Custom storage that syncs to both localStorage and cookies
+const cookieStorage: StateStorage = {
+  getItem: (name: string): string | null => {
+    // Try to get from cookies first (server-side accessible)
+    const cookieValue = Cookies.get(name);
+    if (cookieValue) {
+      return cookieValue;
+    }
+    // Fallback to localStorage (client-side only)
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(name);
+    }
+    return null;
+  },
+  setItem: (name: string, value: string): void => {
+    // Set in both localStorage and cookies
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(name, value);
+    }
+    // Set cookie with 7 days expiry
+    Cookies.set(name, value, { 
+      expires: 7, // 7 days
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production'
+    });
+  },
+  removeItem: (name: string): void => {
+    // Remove from both localStorage and cookies
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(name);
+    }
+    Cookies.remove(name);
+  },
+};
 
 export const useAuthStore = create<AuthStore>()(
   persist(
@@ -46,6 +82,7 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'tikit-auth-storage',
+      storage: createJSONStorage(() => cookieStorage),
     }
   )
 );
