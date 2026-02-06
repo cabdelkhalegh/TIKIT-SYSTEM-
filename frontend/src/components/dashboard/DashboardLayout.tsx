@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
+import GlobalSearch from '@/components/dashboard/GlobalSearch';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -128,14 +129,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-4">
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+            aria-label="Open sidebar"
           >
             <Menu className="h-6 w-6" />
           </button>
-          <div className="flex-1 lg:flex-none"></div>
+          <div className="flex-1">
+            <GlobalSearch />
+          </div>
           <NotificationCenter />
         </header>
 
