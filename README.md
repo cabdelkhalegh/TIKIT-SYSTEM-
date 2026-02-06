@@ -100,6 +100,30 @@ Copy `.env.example` to `.env` in the frontend directory:
 cp frontend/.env.example frontend/.env
 ```
 
+### Prisma Database Setup
+
+After starting the containers, initialize the database:
+
+1. **Generate Prisma Client:**
+   ```bash
+   docker compose exec backend npm run prisma:generate
+   ```
+
+2. **Run database migrations:**
+   ```bash
+   docker compose exec backend npm run prisma:migrate
+   ```
+
+3. **Seed the database with sample data:**
+   ```bash
+   docker compose exec backend npm run prisma:seed
+   ```
+
+4. **Open Prisma Studio (optional):**
+   ```bash
+   docker compose exec backend npm run prisma:studio
+   ```
+
 ## 🧪 Testing the Setup
 
 Once all containers are running, the frontend will display:
@@ -111,9 +135,23 @@ All three should show "ok" or "connected" status if everything is working correc
 
 ## 📚 API Endpoints
 
+### Health & Testing
 - `GET /health` - Backend health check
 - `GET /db-test` - Database connectivity test
+- `GET /prisma-test` - Prisma ORM connectivity and stats
 - `GET /api/info` - API information
+
+### Users API (Prisma)
+- `GET /api/users` - List all users
+- `GET /api/users/:id` - Get user by ID
+- `POST /api/users` - Create new user
+
+### Tickets API (Prisma)
+- `GET /api/tickets` - List all tickets
+- `GET /api/tickets/:id` - Get ticket by ID
+- `POST /api/tickets` - Create new ticket
+- `PUT /api/tickets/:id` - Update ticket
+- `DELETE /api/tickets/:id` - Delete ticket
 
 ## 🐳 Docker Configuration
 
@@ -124,9 +162,11 @@ All three should show "ok" or "connected" status if everything is working correc
    - User: admin
    - Password: admin123
 
-2. **Backend (Node.js)**
+2. **Backend (Node.js + Prisma ORM)**
    - Port: 3001
    - Framework: Express
+   - ORM: Prisma
+   - Database Models: User, Ticket
 
 3. **Frontend (React + Nginx)**
    - Port: 3000
