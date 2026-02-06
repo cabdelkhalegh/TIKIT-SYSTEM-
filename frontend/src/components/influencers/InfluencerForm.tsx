@@ -70,7 +70,6 @@ export default function InfluencerForm({
     register,
     handleSubmit,
     formState: { errors },
-    watch,
   } = useForm<InfluencerFormData>({
     resolver: zodResolver(influencerSchema),
     defaultValues: influencer ? {
