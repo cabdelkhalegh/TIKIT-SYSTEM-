@@ -490,9 +490,7 @@ export default function CampaignForm({
                       id="kpi-impressions"
                       type="number"
                       placeholder="1000000"
-                      onChange={(e) =>
-                        setValue('performanceKPIs.impressions', parseFloat(e.target.value) || 0)
-                      }
+                      {...register('performanceKPIs.impressions', { valueAsNumber: true })}
                     />
                   </div>
                   <div>
@@ -502,9 +500,7 @@ export default function CampaignForm({
                       type="number"
                       step="0.1"
                       placeholder="5.5"
-                      onChange={(e) =>
-                        setValue('performanceKPIs.engagementRate', parseFloat(e.target.value) || 0)
-                      }
+                      {...register('performanceKPIs.engagementRate', { valueAsNumber: true })}
                     />
                   </div>
                 </div>
@@ -515,9 +511,7 @@ export default function CampaignForm({
                       id="kpi-conversions"
                       type="number"
                       placeholder="5000"
-                      onChange={(e) =>
-                        setValue('performanceKPIs.conversions', parseFloat(e.target.value) || 0)
-                      }
+                      {...register('performanceKPIs.conversions', { valueAsNumber: true })}
                     />
                   </div>
                   <div>
@@ -527,9 +521,7 @@ export default function CampaignForm({
                       type="number"
                       step="0.1"
                       placeholder="250"
-                      onChange={(e) =>
-                        setValue('performanceKPIs.roi', parseFloat(e.target.value) || 0)
-                      }
+                      {...register('performanceKPIs.roi', { valueAsNumber: true })}
                     />
                   </div>
                 </div>
