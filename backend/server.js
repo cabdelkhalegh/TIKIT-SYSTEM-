@@ -19,6 +19,8 @@ app.get('/health', (req, res) => {
 });
 
 // Database connectivity test endpoint
+// Note: In production, this endpoint should be rate-limited or removed
+// For development/testing purposes, this endpoint is safe to expose
 app.get('/db-test', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
