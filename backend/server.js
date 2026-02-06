@@ -11,6 +11,13 @@ const {
 } = require('./authHelpers');
 require('dotenv').config();
 
+// Validate required environment variables at startup
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  console.error('❌ ERROR: JWT_SECRET must be set and at least 32 characters long');
+  console.error('Generate a secure secret with: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
+  process.exit(1);
+}
+
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -266,7 +273,20 @@ app.get('/api/users/:id', authenticateToken, async (req, res) => {
     
     const user = await prisma.user.findUnique({
       where: { id },
-      include: { tickets: true }
+      include: { 
+        tickets: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            status: true,
+            priority: true,
+            createdAt: true,
+            updatedAt: true,
+            userId: true
+          }
+        }
+      }
     });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -319,7 +339,16 @@ app.get('/api/tickets/:id', authenticateToken, async (req, res) => {
     
     const ticket = await prisma.ticket.findUnique({
       where: { id },
-      include: { user: true }
+      include: { 
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true
+          }
+        }
+      }
     });
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found' });
@@ -360,7 +389,16 @@ app.post('/api/tickets', authenticateToken, async (req, res) => {
     
     const ticket = await prisma.ticket.create({
       data: { title, description, status, priority, userId },
-      include: { user: true }
+      include: { 
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true
+          }
+        }
+      }
     });
     res.status(201).json(ticket);
   } catch (error) {
@@ -403,7 +441,16 @@ app.put('/api/tickets/:id', authenticateToken, async (req, res) => {
     const ticket = await prisma.ticket.update({
       where: { id },
       data: { title, description, status, priority },
-      include: { user: true }
+      include: { 
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true
+          }
+        }
+      }
     });
     res.json(ticket);
   } catch (error) {

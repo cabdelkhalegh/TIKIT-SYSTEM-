@@ -23,8 +23,14 @@ function validateId(id) {
 function validateUserData(data) {
   const errors = [];
   
-  if (!data.email || typeof data.email !== 'string' || !data.email.includes('@')) {
+  if (!data.email || typeof data.email !== 'string') {
     errors.push('Valid email is required');
+  } else {
+    // More robust email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      errors.push('Valid email format is required');
+    }
   }
   
   if (!data.password || typeof data.password !== 'string' || data.password.length < 6) {
