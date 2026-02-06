@@ -27,10 +27,10 @@ export default function HomePage() {
               </Link>
             </nav>
             <div className="flex items-center space-x-4">
-              <Link href="/auth/login">
+              <Link href="/login">
                 <Button variant="ghost">Sign In</Button>
               </Link>
-              <Link href="/auth/register">
+              <Link href="/register">
                 <Button>Get Started</Button>
               </Link>
             </div>
@@ -50,7 +50,7 @@ export default function HomePage() {
             TIKIT makes influencer marketing effortless and data-driven.
           </p>
           <div className="flex justify-center space-x-4">
-            <Link href="/auth/register">
+            <Link href="/register">
               <Button size="lg" className="h-12 px-8">
                 Start Free Trial
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -121,7 +121,7 @@ export default function HomePage() {
           <p className="text-xl mb-8 opacity-90">
             Join hundreds of brands already using TIKIT to drive better results
           </p>
-          <Link href="/auth/register">
+          <Link href="/register">
             <Button size="lg" variant="secondary" className="h-12 px-8">
               Get Started Free
               <ArrowRight className="ml-2 h-4 w-4" />
