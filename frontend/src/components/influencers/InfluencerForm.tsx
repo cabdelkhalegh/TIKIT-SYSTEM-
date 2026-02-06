@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -489,6 +490,3 @@ export default function InfluencerForm({
     </form>
   );
 }
-
-// Add React import at the top
-import React from 'react';
