@@ -2,6 +2,13 @@ const express = require('express');
 const { Pool } = require('pg');
 const prisma = require('./prismaClient');
 const { validateId, validateUserData, validateTicketData } = require('./validators');
+const { authenticateToken, authorizeRoles } = require('./authMiddleware');
+const { 
+  hashPassword, 
+  comparePassword, 
+  generateToken, 
+  sanitizeUser 
+} = require('./authHelpers');
 require('dotenv').config();
 
 const app = express();
@@ -66,14 +73,163 @@ app.get('/api/info', (req, res) => {
     app: 'TIKIT System',
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
-    features: ['Docker', 'PostgreSQL', 'Prisma ORM']
+    features: ['Docker', 'PostgreSQL', 'Prisma ORM', 'JWT Authentication']
+  });
+});
+
+// ============= AUTHENTICATION ENDPOINTS =============
+
+// Register new user
+app.post('/auth/register', async (req, res) => {
+  try {
+    const { email, name, password, role } = req.body;
+    
+    // Validate input
+    const validation = validateUserData({ email, name, password, role });
+    if (!validation.valid) {
+      return res.status(400).json({ 
+        error: 'Validation failed', 
+        details: validation.errors 
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(409).json({ 
+        error: 'User already exists',
+        message: 'A user with this email already exists' 
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await hashPassword(password);
+
+    // Create user
+    const user = await prisma.user.create({
+      data: { 
+        email, 
+        name, 
+        password: hashedPassword, 
+        role: role || 'user' 
+      }
+    });
+
+    // Generate token
+    const token = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    });
+
+    // Return user without password
+    const safeUser = sanitizeUser(user);
+    
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: safeUser,
+      token
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Registration failed', message: error.message });
+  }
+});
+
+// Login user
+app.post('/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        message: 'Email and password are required' 
+      });
+    }
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      return res.status(401).json({ 
+        error: 'Authentication failed',
+        message: 'Invalid credentials' 
+      });
+    }
+
+    // Verify password
+    const isValidPassword = await comparePassword(password, user.password);
+    
+    if (!isValidPassword) {
+      return res.status(401).json({ 
+        error: 'Authentication failed',
+        message: 'Invalid credentials' 
+      });
+    }
+
+    // Generate token
+    const token = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    });
+
+    // Return user without password
+    const safeUser = sanitizeUser(user);
+
+    res.json({
+      message: 'Login successful',
+      user: safeUser,
+      token
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed', message: error.message });
+  }
+});
+
+// Get current user profile
+app.get('/auth/me', authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      include: {
+        _count: {
+          select: { tickets: true }
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const safeUser = sanitizeUser(user);
+    res.json(safeUser);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Logout (client should delete token, this is just for consistency)
+app.post('/auth/logout', authenticateToken, (req, res) => {
+  res.json({ 
+    message: 'Logout successful',
+    note: 'Please delete the token on the client side' 
   });
 });
 
 // ============= PRISMA-BASED API ENDPOINTS =============
 
-// Users endpoints
-app.get('/api/users', async (req, res) => {
+// Users endpoints (Protected - Admin only for list, authenticated for own profile)
+app.get('/api/users', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       select: {
@@ -93,11 +249,19 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-app.get('/api/users/:id', async (req, res) => {
+app.get('/api/users/:id', authenticateToken, async (req, res) => {
   try {
     const id = validateId(req.params.id);
     if (!id) {
       return res.status(400).json({ error: 'Invalid user ID' });
+    }
+
+    // Users can only view their own profile unless they're admin
+    if (req.user.userId !== id && req.user.role !== 'admin') {
+      return res.status(403).json({ 
+        error: 'Forbidden',
+        message: 'You can only view your own profile' 
+      });
     }
     
     const user = await prisma.user.findUnique({
@@ -107,43 +271,28 @@ app.get('/api/users/:id', async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    res.json(user);
+    
+    // Don't send password back
+    const safeUser = sanitizeUser(user);
+    res.json(safeUser);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Note: In production, passwords should be hashed using bcrypt before storage
-// This endpoint is for development only and should be secured before production use
-app.post('/api/users', async (req, res) => {
-  try {
-    const { email, name, password, role } = req.body;
-    
-    // Validate input
-    const validation = validateUserData({ email, name, password, role });
-    if (!validation.valid) {
-      return res.status(400).json({ error: 'Validation failed', details: validation.errors });
-    }
-    
-    // TODO: Hash password with bcrypt before storing
-    // const hashedPassword = await bcrypt.hash(password, 10);
-    
-    const user = await prisma.user.create({
-      data: { email, name, password, role } // In production: use hashedPassword
-    });
-    
-    // Don't send password back
-    const { password: _, ...userWithoutPassword } = user;
-    res.status(201).json(userWithoutPassword);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
+// Note: User creation is now handled by /auth/register endpoint
+// This endpoint is removed in favor of the authentication flow
 
-// Tickets endpoints
-app.get('/api/tickets', async (req, res) => {
+// Tickets endpoints (Protected - must be authenticated)
+app.get('/api/tickets', authenticateToken, async (req, res) => {
   try {
+    // Regular users can only see their own tickets, admins see all
+    const where = req.user.role === 'admin' 
+      ? {} 
+      : { userId: req.user.userId };
+
     const tickets = await prisma.ticket.findMany({
+      where,
       include: {
         user: {
           select: {
@@ -161,7 +310,7 @@ app.get('/api/tickets', async (req, res) => {
   }
 });
 
-app.get('/api/tickets/:id', async (req, res) => {
+app.get('/api/tickets/:id', authenticateToken, async (req, res) => {
   try {
     const id = validateId(req.params.id);
     if (!id) {
@@ -175,15 +324,27 @@ app.get('/api/tickets/:id', async (req, res) => {
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
+    
+    // Users can only view their own tickets or admins can view any
+    if (req.user.role !== 'admin' && ticket.userId !== req.user.userId) {
+      return res.status(403).json({ 
+        error: 'Forbidden',
+        message: 'You can only view your own tickets' 
+      });
+    }
+
     res.json(ticket);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.post('/api/tickets', async (req, res) => {
+app.post('/api/tickets', authenticateToken, async (req, res) => {
   try {
-    const { title, description, status, priority, userId } = req.body;
+    const { title, description, status, priority } = req.body;
+    
+    // Use authenticated user's ID
+    const userId = req.user.userId;
     
     // Validate input
     const validation = validateTicketData({ 
@@ -191,14 +352,14 @@ app.post('/api/tickets', async (req, res) => {
       description, 
       status, 
       priority, 
-      userId: parseInt(userId) 
+      userId 
     });
     if (!validation.valid) {
       return res.status(400).json({ error: 'Validation failed', details: validation.errors });
     }
     
     const ticket = await prisma.ticket.create({
-      data: { title, description, status, priority, userId: parseInt(userId) },
+      data: { title, description, status, priority, userId },
       include: { user: true }
     });
     res.status(201).json(ticket);
@@ -207,11 +368,28 @@ app.post('/api/tickets', async (req, res) => {
   }
 });
 
-app.put('/api/tickets/:id', async (req, res) => {
+app.put('/api/tickets/:id', authenticateToken, async (req, res) => {
   try {
     const id = validateId(req.params.id);
     if (!id) {
       return res.status(400).json({ error: 'Invalid ticket ID' });
+    }
+    
+    // Check if ticket exists and user has permission
+    const existingTicket = await prisma.ticket.findUnique({
+      where: { id }
+    });
+
+    if (!existingTicket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
+    // Users can only update their own tickets, admins can update any
+    if (req.user.role !== 'admin' && existingTicket.userId !== req.user.userId) {
+      return res.status(403).json({ 
+        error: 'Forbidden',
+        message: 'You can only update your own tickets' 
+      });
     }
     
     const { title, description, status, priority } = req.body;
@@ -233,11 +411,28 @@ app.put('/api/tickets/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/tickets/:id', async (req, res) => {
+app.delete('/api/tickets/:id', authenticateToken, async (req, res) => {
   try {
     const id = validateId(req.params.id);
     if (!id) {
       return res.status(400).json({ error: 'Invalid ticket ID' });
+    }
+    
+    // Check if ticket exists and user has permission
+    const existingTicket = await prisma.ticket.findUnique({
+      where: { id }
+    });
+
+    if (!existingTicket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
+    // Users can only delete their own tickets, admins can delete any
+    if (req.user.role !== 'admin' && existingTicket.userId !== req.user.userId) {
+      return res.status(403).json({ 
+        error: 'Forbidden',
+        message: 'You can only delete your own tickets' 
+      });
     }
     
     await prisma.ticket.delete({
