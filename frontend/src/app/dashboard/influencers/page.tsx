@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ const platformIcons: Record<string, typeof Instagram> = {
 };
 
 export default function InfluencersPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [nicheFilter, setNicheFilter] = useState<string>('all');
 
@@ -150,6 +152,7 @@ export default function InfluencersPage() {
                 <Card
                   key={influencer.influencerId}
                   className="hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => router.push(`/dashboard/influencers/${influencer.influencerId}`)}
                 >
                   <CardHeader>
                     <div className="flex items-start gap-4">
@@ -214,7 +217,15 @@ export default function InfluencersPage() {
                       </div>
                     </div>
                     <div className="mt-4 pt-4 border-t border-gray-100">
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/dashboard/influencers/${influencer.influencerId}`);
+                        }}
+                      >
                         View Profile
                       </Button>
                     </div>
