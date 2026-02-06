@@ -1,41 +1,48 @@
 import { apiClient } from '@/lib/api-client';
 import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, User } from '@/types/auth.types';
 
+// Backend response structure
+interface BackendAuthResponse {
+  success: boolean;
+  data: {
+    userAccount: {
+      userId: string;
+      email: string;
+      fullName: string;
+      role: 'admin' | 'client_manager' | 'influencer_manager';
+      profileImageUrl: string | null;
+      createdAt: string;
+      updatedAt: string;
+    };
+    authToken: string;
+  };
+}
+
+// Transform backend response to frontend format
+function transformAuthResponse(backendResponse: BackendAuthResponse): LoginResponse {
+  return {
+    token: backendResponse.data.authToken,
+    user: {
+      id: backendResponse.data.userAccount.userId,
+      email: backendResponse.data.userAccount.email,
+      fullName: backendResponse.data.userAccount.fullName,
+      role: backendResponse.data.userAccount.role,
+      profileImage: backendResponse.data.userAccount.profileImageUrl,
+      createdAt: backendResponse.data.userAccount.createdAt,
+      updatedAt: backendResponse.data.userAccount.updatedAt,
+    }
+  };
+}
+
 export const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await apiClient.post<any>('/auth/login', credentials);
-    // Backend returns { success: true, data: { userAccount, authToken } }
-    // Transform to match frontend interface { token, user }
-    return {
-      token: response.data.data.authToken,
-      user: {
-        id: response.data.data.userAccount.userId,
-        email: response.data.data.userAccount.email,
-        fullName: response.data.data.userAccount.fullName,
-        role: response.data.data.userAccount.role,
-        profileImage: response.data.data.userAccount.profileImageUrl,
-        createdAt: response.data.data.userAccount.createdAt,
-        updatedAt: response.data.data.userAccount.updatedAt,
-      }
-    };
+    const response = await apiClient.post<BackendAuthResponse>('/auth/login', credentials);
+    return transformAuthResponse(response.data);
   },
 
   async register(userData: RegisterRequest): Promise<RegisterResponse> {
-    const response = await apiClient.post<any>('/auth/register', userData);
-    // Backend returns { success: true, data: { userAccount, authToken } }
-    // Transform to match frontend interface { token, user }
-    return {
-      token: response.data.data.authToken,
-      user: {
-        id: response.data.data.userAccount.userId,
-        email: response.data.data.userAccount.email,
-        fullName: response.data.data.userAccount.fullName,
-        role: response.data.data.userAccount.role,
-        profileImage: response.data.data.userAccount.profileImageUrl,
-        createdAt: response.data.data.userAccount.createdAt,
-        updatedAt: response.data.data.userAccount.updatedAt,
-      }
-    };
+    const response = await apiClient.post<BackendAuthResponse>('/auth/register', userData);
+    return transformAuthResponse(response.data);
   },
 
   async logout(): Promise<void> {

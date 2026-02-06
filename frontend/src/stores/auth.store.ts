@@ -7,8 +7,7 @@ import Cookies from 'js-cookie';
 // Custom cookie storage for zustand
 const cookieStorage = {
   getItem: (name: string) => {
-    const value = Cookies.get(name);
-    return value ? value : null;
+    return Cookies.get(name) ?? null;
   },
   setItem: (name: string, value: string) => {
     Cookies.set(name, value, { expires: 7 }); // 7 days
