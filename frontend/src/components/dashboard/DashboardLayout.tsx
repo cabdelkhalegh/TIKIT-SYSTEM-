@@ -13,9 +13,12 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  Building2
 } from 'lucide-react';
 import { useState } from 'react';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
+import GlobalSearch from '@/components/dashboard/GlobalSearch';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -23,6 +26,7 @@ interface DashboardLayoutProps {
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Clients', href: '/dashboard/clients', icon: Building2 },
   { name: 'Campaigns', href: '/dashboard/campaigns', icon: Target },
   { name: 'Influencers', href: '/dashboard/influencers', icon: Users },
   { name: 'Collaborations', href: '/dashboard/collaborations', icon: Handshake },
@@ -124,14 +128,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar (mobile) */}
-        <header className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
+        {/* Top bar */}
+        <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-4">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100"
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+            aria-label="Open sidebar"
           >
             <Menu className="h-6 w-6" />
           </button>
+          <div className="flex-1">
+            <GlobalSearch />
+          </div>
+          <NotificationCenter />
         </header>
 
         {/* Page content */}

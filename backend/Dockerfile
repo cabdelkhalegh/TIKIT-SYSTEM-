@@ -9,7 +9,7 @@ COPY package.json ./
 COPY package-lock.json* ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm install --production
 
 # Copy Prisma schema
 COPY prisma ./prisma

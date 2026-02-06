@@ -4,6 +4,10 @@ export interface User {
   fullName: string;
   role: 'admin' | 'client_manager' | 'influencer_manager';
   profileImage?: string;
+  phone?: string;
+  company?: string;
+  jobTitle?: string;
+  bio?: string;
   createdAt: string;
   updatedAt: string;
 }
