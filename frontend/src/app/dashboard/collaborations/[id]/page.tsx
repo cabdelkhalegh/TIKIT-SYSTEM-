@@ -200,6 +200,15 @@ const activityIcons: Record<string, typeof Clock> = {
   note_added: MessageSquare,
 };
 
+// Helper functions
+const formatStatus = (status: string): string => {
+  return status.replace('_', ' ').toUpperCase();
+};
+
+const isDeliverableOverdue = (deliverable: Deliverable): boolean => {
+  return new Date(deliverable.dueDate) < new Date() && deliverable.status !== 'approved';
+};
+
 export default function CollaborationDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -216,6 +225,7 @@ export default function CollaborationDetailPage() {
   const [noteContent, setNoteContent] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
 
   // Fetch collaboration data
   const { data: collaboration, isLoading, error } = useQuery({
@@ -414,11 +424,11 @@ export default function CollaborationDetailPage() {
               <div className="flex items-center gap-3 ml-11">
                 <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${statusConfig[collaboration.status].color}`}>
                   <StatusIcon className="h-4 w-4" />
-                  {collaboration.status.replace('_', ' ').toUpperCase()}
+                  {formatStatus(collaboration.status)}
                 </span>
                 <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${paymentStatusConfig[collaboration.paymentStatus].color}`}>
                   <PaymentStatusIcon className="h-4 w-4" />
-                  Payment: {collaboration.paymentStatus.toUpperCase()}
+                  Payment: {formatStatus(collaboration.paymentStatus)}
                 </span>
               </div>
             </div>
@@ -564,7 +574,7 @@ export default function CollaborationDetailPage() {
                     <div className="space-y-3">
                       {collaboration.deliverables.map((deliverable) => {
                         const DeliverableIcon = deliverableStatusConfig[deliverable.status]?.icon || Clock;
-                        const isOverdue = new Date(deliverable.dueDate) < new Date() && deliverable.status !== 'approved';
+                        const isOverdue = isDeliverableOverdue(deliverable);
                         
                         return (
                           <div
@@ -577,7 +587,7 @@ export default function CollaborationDetailPage() {
                                   <DeliverableIcon className="h-5 w-5 text-gray-600" />
                                   <h4 className="font-semibold text-gray-900">{deliverable.type}</h4>
                                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${deliverableStatusConfig[deliverable.status].color}`}>
-                                    {deliverable.status.replace('_', ' ').toUpperCase()}
+                                    {formatStatus(deliverable.status)}
                                   </span>
                                   {isOverdue && (
                                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -936,7 +946,7 @@ export default function CollaborationDetailPage() {
                   <p className="mt-1">
                     <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${statusConfig[collaboration.status].color}`}>
                       <StatusIcon className="h-4 w-4" />
-                      {collaboration.status.replace('_', ' ').toUpperCase()}
+                      {formatStatus(collaboration.status)}
                     </span>
                   </p>
                 </div>
@@ -1118,22 +1128,26 @@ export default function CollaborationDetailPage() {
                 <Textarea
                   placeholder="Enter rejection reason..."
                   rows={3}
-                  id="rejection-reason"
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
                 />
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setSelectedDeliverable(null)}>
+                <Button variant="outline" onClick={() => {
+                  setSelectedDeliverable(null);
+                  setRejectionReason('');
+                }}>
                   Cancel
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={() => {
-                    const reason = (document.getElementById('rejection-reason') as HTMLTextAreaElement)?.value;
                     updateDeliverableMutation.mutate({
                       deliverableId: selectedDeliverable.deliverableId,
                       status: 'rejected',
-                      reason
+                      reason: rejectionReason
                     });
+                    setRejectionReason('');
                   }}
                   disabled={updateDeliverableMutation.isPending}
                 >
