@@ -2,7 +2,7 @@
 
 Deploy the TIKIT Influencer Marketing Platform to Vercel in under 5 minutes!
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/cabdelkhalegh/TIKIT-SYSTEM-&project-name=tikit-platform&repository-name=TIKIT-SYSTEM-&root-directory=frontend)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/cabdelkhalegh/TIKIT-SYSTEM-&project-name=tikit-system&repository-name=tikit-system&root-directory=frontend)
 
 ## 🚀 One-Click Deploy
 
@@ -144,6 +144,11 @@ const allowedOrigins = [
 ## 🔧 Troubleshooting
 
 ### Build Fails
+
+**Error: "Project name contains invalid characters"**
+- ✅ Solution: The `vercel.json` now specifies `"name": "tikit-system"` (lowercase, no trailing hyphen)
+- Vercel project names must be lowercase and cannot contain capital letters or trailing special characters
+- If importing directly, Vercel will use this name from `vercel.json`
 
 **Error: "Root directory not found"**
 - ✅ Solution: Set Root Directory to `frontend` in project settings
