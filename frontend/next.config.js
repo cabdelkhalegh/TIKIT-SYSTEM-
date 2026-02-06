@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone', // Enable standalone output for Docker
+  // Use standalone only for Docker, not for Vercel
+  output: process.env.VERCEL ? undefined : 'standalone',
   reactStrictMode: true,
   images: {
     remotePatterns: [
@@ -8,6 +9,11 @@ const nextConfig = {
         protocol: 'http',
         hostname: 'localhost',
         port: '3001',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.vercel.app',
         pathname: '/uploads/**',
       },
     ],
