@@ -94,9 +94,14 @@ function displayCampaigns(campaigns) {
         
         if (campaign.influencerName) {
             const infDetail = document.createElement('div');
-            infDetail.innerHTML = `<strong>Influencer:</strong> ${campaign.influencerName}`;
+            const label = document.createElement('strong');
+            label.textContent = 'Influencer:';
+            infDetail.appendChild(label);
+
+            infDetail.appendChild(document.createTextNode(' ' + campaign.influencerName));
+
             if (campaign.influencerPlatform) {
-                infDetail.innerHTML += ` (${campaign.influencerPlatform})`;
+                infDetail.appendChild(document.createTextNode(' (' + campaign.influencerPlatform + ')'));
             }
             details.appendChild(infDetail);
         }
