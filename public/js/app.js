@@ -432,6 +432,8 @@ async function deleteInfluencer(id) {
 }
 
 // Utility Functions
+let alertTimeout = null; // Track timeout to prevent multiple rapid-fire alerts
+
 function showAlert(message, type) {
     const main = document.querySelector('main');
 
@@ -440,6 +442,9 @@ function showAlert(message, type) {
     if (!alertContainer) {
         alertContainer = document.createElement('div');
         alertContainer.className = 'alert-container';
+        // Position the container consistently at the top of main
+        alertContainer.style.position = 'relative';
+        alertContainer.style.zIndex = '1000';
 
         if (main) {
             // Insert the container once in a predictable location within <main>
@@ -461,9 +466,15 @@ function showAlert(message, type) {
     alert.textContent = message;
     alert.style.display = 'block';
     
-    setTimeout(() => {
+    // Clear any existing timeout to prevent premature hiding
+    if (alertTimeout) {
+        clearTimeout(alertTimeout);
+    }
+    
+    alertTimeout = setTimeout(() => {
         if (alert && alert.style) {
             alert.style.display = 'none';
         }
+        alertTimeout = null;
     }, 3000);
 }
