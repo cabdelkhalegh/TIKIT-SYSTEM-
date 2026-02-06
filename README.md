@@ -4,7 +4,7 @@
 
 ## About
 
-This is the repository for the TIKIT APP - a comprehensive ticketing system designed for efficient ticket management and tracking.
+This is the repository for TIKIT-SYSTEM - a comprehensive ticketing system designed for efficient ticket management and tracking.
 
 ## Project Status
 
