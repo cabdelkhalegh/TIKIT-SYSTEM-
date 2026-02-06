@@ -1,0 +1,348 @@
+// TIKIT System - Database Schema
+// PRD Section 4.2: Client Company Profile Entity
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User Entity - Represents platform users with authentication and authorization
+// PRD Section 5.1: User Authentication & Authorization
+model User {
+  userId                   String   @id @default(uuid()) @map("user_id")
+  
+  // Authentication
+  email                    String   @unique @map("email")
+  passwordHash             String   @map("password_hash")
+  
+  // Profile
+  fullName                 String   @map("full_name")
+  displayName              String?  @map("display_name")
+  profileImageUrl          String?  @map("profile_image_url")
+  
+  // Authorization
+  role                     String   @default("client_manager") @map("role") // admin, client_manager, influencer_manager
+  isActive                 Boolean  @default(true) @map("is_active")
+  isEmailVerified          Boolean  @default(false) @map("is_email_verified")
+  
+  // Optional relationships
+  // Link to client if user is a client manager
+  managedClientId          String?  @map("managed_client_id")
+  managedClient            Client?  @relation(fields: [managedClientId], references: [clientId])
+  
+  // Link to influencer if user is an influencer
+  managedInfluencerId      String?  @map("managed_influencer_id")
+  managedInfluencer        Influencer? @relation(fields: [managedInfluencerId], references: [influencerId])
+  
+  // Security
+  lastLoginAt              DateTime? @map("last_login_at")
+  passwordResetToken       String?  @map("password_reset_token")
+  passwordResetExpires     DateTime? @map("password_reset_expires")
+  emailVerificationToken   String?  @map("email_verification_token")
+  
+  // Relations
+  notifications            Notification[] @relation("UserNotifications")
+  notificationPreferences  NotificationPreferences? @relation("UserNotificationPreferences")
+  media                    Media[] @relation("UserMedia")
+  
+  // Timestamps
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+  @@index([email])
+  @@index([role])
+  @@index([managedClientId])
+  @@index([managedInfluencerId])
+}
+
+// Client Entity - Represents marketing client companies in TIKIT platform
+model Client {
+  clientId                 String   @id @default(uuid()) @map("client_id")
+  legalCompanyName         String   @map("legal_company_name")
+  brandDisplayName         String   @map("brand_display_name")
+  industryVertical         String?  @map("industry_vertical")
+  
+  // Contact information stored as JSON strings
+  // Expected format: JSON array of strings, e.g., ["email1@example.com", "email2@example.com"]
+  primaryContactEmails     String   @map("primary_contact_emails")
+  billingContactEmails     String   @map("billing_contact_emails")
+  // Expected format: JSON array of channel names, e.g., ["email", "slack", "phone"]
+  preferredCommChannels    String   @map("preferred_comm_channels")
+  
+  // Campaign relationships
+  campaigns                Campaign[]
+  
+  // User relationships (managers who can access this client)
+  managers                 User[]
+  
+  // Financial tracking
+  totalAdSpend             Float?   @default(0) @map("total_ad_spend")
+  performanceMetricsJson   String?  @map("performance_metrics_json")
+  
+  // Timestamps
+  accountCreatedAt         DateTime @default(now()) @map("account_created_at")
+  lastModifiedAt           DateTime @updatedAt @map("last_modified_at")
+
+  @@map("clients")
+}
+
+// Campaign Entity - Represents marketing campaigns in TIKIT platform
+// PRD Section 4.3: Campaign Management
+model Campaign {
+  campaignId               String   @id @default(uuid()) @map("campaign_id")
+  
+  // Campaign metadata
+  campaignName             String   @map("campaign_name")
+  campaignDescription      String?  @map("campaign_description")
+  campaignObjectives       String?  @map("campaign_objectives") // JSON array of objectives
+  
+  // Client relationship - simplified to single relation with status tracking
+  clientId                 String   @map("client_id")
+  client                   Client   @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  
+  // Campaign status tracking
+  // Possible values: "draft", "active", "paused", "completed", "cancelled"
+  status                   String   @default("draft") @map("status")
+  
+  // Budget and financial tracking
+  totalBudget              Float?   @map("total_budget")
+  allocatedBudget          Float?   @default(0) @map("allocated_budget")
+  spentBudget              Float?   @default(0) @map("spent_budget")
+  
+  // Timeline management
+  startDate                DateTime? @map("start_date")
+  endDate                  DateTime? @map("end_date")
+  launchDate               DateTime? @map("launch_date")
+  
+  // Target audience (stored as JSON)
+  // Expected format: JSON object with demographics, interests, locations, etc.
+  targetAudienceJson       String?  @map("target_audience_json")
+  
+  // Target platforms (stored as JSON array)
+  // Expected format: JSON array like ["instagram", "tiktok", "youtube"]
+  targetPlatformsJson      String?  @map("target_platforms_json")
+  
+  // Performance metrics and KPIs (stored as JSON)
+  // Expected format: JSON object with impressions, engagement, conversions, ROI, etc.
+  performanceKPIsJson      String?  @map("performance_kpis_json")
+  actualPerformanceJson    String?  @map("actual_performance_json")
+  
+  // Influencer relationships (many-to-many)
+  campaignInfluencers      CampaignInfluencer[]
+  
+  // Timestamps
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  @@map("campaigns")
+  @@index([clientId])
+  @@index([status])
+}
+
+// Influencer Entity - Represents content creators and influencers in TIKIT platform
+// PRD Section 4.4: Influencer Profiles
+model Influencer {
+  influencerId             String   @id @default(uuid()) @map("influencer_id")
+  
+  // Profile information
+  fullName                 String   @map("full_name")
+  displayName              String   @map("display_name")
+  email                    String   @unique @map("email")
+  phone                    String?  @map("phone")
+  bio                      String?  @map("bio")
+  profileImageUrl          String?  @map("profile_image_url")
+  
+  // Location
+  city                     String?  @map("city")
+  country                  String?  @map("country")
+  
+  // Social media handles (stored as JSON)
+  // Expected format: JSON object like {"instagram": "@handle", "tiktok": "@handle", "youtube": "channel_id"}
+  socialMediaHandles       String?  @map("social_media_handles")
+  
+  // Primary platform for collaboration
+  primaryPlatform          String?  @map("primary_platform")
+  
+  // Audience metrics (stored as JSON)
+  // Expected format: JSON object with platform-specific metrics
+  // Example: {"instagram": {"followers": 150000, "engagement_rate": 4.5, "avg_likes": 6000}}
+  audienceMetrics          String?  @map("audience_metrics")
+  
+  // Content categories and niches (stored as JSON array)
+  // Expected format: ["fashion", "lifestyle", "beauty", "travel"]
+  contentCategories        String?  @map("content_categories")
+  
+  // Performance history (stored as JSON)
+  // Expected format: JSON object with historical campaign data, avg performance, etc.
+  performanceHistory       String?  @map("performance_history")
+  
+  // Availability and rates
+  availabilityStatus       String   @default("available") @map("availability_status") // available, busy, unavailable
+  ratePerPost              Float?   @map("rate_per_post")
+  ratePerVideo             Float?   @map("rate_per_video")
+  ratePerStory             Float?   @map("rate_per_story")
+  
+  // Verification and quality
+  isVerified               Boolean  @default(false) @map("is_verified")
+  qualityScore             Float?   @map("quality_score") // 0-100 score
+  
+  // Notes for internal use
+  internalNotes            String?  @map("internal_notes")
+  
+  // Campaign relationships (many-to-many)
+  campaignInfluencers      CampaignInfluencer[]
+  
+  // User relationships (if this influencer has a user account)
+  users                    User[]
+  
+  // Timestamps
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  @@map("influencers")
+  @@index([primaryPlatform])
+  @@index([availabilityStatus])
+  @@index([isVerified])
+}
+
+// CampaignInfluencer - Junction table for many-to-many relationship
+// Tracks influencer participation in campaigns with collaboration details
+model CampaignInfluencer {
+  id                       String   @id @default(uuid())
+  
+  // Relationships
+  campaignId               String   @map("campaign_id")
+  campaign                 Campaign @relation(fields: [campaignId], references: [campaignId], onDelete: Cascade)
+  
+  influencerId             String   @map("influencer_id")
+  influencer               Influencer @relation(fields: [influencerId], references: [influencerId], onDelete: Cascade)
+  
+  // Collaboration details
+  role                     String?  @map("role") // ambassador, content creator, reviewer, etc.
+  collaborationStatus      String   @default("invited") @map("collaboration_status") // invited, accepted, declined, active, completed
+  
+  // Deliverables (stored as JSON array)
+  // Expected format: ["2 Instagram posts", "1 YouTube video", "3 Stories"]
+  agreedDeliverables       String?  @map("agreed_deliverables")
+  deliveredContent         String?  @map("delivered_content") // JSON array of delivered items
+  
+  // Payment
+  agreedPayment            Float?   @map("agreed_payment")
+  paymentStatus            String   @default("pending") @map("payment_status") // pending, paid, partial
+  
+  // Performance for this collaboration
+  performanceMetrics       String?  @map("performance_metrics") // JSON with views, engagement, etc.
+  
+  // Timestamps
+  invitedAt                DateTime @default(now()) @map("invited_at")
+  acceptedAt               DateTime? @map("accepted_at")
+  completedAt              DateTime? @map("completed_at")
+  
+  @@map("campaign_influencers")
+  @@unique([campaignId, influencerId])
+  @@index([campaignId])
+  @@index([influencerId])
+  @@index([collaborationStatus])
+}
+
+// Notification Entity - In-app and email notifications for users
+// Phase 4.2: Notifications System
+model Notification {
+  notificationId   String   @id @default(uuid()) @map("notification_id")
+  userId           String   @map("user_id")
+  user             User     @relation("UserNotifications", fields: [userId], references: [userId], onDelete: Cascade)
+  
+  // Notification details
+  notificationType String   @map("notification_type") // campaign, collaboration, payment, system
+  category         String   @map("category") // info, warning, success, error
+  title            String   @map("title")
+  message          String   @map("message")
+  metadata         String?  @map("metadata") // JSON with additional data
+  
+  // Action and priority
+  actionUrl        String?  @map("action_url")
+  priority         String   @default("normal") @map("priority") // low, normal, high, urgent
+  
+  // Status
+  isRead           Boolean  @default(false) @map("is_read")
+  readAt           DateTime? @map("read_at")
+  
+  // Timestamps
+  createdAt        DateTime @default(now()) @map("created_at")
+  
+  @@map("notifications")
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// NotificationPreferences Entity - User preferences for notifications
+// Phase 4.2: Notifications System
+model NotificationPreferences {
+  preferenceId         String   @id @default(uuid()) @map("preference_id")
+  userId               String   @unique @map("user_id")
+  user                 User     @relation("UserNotificationPreferences", fields: [userId], references: [userId], onDelete: Cascade)
+  
+  // Email preferences
+  emailCampaign        Boolean  @default(true) @map("email_campaign")
+  emailCollaboration   Boolean  @default(true) @map("email_collaboration")
+  emailPayment         Boolean  @default(true) @map("email_payment")
+  emailSystem          Boolean  @default(true) @map("email_system")
+  
+  // In-app preferences
+  inAppCampaign        Boolean  @default(true) @map("inapp_campaign")
+  inAppCollaboration   Boolean  @default(true) @map("inapp_collaboration")
+  inAppPayment         Boolean  @default(true) @map("inapp_payment")
+  inAppSystem          Boolean  @default(true) @map("inapp_system")
+  
+  // Timestamps
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  
+  @@map("notification_preferences")
+}
+
+// Media Entity - File uploads and media management
+// Phase 4.3: File Upload & Media Management
+model Media {
+  mediaId              String   @id @default(uuid()) @map("media_id")
+  userId               String   @map("user_id")
+  user                 User     @relation("UserMedia", fields: [userId], references: [userId], onDelete: Cascade)
+  
+  // File information
+  filename             String   @map("filename")
+  originalName         String   @map("original_name")
+  mimeType             String   @map("mime_type")
+  size                 Int      @map("size") // in bytes
+  
+  // URLs
+  url                  String   @map("url")
+  thumbnailUrl         String?  @map("thumbnail_url")
+  
+  // Association (polymorphic)
+  entityType           String?  @map("entity_type") // campaign, influencer, collaboration, user
+  entityId             String?  @map("entity_id")
+  
+  // Purpose
+  purpose              String   @default("general") @map("purpose") // profile, campaign, deliverable, general
+  
+  // Access control
+  isPublic             Boolean  @default(false) @map("is_public")
+  
+  // Metadata (JSON)
+  metadata             String?  @map("metadata") // width, height, duration, etc.
+  
+  // Timestamps
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  
+  @@map("media")
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([purpose])
+}

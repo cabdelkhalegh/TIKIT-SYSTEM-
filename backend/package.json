@@ -1,0 +1,43 @@
+{
+  "name": "@tikit/backend",
+  "version": "0.7.0",
+  "description": "TIKIT Backend - API and Database Layer",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate",
+    "db:reset": "prisma migrate reset",
+    "db:seed": "node prisma/seed.js",
+    "db:verify": "node prisma/verify.js"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "keywords": [
+    "backend",
+    "api",
+    "prisma"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "prisma": "^5.9.1"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.9.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-validator": "^7.3.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.0.2",
+    "nodemailer": "^8.0.0",
+    "sharp": "^0.34.5"
+  }
+}

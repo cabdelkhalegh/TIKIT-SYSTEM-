@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: tikit-db
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tikitdb}
+      POSTGRES_USER: ${POSTGRES_USER:-tikit_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tikit_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tikit_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tikit-network
+
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tikit-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://tikit_user:tikit_password@db:5432/tikitdb}
+      PORT: 3001
+      NODE_ENV: ${NODE_ENV:-development}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Mount source code for development hot-reload (comment out for production)
+      - ./backend/src:/app/src:ro
+      - ./backend/prisma:/app/prisma:ro
+    networks:
+      - tikit-network
+    command: >
+      sh -c "
+        npx prisma migrate deploy &&
+        npx prisma generate &&
+        node src/index.js
+      "
+
+  # Frontend Web Application (Placeholder)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tikit-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+      NODE_ENV: ${NODE_ENV:-development}
+    depends_on:
+      - backend
+    volumes:
+      # Mount source code for development (comment out for production)
+      - ./frontend/src:/app/src:ro
+    networks:
+      - tikit-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  tikit-network:
+    driver: bridge
