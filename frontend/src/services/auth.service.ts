@@ -3,13 +3,39 @@ import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, Us
 
 export const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
-    return response.data;
+    const response = await apiClient.post<any>('/auth/login', credentials);
+    // Backend returns { success: true, data: { userAccount, authToken } }
+    // Transform to match frontend interface { token, user }
+    return {
+      token: response.data.data.authToken,
+      user: {
+        id: response.data.data.userAccount.userId,
+        email: response.data.data.userAccount.email,
+        fullName: response.data.data.userAccount.fullName,
+        role: response.data.data.userAccount.role,
+        profileImage: response.data.data.userAccount.profileImageUrl,
+        createdAt: response.data.data.userAccount.createdAt,
+        updatedAt: response.data.data.userAccount.updatedAt,
+      }
+    };
   },
 
   async register(userData: RegisterRequest): Promise<RegisterResponse> {
-    const response = await apiClient.post<RegisterResponse>('/auth/register', userData);
-    return response.data;
+    const response = await apiClient.post<any>('/auth/register', userData);
+    // Backend returns { success: true, data: { userAccount, authToken } }
+    // Transform to match frontend interface { token, user }
+    return {
+      token: response.data.data.authToken,
+      user: {
+        id: response.data.data.userAccount.userId,
+        email: response.data.data.userAccount.email,
+        fullName: response.data.data.userAccount.fullName,
+        role: response.data.data.userAccount.role,
+        profileImage: response.data.data.userAccount.profileImageUrl,
+        createdAt: response.data.data.userAccount.createdAt,
+        updatedAt: response.data.data.userAccount.updatedAt,
+      }
+    };
   },
 
   async logout(): Promise<void> {
