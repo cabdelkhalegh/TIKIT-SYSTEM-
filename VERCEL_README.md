@@ -4,9 +4,30 @@ Deploy the TIKIT Influencer Marketing Platform to Vercel in under 5 minutes!
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/cabdelkhalegh/TIKIT-SYSTEM-&project-name=tikit-system&repository-name=tikit-system&root-directory=frontend)
 
-## 🚀 One-Click Deploy
+## 🚀 One-Click Deploy (Recommended)
 
-Click the button above to deploy automatically with pre-configured settings.
+Click the button above to deploy automatically with **pre-configured settings**.
+
+### What's Auto-Configured ✨
+
+The `vercel.json` file automatically configures:
+- ✅ Project name: `tikit-system`
+- ✅ Root directory: `frontend`
+- ✅ Framework: Next.js (auto-detected)
+- ✅ Build/Install commands
+- ✅ Default environment variables
+- ✅ Security headers
+- ✅ Function timeouts
+- ✅ Deployment regions
+
+### What You Need to Customize ⚠️
+
+**Only 2 required values** (your backend API URLs):
+
+1. `NEXT_PUBLIC_API_URL` - Update from placeholder to your actual backend URL
+2. `NEXT_PUBLIC_API_BASE_URL` - Update from placeholder to your actual backend URL
+
+All other environment variables have sensible defaults!
 
 ## 📋 Manual Deployment Steps
 
@@ -23,30 +44,37 @@ Click the button above to deploy automatically with pre-configured settings.
 
 ### Step 2: Configure Project Settings
 
-**IMPORTANT**: Set these before deploying:
+**Root Directory**: Set to `frontend` (IMPORTANT!)
 
-| Setting | Value | Required |
-|---------|-------|----------|
-| **Root Directory** | `frontend` | ✅ YES |
+All other settings are **auto-configured** from `vercel.json`:
+
+| Setting | Value | Status |
+|---------|-------|--------|
+| **Root Directory** | `frontend` | ⚠️ Set manually |
 | **Framework Preset** | Next.js | ✅ Auto-detected |
-| **Build Command** | `npm run build` | ✅ Auto-set |
-| **Output Directory** | `.next` | ✅ Auto-set |
-| **Install Command** | `npm install` | ✅ Auto-set |
+| **Build Command** | `npm run build` | ✅ Auto-configured |
+| **Output Directory** | `.next` | ✅ Auto-configured |
+| **Install Command** | `npm install` | ✅ Auto-configured |
 
-### Step 3: Add Environment Variables
+### Step 3: Update Environment Variables
 
-Click "Environment Variables" and add these:
+Vercel will auto-populate environment variables from `vercel.json`. 
 
-#### Required Variables
+**You ONLY need to update 2 values:**
 
 ```bash
-# Backend API URLs (replace with your actual backend URL)
+# UPDATE THESE with your actual backend URL:
 NEXT_PUBLIC_API_URL=https://your-backend.railway.app/api/v1
 NEXT_PUBLIC_API_BASE_URL=https://your-backend.railway.app
+```
 
-# App Configuration
+**These are already set with defaults** (no action needed):
+
+```bash
 NEXT_PUBLIC_APP_NAME=TIKIT
-NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
+NEXT_PUBLIC_APP_URL=https://tikit-system.vercel.app
+NEXT_PUBLIC_ENABLE_ANALYTICS=false
+NEXT_PUBLIC_ENABLE_NOTIFICATIONS=true
 ```
 
 #### Optional Variables

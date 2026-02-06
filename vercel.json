@@ -1,8 +1,73 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "name": "tikit-system",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_APP_NAME": "TIKIT",
+      "NEXT_PUBLIC_ENABLE_ANALYTICS": "false",
+      "NEXT_PUBLIC_ENABLE_NOTIFICATIONS": "true"
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_API_URL": {
+      "description": "Backend API URL with /api/v1 path (e.g., https://your-backend.railway.app/api/v1). REQUIRED: Update this with your backend URL.",
+      "value": "https://your-backend-url.com/api/v1"
+    },
+    "NEXT_PUBLIC_API_BASE_URL": {
+      "description": "Backend base URL without path (e.g., https://your-backend.railway.app). REQUIRED: Update this with your backend URL.",
+      "value": "https://your-backend-url.com"
+    },
+    "NEXT_PUBLIC_APP_NAME": {
+      "description": "Application display name",
+      "value": "TIKIT"
+    },
+    "NEXT_PUBLIC_APP_URL": {
+      "description": "Your Vercel deployment URL. Auto-filled after first deployment.",
+      "value": "https://tikit-system.vercel.app"
+    },
+    "NEXT_PUBLIC_ENABLE_ANALYTICS": {
+      "description": "Enable analytics features (true/false)",
+      "value": "false"
+    },
+    "NEXT_PUBLIC_ENABLE_NOTIFICATIONS": {
+      "description": "Enable real-time notifications (true/false)",
+      "value": "true"
+    }
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "copilot/build-client-campaign-ui": true
+    }
+  },
+  "regions": ["iad1"],
+  "functions": {
+    "app/**/*.tsx": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
 }
