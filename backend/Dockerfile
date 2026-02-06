@@ -10,6 +10,12 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
+# Copy Prisma schema
+COPY prisma ./prisma/
+
+# Generate Prisma Client
+RUN npx prisma generate
+
 # Copy application code
 COPY . .
 
