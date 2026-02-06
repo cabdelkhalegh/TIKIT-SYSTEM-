@@ -1,6 +1,7 @@
 // TIKIT System - Database Seed Script
 // PRD Section 4.2, 4.3 & 4.4: Test data for Client, Campaign, and Influencer Entities
 
+require('dotenv').config();
 const { PrismaClient } = require('@prisma/client')
 
 const dbClient = new PrismaClient()

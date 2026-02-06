@@ -6,8 +6,12 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const { PrismaClient } = require('@prisma/client');
 
-// Import authentication routes
+// Import routes
 const authRoutes = require('./routes/auth-routes');
+const clientRoutes = require('./routes/client-routes');
+const campaignRoutes = require('./routes/campaign-routes');
+const influencerRoutes = require('./routes/influencer-routes');
+const collaborationRoutes = require('./routes/collaboration-routes');
 
 // Load environment variables
 dotenv.config();
@@ -20,8 +24,12 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Authentication routes (public)
+// API Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/clients', clientRoutes);
+app.use('/api/v1/campaigns', campaignRoutes);
+app.use('/api/v1/influencers', influencerRoutes);
+app.use('/api/v1/collaborations', collaborationRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -29,343 +37,20 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     service: 'TIKIT Backend API',
     timestamp: new Date().toISOString(),
-    version: '0.3.1'
+    version: '0.4.0'
   });
-});
-
-// API v1 routes - Clients
-app.get('/api/v1/clients', async (req, res) => {
-  try {
-    const clients = await prisma.client.findMany({
-      include: {
-        campaigns: {
-          select: {
-            campaignId: true,
-            campaignName: true,
-            status: true
-          }
-        }
-      }
-    });
-    res.json({
-      success: true,
-      data: clients,
-      count: clients.length
-    });
-  } catch (error) {
-    console.error('Error fetching clients:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch clients'
-    });
-  }
-});
-
-app.get('/api/v1/clients/:id', async (req, res) => {
-  try {
-    const client = await prisma.client.findUnique({
-      where: { clientId: req.params.id },
-      include: {
-        campaigns: true
-      }
-    });
-    
-    if (!client) {
-      return res.status(404).json({
-        success: false,
-        error: 'Client not found'
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: client
-    });
-  } catch (error) {
-    console.error('Error fetching client:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch client'
-    });
-  }
-});
-
-// API v1 routes - Campaigns
-app.get('/api/v1/campaigns', async (req, res) => {
-  try {
-    const { status, clientId } = req.query;
-    
-    const where = {};
-    if (status) where.status = status;
-    if (clientId) where.clientId = clientId;
-    
-    const campaigns = await prisma.campaign.findMany({
-      where,
-      include: {
-        client: {
-          select: {
-            clientId: true,
-            brandDisplayName: true,
-            legalCompanyName: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
-    
-    res.json({
-      success: true,
-      data: campaigns,
-      count: campaigns.length
-    });
-  } catch (error) {
-    console.error('Error fetching campaigns:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch campaigns'
-    });
-  }
-});
-
-app.get('/api/v1/campaigns/:id', async (req, res) => {
-  try {
-    const campaign = await prisma.campaign.findUnique({
-      where: { campaignId: req.params.id },
-      include: {
-        client: true
-      }
-    });
-    
-    if (!campaign) {
-      return res.status(404).json({
-        success: false,
-        error: 'Campaign not found'
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: campaign
-    });
-  } catch (error) {
-    console.error('Error fetching campaign:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch campaign'
-    });
-  }
-});
-
-app.post('/api/v1/campaigns', async (req, res) => {
-  try {
-    const campaign = await prisma.campaign.create({
-      data: req.body,
-      include: {
-        client: true
-      }
-    });
-    
-    res.status(201).json({
-      success: true,
-      data: campaign
-    });
-  } catch (error) {
-    console.error('Error creating campaign:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create campaign'
-    });
-  }
-});
-
-// API v1 routes - Influencers
-app.get('/api/v1/influencers', async (req, res) => {
-  try {
-    const { platform, status, verified } = req.query;
-    
-    const where = {};
-    if (platform) where.primaryPlatform = platform;
-    if (status) where.availabilityStatus = status;
-    if (verified !== undefined) where.isVerified = verified === 'true';
-    
-    const influencers = await prisma.influencer.findMany({
-      where,
-      include: {
-        campaignInfluencers: {
-          include: {
-            campaign: {
-              select: {
-                campaignId: true,
-                campaignName: true,
-                status: true
-              }
-            }
-          }
-        }
-      },
-      orderBy: {
-        qualityScore: 'desc'
-      }
-    });
-    
-    res.json({
-      success: true,
-      data: influencers,
-      count: influencers.length
-    });
-  } catch (error) {
-    console.error('Error fetching influencers:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch influencers'
-    });
-  }
-});
-
-app.get('/api/v1/influencers/:id', async (req, res) => {
-  try {
-    const influencer = await prisma.influencer.findUnique({
-      where: { influencerId: req.params.id },
-      include: {
-        campaignInfluencers: {
-          include: {
-            campaign: {
-              include: {
-                client: {
-                  select: {
-                    clientId: true,
-                    brandDisplayName: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-    
-    if (!influencer) {
-      return res.status(404).json({
-        success: false,
-        error: 'Influencer not found'
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: influencer
-    });
-  } catch (error) {
-    console.error('Error fetching influencer:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch influencer'
-    });
-  }
-});
-
-app.post('/api/v1/influencers', async (req, res) => {
-  try {
-    const influencer = await prisma.influencer.create({
-      data: req.body
-    });
-    
-    res.status(201).json({
-      success: true,
-      data: influencer
-    });
-  } catch (error) {
-    console.error('Error creating influencer:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create influencer'
-    });
-  }
-});
-
-// API v1 routes - Campaign-Influencer Collaborations
-app.get('/api/v1/collaborations', async (req, res) => {
-  try {
-    const { campaignId, influencerId, status } = req.query;
-    
-    const where = {};
-    if (campaignId) where.campaignId = campaignId;
-    if (influencerId) where.influencerId = influencerId;
-    if (status) where.collaborationStatus = status;
-    
-    const collaborations = await prisma.campaignInfluencer.findMany({
-      where,
-      include: {
-        campaign: {
-          select: {
-            campaignId: true,
-            campaignName: true,
-            status: true,
-            client: {
-              select: {
-                brandDisplayName: true
-              }
-            }
-          }
-        },
-        influencer: {
-          select: {
-            influencerId: true,
-            displayName: true,
-            fullName: true,
-            primaryPlatform: true
-          }
-        }
-      },
-      orderBy: {
-        invitedAt: 'desc'
-      }
-    });
-    
-    res.json({
-      success: true,
-      data: collaborations,
-      count: collaborations.length
-    });
-  } catch (error) {
-    console.error('Error fetching collaborations:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch collaborations'
-    });
-  }
-});
-
-app.post('/api/v1/collaborations', async (req, res) => {
-  try {
-    const collaboration = await prisma.campaignInfluencer.create({
-      data: req.body,
-      include: {
-        campaign: true,
-        influencer: true
-      }
-    });
-    
-    res.status(201).json({
-      success: true,
-      data: collaboration
-    });
-  } catch (error) {
-    console.error('Error creating collaboration:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create collaboration'
-    });
-  }
 });
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
     message: 'TIKIT Backend API',
-    version: '0.3.1',
+    version: '0.4.0',
+    features: {
+      authentication: 'JWT-based authentication with role-based access control',
+      campaignLifecycle: 'Campaign status transitions (draft → active → paused/completed)',
+      collaborationWorkflow: 'Influencer collaboration lifecycle management'
+    },
     endpoints: {
       health: '/health',
       auth: {
@@ -375,24 +60,59 @@ app.get('/', (req, res) => {
         updateProfile: 'PUT /api/v1/auth/profile (protected)',
         changePassword: 'POST /api/v1/auth/change-password (protected)'
       },
-      clients: '/api/v1/clients',
-      campaigns: '/api/v1/campaigns',
-      influencers: '/api/v1/influencers',
-      collaborations: '/api/v1/collaborations',
-      'filters': 'All endpoints support filtering via query params'
+      clients: {
+        list: 'GET /api/v1/clients (protected)',
+        get: 'GET /api/v1/clients/:id (protected)',
+        create: 'POST /api/v1/clients (protected: admin, client_manager)',
+        update: 'PUT /api/v1/clients/:id (protected: admin, client_manager)',
+        delete: 'DELETE /api/v1/clients/:id (protected: admin)'
+      },
+      campaigns: {
+        list: 'GET /api/v1/campaigns (protected, filters: status, clientId)',
+        get: 'GET /api/v1/campaigns/:id (protected)',
+        create: 'POST /api/v1/campaigns (protected)',
+        update: 'PUT /api/v1/campaigns/:id (protected)',
+        delete: 'DELETE /api/v1/campaigns/:id (protected: admin)',
+        activate: 'POST /api/v1/campaigns/:id/activate (protected)',
+        pause: 'POST /api/v1/campaigns/:id/pause (protected)',
+        resume: 'POST /api/v1/campaigns/:id/resume (protected)',
+        complete: 'POST /api/v1/campaigns/:id/complete (protected)',
+        cancel: 'POST /api/v1/campaigns/:id/cancel (protected)',
+        budget: 'GET /api/v1/campaigns/:id/budget (protected)'
+      },
+      influencers: {
+        list: 'GET /api/v1/influencers (protected, filters: platform, status, verified)',
+        get: 'GET /api/v1/influencers/:id (protected)',
+        create: 'POST /api/v1/influencers (protected: admin, influencer_manager)',
+        update: 'PUT /api/v1/influencers/:id (protected: admin, influencer_manager)',
+        delete: 'DELETE /api/v1/influencers/:id (protected: admin)'
+      },
+      collaborations: {
+        list: 'GET /api/v1/collaborations (protected, filters: campaignId, influencerId, status)',
+        get: 'GET /api/v1/collaborations/:id (protected)',
+        create: 'POST /api/v1/collaborations (protected)',
+        update: 'PUT /api/v1/collaborations/:id (protected)',
+        delete: 'DELETE /api/v1/collaborations/:id (protected: admin)',
+        accept: 'POST /api/v1/collaborations/:id/accept (protected)',
+        decline: 'POST /api/v1/collaborations/:id/decline (protected)',
+        start: 'POST /api/v1/collaborations/:id/start (protected)',
+        complete: 'POST /api/v1/collaborations/:id/complete (protected)',
+        cancel: 'POST /api/v1/collaborations/:id/cancel (protected)'
+      }
     }
   });
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 TIKIT Backend API running on port ${PORT}`);
+  console.log(`🚀 TIKIT Backend API v0.4.0 running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🔐 Auth API: http://localhost:${PORT}/api/v1/auth`);
-  console.log(`👥 Clients API: http://localhost:${PORT}/api/v1/clients`);
-  console.log(`🎯 Campaigns API: http://localhost:${PORT}/api/v1/campaigns`);
-  console.log(`⭐ Influencers API: http://localhost:${PORT}/api/v1/influencers`);
-  console.log(`🤝 Collaborations API: http://localhost:${PORT}/api/v1/collaborations`);
+  console.log(`👥 Clients API: http://localhost:${PORT}/api/v1/clients (protected)`);
+  console.log(`🎯 Campaigns API: http://localhost:${PORT}/api/v1/campaigns (protected, with lifecycle)`);
+  console.log(`⭐ Influencers API: http://localhost:${PORT}/api/v1/influencers (protected)`);
+  console.log(`🤝 Collaborations API: http://localhost:${PORT}/api/v1/collaborations (protected, with workflow)`);
+  console.log(`\n✨ Features: Authentication, Campaign Lifecycle, Collaboration Workflow`);
 });
 
 // Graceful shutdown
