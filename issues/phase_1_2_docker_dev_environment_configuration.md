@@ -11,11 +11,11 @@
 Create Dockerfiles for backend and frontend, configure docker-compose for backend, frontend, and postgres. Add development `.env.example` and ensure Dev/Prod parity.
 
 ## ✅ Acceptance Criteria  
-- [ ] Dockerfile for backend and frontend (multi-stage if needed)  
-- [ ] `docker-compose.yml` runs all services together  
-- [ ] `.env.example` for both backend and frontend  
-- [ ] All containers build and run locally  
-- [ ] README updated with docker commands
+- [x] Dockerfile for backend and frontend (multi-stage if needed)  
+- [x] `docker-compose.yml` runs all services together  
+- [x] `.env.example` for both backend and frontend  
+- [x] All containers build and run locally  
+- [x] README updated with docker commands
 
 ## 🔧 Implementation Steps  
 1. Create `backend/Dockerfile` and `frontend/Dockerfile`  
