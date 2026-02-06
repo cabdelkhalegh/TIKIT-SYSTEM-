@@ -108,6 +108,8 @@ export default function CampaignForm({
     },
   });
 
+  // Note: Using 'as any' for useFieldArray with nested paths is a known limitation in react-hook-form v7
+  // This is the recommended workaround: https://github.com/react-hook-form/react-hook-form/issues/4055
   const {
     fields: objectiveFields,
     append: appendObjective,

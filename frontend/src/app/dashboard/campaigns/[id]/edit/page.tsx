@@ -68,26 +68,35 @@ export default function EditCampaignPage() {
   }
 
   // Parse JSON fields if needed
+  const parseJsonField = <T,>(field: string | T | undefined, fallback: T): T => {
+    if (typeof field === 'string') {
+      try {
+        return JSON.parse(field);
+      } catch {
+        return fallback;
+      }
+    }
+    return field ?? fallback;
+  };
+
   const campaign: Campaign = {
     ...campaignData.data,
-    campaignObjectives: Array.isArray(campaignData.data.campaignObjectives)
-      ? campaignData.data.campaignObjectives
-      : campaignData.data.campaignObjectives
-      ? JSON.parse(campaignData.data.campaignObjectives as any)
-      : [],
-    targetAudience:
-      typeof campaignData.data.targetAudienceJson === 'string'
-        ? JSON.parse(campaignData.data.targetAudienceJson)
-        : campaignData.data.targetAudience,
-    targetPlatforms: Array.isArray(campaignData.data.targetPlatforms)
-      ? campaignData.data.targetPlatforms
-      : campaignData.data.targetPlatformsJson
-      ? JSON.parse(campaignData.data.targetPlatformsJson as any)
-      : [],
-    performanceKPIs:
-      typeof campaignData.data.performanceKPIsJson === 'string'
-        ? JSON.parse(campaignData.data.performanceKPIsJson)
-        : campaignData.data.performanceKPIs,
+    campaignObjectives: parseJsonField<string[]>(
+      campaignData.data.campaignObjectives as any,
+      []
+    ),
+    targetAudience: parseJsonField(
+      campaignData.data.targetAudienceJson,
+      undefined
+    ),
+    targetPlatforms: parseJsonField<string[]>(
+      campaignData.data.targetPlatforms as any,
+      []
+    ),
+    performanceKPIs: parseJsonField(
+      campaignData.data.performanceKPIsJson,
+      undefined
+    ),
   };
 
   const clients = (clientsData?.data || []).map((client) => ({
