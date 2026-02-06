@@ -32,7 +32,6 @@ out/
 *.swp
 *.swo
 *~
-.DS_Store
 
 # Environment variables
 .env
@@ -43,7 +42,6 @@ out/
 
 # Logs
 logs/
-*.log
 
 # Testing
 coverage/
