@@ -17,6 +17,7 @@ import {
   Building2
 } from 'lucide-react';
 import { useState } from 'react';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -126,14 +127,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar (mobile) */}
-        <header className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
+        {/* Top bar */}
+        <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100"
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
           >
             <Menu className="h-6 w-6" />
           </button>
+          <div className="flex-1 lg:flex-none"></div>
+          <NotificationCenter />
         </header>
 
         {/* Page content */}
