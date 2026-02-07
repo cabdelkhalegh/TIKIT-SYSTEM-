@@ -84,6 +84,7 @@ For complete control and self-hosted deployment, see [DEPLOY_NOW.md](./DEPLOY_NO
 - 📋 [REQUIRED_VALUES_GUIDE.md](./REQUIRED_VALUES_GUIDE.md) - **EXACT values needed** (if using backend)
 - ⚡ [VERCEL_README.md](./VERCEL_README.md) - Quick Vercel deployment guide
 - 🔧 [VERCEL_AUTO_CONFIG_GUIDE.md](./VERCEL_AUTO_CONFIG_GUIDE.md) - Auto-configuration details
+- 🔄 [VERCEL_ENV_MIGRATION.md](./VERCEL_ENV_MIGRATION.md) - **Environment variables setup & migration guide**
 
 ### Alternative: Deploy with Docker 🐳
 
