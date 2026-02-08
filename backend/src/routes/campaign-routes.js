@@ -303,16 +303,7 @@ router.get('/:id/budget', asyncHandler(async (req, res) => {
   });
 }));
 
-// Delete campaign (admin only)
-router.delete('/:id', asyncHandler(async (req, res) => {
-  await prisma.campaign.delete({
-    where: { campaignId: req.params.id }
-  });
-  
-  res.json({
-    success: true,
-    message: 'Campaign deleted successfully'
-  });
-}));
+// Note: DELETE endpoint is provided by the CRUD factory above
+// Role-based access control for DELETE is handled by the role-based-method middleware
 
 module.exports = router;

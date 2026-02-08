@@ -117,8 +117,8 @@ function createCrudRouter(options) {
       });
       
       const result = await beforeUpdate(req.params.id, data, existingEntity, req, res);
-      // If result is a response object, return early
-      if (result && result.headersSent) {
+      // If response was already sent in the hook, return early
+      if (res.headersSent) {
         return;
       }
       if (result !== undefined) {
