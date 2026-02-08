@@ -12,6 +12,7 @@ const router = createCrudRouter({
   prisma,
   modelName: 'client',
   idField: 'clientId',
+  orderBy: { accountCreatedAt: 'desc' },
   includeRelations: {
     list: {
       campaigns: {

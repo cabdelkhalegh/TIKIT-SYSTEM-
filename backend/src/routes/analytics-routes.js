@@ -161,12 +161,12 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
     const campaignsByStatus = await prismaClient.campaign.groupBy({
       by: ['status'],
       _count: {
-        id: true
+        _all: true
       }
     });
 
     const statusBreakdown = campaignsByStatus.reduce((acc, item) => {
-      acc[item.status] = item._count.id;
+      acc[item.status] = item._count._all;
       return acc;
     }, {});
 
@@ -182,7 +182,7 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
     // Get performance metrics from completed collaborations
     const completedCollaborations = await prismaClient.campaignInfluencer.findMany({
       where: {
-        status: 'completed'
+        collaborationStatus: 'completed'
       },
       select: {
         performanceMetrics: true
@@ -195,21 +195,25 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
 
     completedCollaborations.forEach(collab => {
       if (collab.performanceMetrics) {
-        totalReachValue += collab.performanceMetrics.reach || 0;
-        totalEngagementValue += collab.performanceMetrics.engagement || 0;
-        totalImpressionsValue += collab.performanceMetrics.impressions || 0;
+        try {
+          const metrics = typeof collab.performanceMetrics === 'string'
+            ? JSON.parse(collab.performanceMetrics) : collab.performanceMetrics;
+          totalReachValue += metrics.reach || 0;
+          totalEngagementValue += metrics.engagement || 0;
+          totalImpressionsValue += metrics.impressions || 0;
+        } catch { /* skip invalid JSON */ }
       }
     });
 
     // Get active collaborations
     const activeCollaborations = await prismaClient.campaignInfluencer.findMany({
       where: {
-        status: 'active'
+        collaborationStatus: 'active'
       },
       include: {
         campaign: {
           select: {
-            name: true
+            campaignName: true
           }
         },
         influencer: {
@@ -220,7 +224,7 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
       },
       take: 10,
       orderBy: {
-        startedAt: 'desc'
+        invitedAt: 'desc'
       }
     });
 
@@ -232,9 +236,9 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
         }
       },
       include: {
-        collaborations: {
+        campaignInfluencers: {
           where: {
-            status: 'completed'
+            collaborationStatus: 'completed'
           },
           select: {
             performanceMetrics: true
@@ -245,13 +249,20 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
     });
 
     const campaignsWithEngagement = topCampaigns.map(campaign => {
-      const totalEngagement = campaign.collaborations.reduce((sum, collab) => {
-        return sum + (collab.performanceMetrics?.engagement || 0);
+      const totalEngagement = campaign.campaignInfluencers.reduce((sum, collab) => {
+        if (collab.performanceMetrics) {
+          try {
+            const metrics = typeof collab.performanceMetrics === 'string'
+              ? JSON.parse(collab.performanceMetrics) : collab.performanceMetrics;
+            return sum + (metrics.engagement || 0);
+          } catch { return sum; }
+        }
+        return sum;
       }, 0);
       
       return {
-        id: campaign.id,
-        name: campaign.name,
+        id: campaign.campaignId,
+        name: campaign.campaignName,
         status: campaign.status,
         totalEngagement
       };
@@ -260,16 +271,16 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
     // Get top influencers by performance
     const topInfluencers = await prismaClient.influencer.findMany({
       where: {
-        campaigns: {
+        campaignInfluencers: {
           some: {
-            status: 'completed'
+            collaborationStatus: 'completed'
           }
         }
       },
       include: {
-        campaigns: {
+        campaignInfluencers: {
           where: {
-            status: 'completed'
+            collaborationStatus: 'completed'
           },
           select: {
             performanceMetrics: true
@@ -280,15 +291,22 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
     });
 
     const influencersWithEngagement = topInfluencers.map(influencer => {
-      const totalEngagement = influencer.campaigns.reduce((sum, campaign) => {
-        return sum + (campaign.performanceMetrics?.engagement || 0);
+      const totalEngagement = influencer.campaignInfluencers.reduce((sum, collab) => {
+        if (collab.performanceMetrics) {
+          try {
+            const metrics = typeof collab.performanceMetrics === 'string'
+              ? JSON.parse(collab.performanceMetrics) : collab.performanceMetrics;
+            return sum + (metrics.engagement || 0);
+          } catch { return sum; }
+        }
+        return sum;
       }, 0);
       
       return {
-        id: influencer.id,
+        id: influencer.influencerId,
         name: influencer.fullName,
         totalEngagement,
-        completedCampaigns: influencer.campaigns.length
+        completedCampaigns: influencer.campaignInfluencers.length
       };
     }).sort((a, b) => b.totalEngagement - a.totalEngagement).slice(0, 5);
 
@@ -302,9 +320,15 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
     const platformCounts = {};
     allInfluencers.forEach(inf => {
       if (inf.socialMediaHandles) {
-        Object.keys(inf.socialMediaHandles).forEach(platform => {
-          platformCounts[platform] = (platformCounts[platform] || 0) + 1;
-        });
+        try {
+          const handles = typeof inf.socialMediaHandles === 'string'
+            ? JSON.parse(inf.socialMediaHandles) : inf.socialMediaHandles;
+          if (handles && typeof handles === 'object') {
+            Object.keys(handles).forEach(platform => {
+              platformCounts[platform] = (platformCounts[platform] || 0) + 1;
+            });
+          }
+        } catch { /* skip invalid JSON */ }
       }
     });
 
@@ -338,11 +362,11 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
       },
       activeCollaborations: activeCollaborations.map(collab => ({
         id: collab.id,
-        campaignName: collab.campaign.name,
+        campaignName: collab.campaign.campaignName,
         influencerName: collab.influencer.fullName,
         role: collab.role,
-        status: collab.status,
-        startedAt: collab.startedAt
+        status: collab.collaborationStatus,
+        invitedAt: collab.invitedAt
       })),
       topPerformers: {
         campaigns: campaignsWithEngagement,
@@ -372,22 +396,22 @@ analyticsRouter.get('/export', requireAuthentication, async (req, res, next) => 
 
     // Get all campaigns
     const campaigns = await prismaClient.campaign.findMany({
-      select: { id: true }
+      select: { campaignId: true }
     });
 
     // Get all influencers
     const influencers = await prismaClient.influencer.findMany({
-      select: { id: true }
+      select: { influencerId: true }
     });
 
     // Generate analytics for all campaigns (limit to prevent timeout)
     const campaignAnalytics = await Promise.all(
-      campaigns.slice(0, 50).map(c => CampaignAnalyticsEngine.generateCampaignAnalytics(c.id))
+      campaigns.slice(0, 50).map(c => CampaignAnalyticsEngine.generateCampaignAnalytics(c.campaignId))
     );
 
     // Generate analytics for all influencers (limit to prevent timeout)
     const influencerAnalytics = await Promise.all(
-      influencers.slice(0, 50).map(i => InfluencerAnalyticsEngine.generateInfluencerAnalytics(i.id))
+      influencers.slice(0, 50).map(i => InfluencerAnalyticsEngine.generateInfluencerAnalytics(i.influencerId))
     );
 
     const exportData = {

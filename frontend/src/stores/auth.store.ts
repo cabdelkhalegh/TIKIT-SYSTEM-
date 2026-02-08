@@ -3,6 +3,17 @@ import { persist } from 'zustand/middleware';
 import type { AuthStore, User } from '@/types/auth.types';
 import { apiClient } from '@/lib/api-client';
 
+// Helper to sync auth state to a cookie so Next.js middleware can read it
+function syncAuthCookie(token: string | null, isAuthenticated: boolean) {
+  if (typeof document === 'undefined') return;
+  if (token && isAuthenticated) {
+    const cookieValue = JSON.stringify({ state: { token, isAuthenticated } });
+    document.cookie = `tikit-auth-storage=${encodeURIComponent(cookieValue)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+  } else {
+    document.cookie = 'tikit-auth-storage=; path=/; max-age=0';
+  }
+}
+
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
@@ -14,6 +25,9 @@ export const useAuthStore = create<AuthStore>()(
         // Set token in API client headers
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
+        // Sync to cookie for middleware
+        syncAuthCookie(token, true);
+        
         set({
           user,
           token,
@@ -24,6 +38,9 @@ export const useAuthStore = create<AuthStore>()(
       logout: () => {
         // Remove token from API client headers
         delete apiClient.defaults.headers.common['Authorization'];
+        
+        // Clear cookie
+        syncAuthCookie(null, false);
         
         set({
           user: null,
@@ -41,6 +58,8 @@ export const useAuthStore = create<AuthStore>()(
         const state = useAuthStore.getState();
         if (state.token) {
           apiClient.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
+          // Ensure cookie is in sync
+          syncAuthCookie(state.token, true);
         }
       },
     }),

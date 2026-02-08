@@ -78,6 +78,7 @@ export interface BudgetStatus {
 export interface CampaignListResponse {
   success: boolean;
   data: Campaign[];
+  count: number;
   pagination?: {
     page: number;
     perPage: number;

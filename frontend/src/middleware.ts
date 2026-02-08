@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('tikit-auth-storage')?.value;
+  const rawCookie = request.cookies.get('tikit-auth-storage')?.value;
+  const token = rawCookie ? decodeURIComponent(rawCookie) : undefined;
   
   // Check if the request is for a protected route
   if (request.nextUrl.pathname.startsWith('/dashboard')) {
