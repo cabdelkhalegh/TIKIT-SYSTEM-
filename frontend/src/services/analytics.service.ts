@@ -90,7 +90,7 @@ function mapDashboardResponse(raw: Record<string, any>): DashboardSummary {
       totalEngagement: performance.totalEngagement || 0,
       totalImpressions: performance.totalImpressions || 0,
       avgEngagementRate: performance.totalReach > 0
-        ? parseFloat(((performance.totalEngagement / performance.totalReach) * 100).toFixed(2))
+        ? Math.round((performance.totalEngagement / performance.totalReach) * 10000) / 100
         : 0,
     },
     activeCollaborations: {

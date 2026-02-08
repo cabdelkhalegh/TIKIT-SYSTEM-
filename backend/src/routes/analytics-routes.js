@@ -8,6 +8,21 @@ const { NotFoundError } = require('../utils/error-types');
 const prismaClient = new PrismaClient();
 
 /**
+ * Safely parse a JSON metrics field (stored as string in SQLite)
+ * @param {*} value - The raw field value (string or object)
+ * @returns {Object} Parsed object or empty object on failure
+ */
+function parseMetrics(value) {
+  if (!value) return {};
+  if (typeof value === 'object') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return {};
+  }
+}
+
+/**
  * @route   GET /api/v1/analytics/campaigns/:id
  * @desc    Get detailed analytics for a specific campaign
  * @access  Private
@@ -194,15 +209,10 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
     let totalImpressionsValue = 0;
 
     completedCollaborations.forEach(collab => {
-      if (collab.performanceMetrics) {
-        try {
-          const metrics = typeof collab.performanceMetrics === 'string'
-            ? JSON.parse(collab.performanceMetrics) : collab.performanceMetrics;
-          totalReachValue += metrics.reach || 0;
-          totalEngagementValue += metrics.engagement || 0;
-          totalImpressionsValue += metrics.impressions || 0;
-        } catch { /* skip invalid JSON */ }
-      }
+      const metrics = parseMetrics(collab.performanceMetrics);
+      totalReachValue += metrics.reach || 0;
+      totalEngagementValue += metrics.engagement || 0;
+      totalImpressionsValue += metrics.impressions || 0;
     });
 
     // Get active collaborations
@@ -250,14 +260,8 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
 
     const campaignsWithEngagement = topCampaigns.map(campaign => {
       const totalEngagement = campaign.campaignInfluencers.reduce((sum, collab) => {
-        if (collab.performanceMetrics) {
-          try {
-            const metrics = typeof collab.performanceMetrics === 'string'
-              ? JSON.parse(collab.performanceMetrics) : collab.performanceMetrics;
-            return sum + (metrics.engagement || 0);
-          } catch { return sum; }
-        }
-        return sum;
+        const metrics = parseMetrics(collab.performanceMetrics);
+        return sum + (metrics.engagement || 0);
       }, 0);
       
       return {
@@ -292,14 +296,8 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
 
     const influencersWithEngagement = topInfluencers.map(influencer => {
       const totalEngagement = influencer.campaignInfluencers.reduce((sum, collab) => {
-        if (collab.performanceMetrics) {
-          try {
-            const metrics = typeof collab.performanceMetrics === 'string'
-              ? JSON.parse(collab.performanceMetrics) : collab.performanceMetrics;
-            return sum + (metrics.engagement || 0);
-          } catch { return sum; }
-        }
-        return sum;
+        const metrics = parseMetrics(collab.performanceMetrics);
+        return sum + (metrics.engagement || 0);
       }, 0);
       
       return {
@@ -319,16 +317,11 @@ analyticsRouter.get('/dashboard', requireAuthentication, async (req, res, next) 
 
     const platformCounts = {};
     allInfluencers.forEach(inf => {
-      if (inf.socialMediaHandles) {
-        try {
-          const handles = typeof inf.socialMediaHandles === 'string'
-            ? JSON.parse(inf.socialMediaHandles) : inf.socialMediaHandles;
-          if (handles && typeof handles === 'object') {
-            Object.keys(handles).forEach(platform => {
-              platformCounts[platform] = (platformCounts[platform] || 0) + 1;
-            });
-          }
-        } catch { /* skip invalid JSON */ }
+      const handles = parseMetrics(inf.socialMediaHandles);
+      if (handles && typeof handles === 'object') {
+        Object.keys(handles).forEach(platform => {
+          platformCounts[platform] = (platformCounts[platform] || 0) + 1;
+        });
       }
     });
 
