@@ -26,12 +26,12 @@ export const notificationService = {
   },
 
   async markAsRead(id: string): Promise<Notification> {
-    const response = await apiClient.post<Notification>(`/notifications/mark-read/${id}`);
+    const response = await apiClient.patch<Notification>(`/notifications/${id}/read`);
     return response.data;
   },
 
   async markAllAsRead(): Promise<void> {
-    await apiClient.post('/notifications/mark-all-read');
+    await apiClient.patch('/notifications/mark-all-read');
   },
 
   async delete(id: string): Promise<void> {
@@ -39,7 +39,7 @@ export const notificationService = {
   },
 
   async getUnreadCount(): Promise<number> {
-    const response = await apiClient.get<UnreadCountResponse>('/notifications/unread/count');
-    return response.data.count;
+    const response = await apiClient.get<UnreadCountResponse>('/notifications/unread-count');
+    return response.data.unreadCount ?? response.data.count ?? 0;
   },
 };

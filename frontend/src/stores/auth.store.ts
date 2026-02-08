@@ -65,6 +65,13 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'tikit-auth-storage',
+      onRehydrateStorage: () => (state) => {
+        // After hydrating from localStorage, restore the auth header on the API client
+        if (state?.token) {
+          apiClient.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
+          syncAuthCookie(state.token, true);
+        }
+      },
     }
   )
 );
