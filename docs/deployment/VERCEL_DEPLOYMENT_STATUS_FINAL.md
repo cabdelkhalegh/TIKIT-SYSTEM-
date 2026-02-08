@@ -68,7 +68,7 @@ The TIKIT platform is now **fully configured and ready** for Vercel deployment. 
 
 ### Option 1: One-Click Deploy ⭐ (Fastest)
 
-1. Open [VERCEL_README.md](./VERCEL_README.md)
+1. Open [VERCEL_README.md](../guides/VERCEL_README.md)
 2. Click "Deploy with Vercel" button
 3. Set root directory: `frontend`
 4. Add environment variables (see below)
