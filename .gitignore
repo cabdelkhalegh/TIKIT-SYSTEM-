@@ -34,3 +34,4 @@ Thumbs.db
 *.swp
 *.swo
 cat: .gitignore_append: No such file or directory
+.next/
