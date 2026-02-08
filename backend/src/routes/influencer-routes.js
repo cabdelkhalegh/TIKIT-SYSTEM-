@@ -1,8 +1,9 @@
 // Influencer Management Routes
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
-const { requireAuthentication, requireRole } = require('../middleware/access-control');
+const { requireAuthentication } = require('../middleware/access-control');
 const createCrudRouter = require('../utils/crud-router-factory');
+const createRoleBasedMethodMiddleware = require('../middleware/role-based-method');
 const asyncHandler = require('../middleware/async-handler');
 const InfluencerMatchingEngine = require('../utils/influencer-matching-engine');
 
@@ -55,21 +56,11 @@ const router = createCrudRouter({
 // Apply authentication to all routes
 router.use('/', requireAuthentication);
 
-// Apply role-based access control to mutation operations
-router.use('/', (req, res, next) => {
-  const mutationMethods = ['POST', 'PUT'];
-  const deleteMethods = ['DELETE'];
-  
-  if (mutationMethods.includes(req.method)) {
-    return requireRole(['admin', 'influencer_manager'])(req, res, next);
-  }
-  
-  if (deleteMethods.includes(req.method)) {
-    return requireRole(['admin'])(req, res, next);
-  }
-  
-  next();
-});
+// Apply role-based access control
+router.use('/', createRoleBasedMethodMiddleware({
+  mutation: ['admin', 'influencer_manager'],
+  delete: ['admin']
+}));
 
 // ===== DISCOVERY & MATCHING ENDPOINTS =====
 

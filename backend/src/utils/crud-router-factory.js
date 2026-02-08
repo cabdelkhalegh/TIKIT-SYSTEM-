@@ -15,6 +15,8 @@ const asyncHandler = require('../middleware/async-handler');
  * @param {Object} options.includeRelations - Relations to include in queries
  * @param {Object} options.listFilters - Custom filters for list endpoint
  * @param {string} options.orderBy - Default ordering for list endpoint
+ * @param {Function} options.beforeCreate - Hook called before creating entity with req.body
+ * @param {Function} options.beforeUpdate - Hook called before updating entity with (id, req.body, existingEntity)
  * @returns {Object} Router with CRUD operations
  */
 function createCrudRouter(options) {
@@ -24,7 +26,9 @@ function createCrudRouter(options) {
     idField,
     includeRelations = {},
     listFilters = {},
-    orderBy = { createdAt: 'desc' }
+    orderBy = { createdAt: 'desc' },
+    beforeCreate,
+    beforeUpdate
   } = options;
 
   const router = express.Router();
@@ -79,8 +83,18 @@ function createCrudRouter(options) {
    * Create new entity
    */
   router.post('/', asyncHandler(async (req, res) => {
+    let data = req.body;
+    
+    // Call beforeCreate hook if provided
+    if (beforeCreate) {
+      const result = await beforeCreate(data, req);
+      if (result !== undefined) {
+        data = result;
+      }
+    }
+    
     const newEntity = await model.create({
-      data: req.body,
+      data,
       include: includeRelations.create || includeRelations.default || {}
     });
     
@@ -94,9 +108,27 @@ function createCrudRouter(options) {
    * Update entity
    */
   router.put('/:id', asyncHandler(async (req, res) => {
+    let data = req.body;
+    
+    // Call beforeUpdate hook if provided
+    if (beforeUpdate) {
+      const existingEntity = await model.findUnique({
+        where: { [idField]: req.params.id }
+      });
+      
+      const result = await beforeUpdate(req.params.id, data, existingEntity, req, res);
+      // If result is a response object, return early
+      if (result && result.headersSent) {
+        return;
+      }
+      if (result !== undefined) {
+        data = result;
+      }
+    }
+    
     const updatedEntity = await model.update({
       where: { [idField]: req.params.id },
-      data: req.body,
+      data,
       include: includeRelations.update || includeRelations.default || {}
     });
     

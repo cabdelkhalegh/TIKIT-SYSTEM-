@@ -1,8 +1,9 @@
 // Client Management Routes
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
-const { requireAuthentication, requireRole } = require('../middleware/access-control');
+const { requireAuthentication } = require('../middleware/access-control');
 const createCrudRouter = require('../utils/crud-router-factory');
+const createRoleBasedMethodMiddleware = require('../middleware/role-based-method');
 
 const prisma = new PrismaClient();
 
@@ -30,20 +31,10 @@ const router = createCrudRouter({
 // Apply authentication middleware to all routes
 router.use('/', requireAuthentication);
 
-// Apply role-based access control to mutation operations
-router.use('/', (req, res, next) => {
-  const mutationMethods = ['POST', 'PUT'];
-  const deleteMethods = ['DELETE'];
-  
-  if (mutationMethods.includes(req.method)) {
-    return requireRole(['admin', 'client_manager'])(req, res, next);
-  }
-  
-  if (deleteMethods.includes(req.method)) {
-    return requireRole(['admin'])(req, res, next);
-  }
-  
-  next();
-});
+// Apply role-based access control
+router.use('/', createRoleBasedMethodMiddleware({
+  mutation: ['admin', 'client_manager'],
+  delete: ['admin']
+}));
 
 module.exports = router;

@@ -1,15 +1,16 @@
 // Campaign Management Routes with Lifecycle Support
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
-const { requireAuthentication, requireRole } = require('../middleware/access-control');
+const { requireAuthentication } = require('../middleware/access-control');
 const createCrudRouter = require('../utils/crud-router-factory');
+const createRoleBasedMethodMiddleware = require('../middleware/role-based-method');
 const asyncHandler = require('../middleware/async-handler');
 const { createStatusValidator, CAMPAIGN_STATUS_TRANSITIONS } = require('../utils/status-transition-helper');
 
 const prisma = new PrismaClient();
 const canTransitionStatus = createStatusValidator(CAMPAIGN_STATUS_TRANSITIONS);
 
-// Create base CRUD router with custom filters
+// Create base CRUD router with custom filters and hooks
 const router = createCrudRouter({
   prisma,
   modelName: 'campaign',
@@ -45,45 +46,34 @@ const router = createCrudRouter({
     default: {
       client: true
     }
+  },
+  beforeCreate: (data) => {
+    // Set default status to draft if not provided
+    return { ...data, status: data.status || 'draft' };
+  },
+  beforeUpdate: async (id, data, existingEntity, req, res) => {
+    // If status is being changed, validate the transition
+    if (data.status && existingEntity && data.status !== existingEntity.status) {
+      if (!canTransitionStatus(existingEntity.status, data.status)) {
+        res.status(400).json({
+          success: false,
+          error: `Cannot transition campaign from ${existingEntity.status} to ${data.status}`,
+          allowedTransitions: CAMPAIGN_STATUS_TRANSITIONS[existingEntity.status]
+        });
+        return; // Return undefined to stop processing
+      }
+    }
+    return data;
   }
 });
 
 // Apply authentication to all routes
 router.use('/', requireAuthentication);
 
-// Override POST to set default status
-const originalPost = router.stack.find(layer => layer.route?.path === '/' && layer.route?.methods.post);
-if (originalPost) {
-  const originalHandler = originalPost.route.stack[originalPost.route.stack.length - 1].handle;
-  originalPost.route.stack[originalPost.route.stack.length - 1].handle = asyncHandler(async (req, res) => {
-    req.body.status = req.body.status || 'draft';
-    return originalHandler(req, res);
-  });
-}
-
-// Override PUT to validate status transitions
-const originalPut = router.stack.find(layer => layer.route?.path === '/:id' && layer.route?.methods.put);
-if (originalPut) {
-  const originalHandler = originalPut.route.stack[originalPut.route.stack.length - 1].handle;
-  originalPut.route.stack[originalPut.route.stack.length - 1].handle = asyncHandler(async (req, res) => {
-    if (req.body.status) {
-      const existingCampaign = await prisma.campaign.findUnique({
-        where: { campaignId: req.params.id }
-      });
-      
-      if (existingCampaign && req.body.status !== existingCampaign.status) {
-        if (!canTransitionStatus(existingCampaign.status, req.body.status)) {
-          return res.status(400).json({
-            success: false,
-            error: `Cannot transition campaign from ${existingCampaign.status} to ${req.body.status}`,
-            allowedTransitions: CAMPAIGN_STATUS_TRANSITIONS[existingCampaign.status]
-          });
-        }
-      }
-    }
-    return originalHandler(req, res);
-  });
-}
+// Apply role-based access control
+router.use('/', createRoleBasedMethodMiddleware({
+  delete: ['admin']
+}));
 
 // Activate campaign (change status from draft to active)
 router.post('/:id/activate', asyncHandler(async (req, res) => {
@@ -314,7 +304,7 @@ router.get('/:id/budget', asyncHandler(async (req, res) => {
 }));
 
 // Delete campaign (admin only)
-router.delete('/:id', requireRole(['admin']), asyncHandler(async (req, res) => {
+router.delete('/:id', asyncHandler(async (req, res) => {
   await prisma.campaign.delete({
     where: { campaignId: req.params.id }
   });
