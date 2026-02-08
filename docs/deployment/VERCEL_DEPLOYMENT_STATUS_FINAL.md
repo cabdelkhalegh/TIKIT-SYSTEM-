@@ -134,7 +134,7 @@ const allowedOrigins = [
 - [ ] Can login (if backend connected)
 - [ ] Dashboard displays data
 
-**Full checklist**: See [VERCEL_DEPLOYMENT_CHECKLIST.md](./VERCEL_DEPLOYMENT_CHECKLIST.md)
+**Full checklist**: See [VERCEL_DEPLOYMENT_CHECKLIST.md](../guides/VERCEL_DEPLOYMENT_CHECKLIST.md)
 
 ---
 
