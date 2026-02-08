@@ -1,9 +1,0 @@
-{
-  "/_not-found/page": "/_not-found",
-  "/api/tickets/[id]/route": "/api/tickets/[id]",
-  "/api/users/route": "/api/users",
-  "/api/tickets/route": "/api/tickets",
-  "/page": "/",
-  "/tickets/[id]/page": "/tickets/[id]",
-  "/tickets/new/page": "/tickets/new"
-}
