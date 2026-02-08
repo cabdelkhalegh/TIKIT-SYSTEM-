@@ -75,6 +75,7 @@ export interface Influencer {
 export interface InfluencerListResponse {
   success: boolean;
   data: Influencer[];
+  count: number;
   pagination?: {
     page: number;
     perPage: number;
