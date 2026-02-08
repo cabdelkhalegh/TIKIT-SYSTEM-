@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api-client';
+import { BaseService } from './base.service';
 import type {
   Influencer,
   InfluencerListResponse,
@@ -15,7 +16,12 @@ import type {
   InfluencerStatus,
 } from '@/types/influencer.types';
 
-export const influencerService = {
+class InfluencerService extends BaseService<Influencer> {
+  constructor() {
+    super('/influencers');
+  }
+
+  // Extend getAll with typed response
   async getAll(params?: {
     page?: number;
     perPage?: number;
@@ -24,47 +30,44 @@ export const influencerService = {
     verified?: boolean;
     search?: string;
   }): Promise<InfluencerListResponse> {
-    const response = await apiClient.get<InfluencerListResponse>('/influencers', { params });
-    return response.data;
-  },
+    return super.getAll(params) as Promise<InfluencerListResponse>;
+  }
 
+  // Extend getById with typed response
   async getById(id: string): Promise<InfluencerResponse> {
-    const response = await apiClient.get<InfluencerResponse>(`/influencers/${id}`);
-    return response.data;
-  },
+    return super.getById(id) as Promise<InfluencerResponse>;
+  }
 
+  // Extend create with typed request/response
   async create(data: CreateInfluencerRequest): Promise<InfluencerResponse> {
-    const response = await apiClient.post<InfluencerResponse>('/influencers', data);
-    return response.data;
-  },
+    return super.create(data) as Promise<InfluencerResponse>;
+  }
 
+  // Extend update with typed request/response
   async update(id: string, data: UpdateInfluencerRequest): Promise<InfluencerResponse> {
-    const response = await apiClient.put<InfluencerResponse>(`/influencers/${id}`, data);
-    return response.data;
-  },
+    return super.update(id, data) as Promise<InfluencerResponse>;
+  }
 
-  async delete(id: string): Promise<{ success: boolean }> {
-    const response = await apiClient.delete<{ success: boolean }>(`/influencers/${id}`);
-    return response.data;
-  },
-
+  // Custom methods specific to influencers
   async advancedSearch(params: AdvancedSearchParams): Promise<AdvancedSearchResponse> {
-    const response = await apiClient.get<AdvancedSearchResponse>('/influencers/search/advanced', { params });
+    const response = await apiClient.get<AdvancedSearchResponse>(`${this.endpoint}/search/advanced`, { params });
     return response.data;
-  },
+  }
 
   async findMatchesForCampaign(campaignId: string): Promise<CampaignMatchResponse> {
-    const response = await apiClient.post<CampaignMatchResponse>(`/influencers/match/campaign/${campaignId}`);
+    const response = await apiClient.post<CampaignMatchResponse>(`${this.endpoint}/match/campaign/${campaignId}`);
     return response.data;
-  },
+  }
 
   async findSimilar(id: string): Promise<SimilarInfluencersResponse> {
-    const response = await apiClient.get<SimilarInfluencersResponse>(`/influencers/${id}/similar`);
+    const response = await apiClient.get<SimilarInfluencersResponse>(`${this.endpoint}/${id}/similar`);
     return response.data;
-  },
+  }
 
   async compareBulk(data: CompareInfluencersRequest): Promise<CompareInfluencersResponse> {
-    const response = await apiClient.post<CompareInfluencersResponse>('/influencers/compare/bulk', data);
+    const response = await apiClient.post<CompareInfluencersResponse>(`${this.endpoint}/compare/bulk`, data);
     return response.data;
-  },
-};
+  }
+}
+
+export const influencerService = new InfluencerService();
