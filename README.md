@@ -1,6 +1,10 @@
 # TIKIT-SYSTEM-
 This is the repository for the TIKIT Influencer Marketing Platform
 
+> **📋 IMPORTANT**: See [MERGE_RECOMMENDATIONS.md](./MERGE_RECOMMENDATIONS.md) for critical branch merges needed
+> 
+> **🔒 SECURITY**: Main branch has 4 high severity vulnerabilities - Security fixes available in branches
+
 ## 🎉 Current Status: Frontend & Backend Complete - Production Ready!
 
 **Phase 1: Infrastructure** ✅ (100%)
@@ -84,6 +88,7 @@ For complete control and self-hosted deployment, see [DEPLOY_NOW.md](./DEPLOY_NO
 - 📋 [REQUIRED_VALUES_GUIDE.md](./REQUIRED_VALUES_GUIDE.md) - **EXACT values needed** (if using backend)
 - ⚡ [VERCEL_README.md](./VERCEL_README.md) - Quick Vercel deployment guide
 - 🔧 [VERCEL_AUTO_CONFIG_GUIDE.md](./VERCEL_AUTO_CONFIG_GUIDE.md) - Auto-configuration details
+- 🔄 [VERCEL_ENV_MIGRATION.md](./VERCEL_ENV_MIGRATION.md) - **Environment variables setup & migration guide**
 
 ### Alternative: Deploy with Docker 🐳
 
@@ -159,22 +164,24 @@ npm run dev
 
 ## 📚 Documentation
 
-**Current Status & Planning:**
-- **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** - Comprehensive project status report
-- **[WHATS_NEXT.md](./WHATS_NEXT.md)** - Detailed next steps and timeline
-- **[PROGRESS_DASHBOARD.md](./PROGRESS_DASHBOARD.md)** - Visual progress tracking
+### Core Documentation (Root)
+- **[README.md](./README.md)** - This file
 - **[ROADMAP.md](./ROADMAP.md)** - Complete development roadmap
+- **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** - Current project status
+- **[EXECUTIVE_SUMMARY.md](./EXECUTIVE_SUMMARY.md)** - Executive overview
+- **[FINAL_PROJECT_STATUS.md](./FINAL_PROJECT_STATUS.md)** - Complete platform overview
+- **[WHATS_NEXT.md](./WHATS_NEXT.md)** - Next steps and timeline
 
-**Phase Documentation:**
-- **[PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md)** - Phase 1 completion report
-- **[PHASE_2.2_CAMPAIGN_ENTITY.md](./PHASE_2.2_CAMPAIGN_ENTITY.md)** - Campaign entity guide
-- **[PHASE_2.3_INFLUENCER_ENTITY.md](./PHASE_2.3_INFLUENCER_ENTITY.md)** - Influencer entity guide
-- **[PHASE_3.1_AUTHENTICATION.md](./PHASE_3.1_AUTHENTICATION.md)** - Authentication system guide
-- **[PHASE_3.2_CAMPAIGN_LIFECYCLE.md](./PHASE_3.2_CAMPAIGN_LIFECYCLE.md)** - Campaign lifecycle guide
+### Repository Management
+- **[BRANCH_CLEANUP_ANALYSIS.md](./BRANCH_CLEANUP_ANALYSIS.md)** - Complete branch analysis
+- **[MERGE_RECOMMENDATIONS.md](./MERGE_RECOMMENDATIONS.md)** - Branch merge guide
+- **[CLEANUP_SUMMARY.md](./CLEANUP_SUMMARY.md)** - Cleanup actions summary
 
-**Setup Guides:**
-- **[DOCKER_GUIDE.md](./DOCKER_GUIDE.md)** - Complete Docker setup and usage guide
-- **[PHASE_1_CHECKLIST.md](./PHASE_1_CHECKLIST.md)** - Phase 1 implementation checklist
+### Organized Documentation
+- **[docs/phases/](./docs/phases/)** - All phase implementation guides (20 files)
+- **[docs/deployment/](./docs/deployment/)** - Deployment guides and instructions (13 files)
+- **[docs/guides/](./docs/guides/)** - How-to guides and tutorials (7 files)
+- **[docs/archive/](./docs/archive/)** - Historical documentation (26 files)
 
 ## 📝 Available Commands
 
