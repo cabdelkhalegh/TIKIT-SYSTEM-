@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api-client';
+import { BaseService } from './base.service';
 import type {
   Client,
   ClientListResponse,
@@ -7,33 +7,34 @@ import type {
   UpdateClientRequest,
 } from '@/types/client.types';
 
-export const clientService = {
+class ClientService extends BaseService<Client> {
+  constructor() {
+    super('/clients');
+  }
+
+  // Extend getAll with typed response
   async getAll(params?: {
     page?: number;
     perPage?: number;
     search?: string;
   }): Promise<ClientListResponse> {
-    const response = await apiClient.get<ClientListResponse>('/clients', { params });
-    return response.data;
-  },
+    return super.getAll(params) as Promise<ClientListResponse>;
+  }
 
+  // Extend getById with typed response
   async getById(id: string): Promise<ClientResponse> {
-    const response = await apiClient.get<ClientResponse>(`/clients/${id}`);
-    return response.data;
-  },
+    return super.getById(id) as Promise<ClientResponse>;
+  }
 
+  // Extend create with typed request/response
   async create(data: CreateClientRequest): Promise<ClientResponse> {
-    const response = await apiClient.post<ClientResponse>('/clients', data);
-    return response.data;
-  },
+    return super.create(data) as Promise<ClientResponse>;
+  }
 
+  // Extend update with typed request/response
   async update(id: string, data: UpdateClientRequest): Promise<ClientResponse> {
-    const response = await apiClient.put<ClientResponse>(`/clients/${id}`, data);
-    return response.data;
-  },
+    return super.update(id, data) as Promise<ClientResponse>;
+  }
+}
 
-  async delete(id: string): Promise<{ success: boolean }> {
-    const response = await apiClient.delete<{ success: boolean }>(`/clients/${id}`);
-    return response.data;
-  },
-};
+export const clientService = new ClientService();
