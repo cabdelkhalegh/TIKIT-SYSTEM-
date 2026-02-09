@@ -25,9 +25,9 @@ export interface Campaign {
   updatedAt: string;
   client?: {
     clientId: string;
-    companyLegalName: string;
-    brandName: string;
-    industry?: string;
+    legalCompanyName: string;
+    brandDisplayName: string;
+    industryVertical?: string;
   };
   _count?: {
     campaignInfluencers: number;

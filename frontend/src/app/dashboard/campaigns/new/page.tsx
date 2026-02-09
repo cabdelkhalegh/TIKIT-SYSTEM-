@@ -47,9 +47,9 @@ export default function NewCampaignPage() {
   }
 
   const clients = (clientsData?.data || []).map((client) => ({
-    clientId: client.id,
-    brandName: client.brandName,
-    companyLegalName: client.companyLegalName,
+    clientId: client.clientId,
+    brandName: client.brandDisplayName,
+    companyLegalName: client.legalCompanyName,
   }));
 
   return (

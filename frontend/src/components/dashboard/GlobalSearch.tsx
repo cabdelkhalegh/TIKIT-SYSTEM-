@@ -82,11 +82,11 @@ export default function GlobalSearch() {
     if (clientsData?.data) {
       clientsData.data.forEach((client: any) => {
         allResults.push({
-          id: client.id,
+          id: client.clientId,
           type: 'client',
-          title: client.brandName || client.companyLegalName,
-          subtitle: client.industry,
-          href: `/dashboard/clients/${client.id}`,
+          title: client.brandDisplayName || client.legalCompanyName,
+          subtitle: client.industryVertical,
+          href: `/dashboard/clients/${client.clientId}`,
         });
       });
     }

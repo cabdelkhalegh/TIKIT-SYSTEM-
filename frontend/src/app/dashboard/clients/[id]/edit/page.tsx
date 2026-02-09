@@ -85,7 +85,7 @@ export default function EditClientPage() {
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">Edit Client</h1>
           <p className="mt-1 text-gray-600">
-            Update information for {client.brandName || client.companyLegalName}
+            Update information for {client.brandDisplayName || client.legalCompanyName}
           </p>
         </div>
 

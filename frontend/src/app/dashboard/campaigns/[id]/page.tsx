@@ -372,12 +372,12 @@ export default function CampaignDetailPage() {
                         href={`/dashboard/clients/${campaign.client.clientId}`}
                         className="text-purple-600 hover:text-purple-700 font-medium"
                       >
-                        {campaign.client.brandName || campaign.client.companyLegalName}
+                        {campaign.client.brandDisplayName || campaign.client.legalCompanyName}
                       </Link>
                     </div>
-                    {campaign.client.industry && (
+                    {campaign.client.industryVertical && (
                       <div className="text-sm text-gray-600">
-                        Industry: {campaign.client.industry}
+                        Industry: {campaign.client.industryVertical}
                       </div>
                     )}
                   </div>

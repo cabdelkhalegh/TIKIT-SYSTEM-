@@ -27,9 +27,9 @@ const communicationPreferenceSchema = z.object({
 });
 
 const clientFormSchema = z.object({
-  companyLegalName: z.string().min(1, 'Company legal name is required'),
-  brandName: z.string().min(1, 'Brand name is required'),
-  industry: z.string().optional(),
+  legalCompanyName: z.string().min(1, 'Company legal name is required'),
+  brandDisplayName: z.string().min(1, 'Brand name is required'),
+  industryVertical: z.string().optional(),
   websiteUrl: z.string().url('Invalid URL').optional(),
   primaryContacts: z.array(contactSchema).min(1, 'At least one primary contact is required'),
   billingContacts: z.array(contactSchema).optional(),
@@ -56,9 +56,9 @@ export default function ClientForm({ client, onSubmit, isSubmitting = false }: C
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientFormSchema),
     defaultValues: {
-      companyLegalName: '',
-      brandName: '',
-      industry: '',
+      legalCompanyName: '',
+      brandDisplayName: '',
+      industryVertical: '',
       websiteUrl: '',
       primaryContacts: [{ name: '', email: '', phone: '', role: '' }],
       billingContacts: [],
@@ -95,23 +95,39 @@ export default function ClientForm({ client, onSubmit, isSubmitting = false }: C
 
   useEffect(() => {
     if (client) {
+      let primaryContacts = [{ name: '', email: '', phone: '', role: '' }];
+      let billingContacts: { name: string; email: string; phone?: string; role?: string }[] = [];
+      let communicationPreferences: { channel: 'email' | 'phone' | 'slack' | 'teams'; value: string; preferred?: boolean }[] = [];
+      try { primaryContacts = client.primaryContactEmails ? JSON.parse(client.primaryContactEmails) : primaryContacts; } catch { /* fallback to default if JSON is invalid */ }
+      try { billingContacts = client.billingContactEmails ? JSON.parse(client.billingContactEmails) : []; } catch { /* fallback to empty if JSON is invalid */ }
+      try { communicationPreferences = client.preferredCommChannels ? JSON.parse(client.preferredCommChannels) : []; } catch { /* fallback to empty if JSON is invalid */ }
+
       reset({
-        companyLegalName: client.companyLegalName,
-        brandName: client.brandName,
-        industry: client.industry || '',
+        legalCompanyName: client.legalCompanyName,
+        brandDisplayName: client.brandDisplayName,
+        industryVertical: client.industryVertical || '',
         websiteUrl: client.websiteUrl || '',
-        primaryContacts: client.primaryContacts.length > 0 
-          ? client.primaryContacts 
+        primaryContacts: primaryContacts.length > 0 
+          ? primaryContacts 
           : [{ name: '', email: '', phone: '', role: '' }],
-        billingContacts: client.billingContacts || [],
-        communicationPreferences: client.communicationPreferences || [],
+        billingContacts,
+        communicationPreferences,
       });
     }
   }, [client, reset]);
 
   const handleFormSubmit = async (data: ClientFormData) => {
     try {
-      await onSubmit(data);
+      const payload: CreateClientRequest | UpdateClientRequest = {
+        legalCompanyName: data.legalCompanyName,
+        brandDisplayName: data.brandDisplayName,
+        industryVertical: data.industryVertical,
+        websiteUrl: data.websiteUrl,
+        primaryContactEmails: JSON.stringify(data.primaryContacts),
+        billingContactEmails: data.billingContacts ? JSON.stringify(data.billingContacts) : undefined,
+        preferredCommChannels: data.communicationPreferences ? JSON.stringify(data.communicationPreferences) : undefined,
+      };
+      await onSubmit(payload);
       toast.success(client ? 'Client updated successfully' : 'Client created successfully');
       router.push('/dashboard/clients');
     } catch (error: any) {
@@ -126,45 +142,45 @@ export default function ClientForm({ client, onSubmit, isSubmitting = false }: C
         <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="companyLegalName">
+            <Label htmlFor="legalCompanyName">
               Company Legal Name <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="companyLegalName"
-              {...register('companyLegalName')}
+              id="legalCompanyName"
+              {...register('legalCompanyName')}
               placeholder="Acme Corporation Inc."
               className="mt-1"
             />
-            {errors.companyLegalName && (
-              <p className="text-sm text-red-500 mt-1">{errors.companyLegalName.message}</p>
+            {errors.legalCompanyName && (
+              <p className="text-sm text-red-500 mt-1">{errors.legalCompanyName.message}</p>
             )}
           </div>
 
           <div>
-            <Label htmlFor="brandName">
+            <Label htmlFor="brandDisplayName">
               Brand Name <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="brandName"
-              {...register('brandName')}
+              id="brandDisplayName"
+              {...register('brandDisplayName')}
               placeholder="Acme"
               className="mt-1"
             />
-            {errors.brandName && (
-              <p className="text-sm text-red-500 mt-1">{errors.brandName.message}</p>
+            {errors.brandDisplayName && (
+              <p className="text-sm text-red-500 mt-1">{errors.brandDisplayName.message}</p>
             )}
           </div>
 
           <div>
-            <Label htmlFor="industry">Industry</Label>
+            <Label htmlFor="industryVertical">Industry</Label>
             <Input
-              id="industry"
-              {...register('industry')}
+              id="industryVertical"
+              {...register('industryVertical')}
               placeholder="Technology, Fashion, etc."
               className="mt-1"
             />
-            {errors.industry && (
-              <p className="text-sm text-red-500 mt-1">{errors.industry.message}</p>
+            {errors.industryVertical && (
+              <p className="text-sm text-red-500 mt-1">{errors.industryVertical.message}</p>
             )}
           </div>
 
