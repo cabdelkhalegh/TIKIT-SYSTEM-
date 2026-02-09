@@ -49,6 +49,11 @@ export default function CollaborationForm({
   onSubmit,
   isSubmitting = false,
 }: CollaborationFormProps) {
+  const parseDeliverables = (json?: string) => {
+    try { return JSON.parse(json || '[]'); } catch { return []; }
+  };
+  const defaultDeliverable = [{ name: '', description: '', dueDate: '', status: 'pending' as const }];
+
   const [deliverableCount, setDeliverableCount] = useState(1);
 
   const {
@@ -64,9 +69,9 @@ export default function CollaborationForm({
       campaignId: collaboration?.campaignId || '',
       influencerId: collaboration?.influencerId || '',
       role: collaboration?.role || '',
-      agreedDeliverables: (() => { try { return JSON.parse(collaboration?.agreedDeliverables || '[]'); } catch { return []; } })().length > 0
-        ? (() => { try { return JSON.parse(collaboration?.agreedDeliverables || '[]'); } catch { return []; } })()
-        : [{ name: '', description: '', dueDate: '', status: 'pending' as const }],
+      agreedDeliverables: parseDeliverables(collaboration?.agreedDeliverables).length > 0
+        ? parseDeliverables(collaboration?.agreedDeliverables)
+        : defaultDeliverable,
       agreedPayment: collaboration?.agreedPayment || undefined,
       notes: '',
     },
@@ -83,9 +88,9 @@ export default function CollaborationForm({
         campaignId: collaboration.campaignId,
         influencerId: collaboration.influencerId,
         role: collaboration.role || '',
-        agreedDeliverables: (() => { try { return JSON.parse(collaboration.agreedDeliverables || '[]'); } catch { return []; } })().length > 0
-          ? (() => { try { return JSON.parse(collaboration.agreedDeliverables || '[]'); } catch { return []; } })()
-          : [{ name: '', description: '', dueDate: '', status: 'pending' as const }],
+        agreedDeliverables: parseDeliverables(collaboration.agreedDeliverables).length > 0
+          ? parseDeliverables(collaboration.agreedDeliverables)
+          : defaultDeliverable,
         agreedPayment: collaboration.agreedPayment,
         notes: '',
       });
