@@ -13,7 +13,6 @@ import type {
   CompareInfluencersRequest,
   CompareInfluencersResponse,
   Platform,
-  InfluencerStatus,
 } from '@/types/influencer.types';
 
 class InfluencerService extends BaseService<Influencer> {
@@ -26,7 +25,7 @@ class InfluencerService extends BaseService<Influencer> {
     page?: number;
     perPage?: number;
     platform?: Platform;
-    status?: InfluencerStatus;
+    status?: string;
     verified?: boolean;
     search?: string;
   }): Promise<InfluencerListResponse> {

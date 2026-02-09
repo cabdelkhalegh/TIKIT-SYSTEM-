@@ -38,7 +38,7 @@ type CollaborationFormData = z.infer<typeof collaborationFormSchema>;
 interface CollaborationFormProps {
   collaboration?: Collaboration;
   campaigns: Array<{ campaignId: string; campaignName: string }>;
-  influencers: Array<{ id: string; displayName?: string; fullName: string }>;
+  influencers: Array<{ influencerId: string; displayName?: string; fullName: string }>;
   onSubmit: (data: CreateCollaborationRequest | UpdateCollaborationRequest) => Promise<void>;
   isSubmitting?: boolean;
 }
@@ -141,7 +141,7 @@ export default function CollaborationForm({
             >
               <option value="">Select an influencer</option>
               {influencers.map((influencer) => (
-                <option key={influencer.id} value={influencer.id}>
+                <option key={influencer.influencerId} value={influencer.influencerId}>
                   {influencer.displayName || influencer.fullName}
                 </option>
               ))}

@@ -51,25 +51,68 @@ export interface PerformanceHistory {
 }
 
 export interface Influencer {
-  id: string;
+  influencerId: string;
   fullName: string;
   displayName?: string;
   bio?: string;
   email: string;
   phone?: string;
-  socialMediaHandles: SocialMediaHandles;
+  profileImageUrl?: string;
+  socialMediaHandles?: string;
   primaryPlatform: Platform;
-  contentCategories: ContentCategory[];
-  audienceMetrics: AudienceMetrics;
-  rates: Rates;
-  location?: string;
-  languages: string[];
-  verified: boolean;
+  contentCategories?: string;
+  audienceMetrics?: string;
+  ratePerPost?: number;
+  ratePerVideo?: number;
+  ratePerStory?: number;
+  city?: string;
+  country?: string;
+  isVerified: boolean;
   qualityScore: number;
-  performanceHistory?: PerformanceHistory[];
-  status: InfluencerStatus;
+  performanceHistory?: string;
+  availabilityStatus: string;
+  internalNotes?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Safely parse a JSON string with a fallback default value. */
+export function safeJsonParse<T>(value: string | undefined | null, fallback: T): T {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+/** Parse socialMediaHandles JSON string into SocialMediaHandles object. */
+export function parseSocialHandles(influencer: Influencer): SocialMediaHandles {
+  return safeJsonParse<SocialMediaHandles>(influencer.socialMediaHandles, {});
+}
+
+/** Parse audienceMetrics JSON string into AudienceMetrics object. */
+export function parseAudienceMetrics(influencer: Influencer): AudienceMetrics {
+  return safeJsonParse<AudienceMetrics>(influencer.audienceMetrics, {
+    followers: 0,
+    engagementRate: 0,
+    avgViews: 0,
+  });
+}
+
+/** Parse contentCategories JSON string into ContentCategory array. */
+export function parseContentCategories(influencer: Influencer): ContentCategory[] {
+  return safeJsonParse<ContentCategory[]>(influencer.contentCategories, []);
+}
+
+/** Parse performanceHistory JSON string into PerformanceHistory array. */
+export function parsePerformanceHistory(influencer: Influencer): PerformanceHistory[] {
+  return safeJsonParse<PerformanceHistory[]>(influencer.performanceHistory, []);
+}
+
+/** Build a display location string from city and country. */
+export function getDisplayLocation(influencer: Influencer): string {
+  return [influencer.city, influencer.country].filter(Boolean).join(', ');
 }
 
 export interface InfluencerListResponse {
@@ -95,16 +138,20 @@ export interface CreateInfluencerRequest {
   bio?: string;
   email: string;
   phone?: string;
-  socialMediaHandles: SocialMediaHandles;
+  profileImageUrl?: string;
+  socialMediaHandles?: string;
   primaryPlatform: Platform;
-  contentCategories: ContentCategory[];
-  audienceMetrics: AudienceMetrics;
-  rates: Rates;
-  location?: string;
-  languages: string[];
-  verified?: boolean;
+  contentCategories?: string;
+  audienceMetrics?: string;
+  ratePerPost?: number;
+  ratePerVideo?: number;
+  ratePerStory?: number;
+  city?: string;
+  country?: string;
+  isVerified?: boolean;
   qualityScore?: number;
-  status?: InfluencerStatus;
+  availabilityStatus?: string;
+  internalNotes?: string;
 }
 
 export interface UpdateInfluencerRequest extends Partial<CreateInfluencerRequest> {}
@@ -121,7 +168,6 @@ export interface AdvancedSearchParams {
   maxPrice?: number;
   minQualityScore?: number;
   verified?: boolean;
-  languages?: string[];
 }
 
 export interface AdvancedSearchResponse {

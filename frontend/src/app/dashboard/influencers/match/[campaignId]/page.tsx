@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import InfluencerCard from '@/components/influencers/InfluencerCard';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { parseAudienceMetrics } from '@/types/influencer.types';
 
 // SVG Circle Progress Constants
 // Circle radius = 32px, circumference = 2πr ≈ 201px
@@ -162,7 +163,7 @@ export default function CampaignMatchPage() {
 
                 <div className="space-y-6">
                   {matches.map((match) => (
-                    <Card key={match.influencer.id} className="overflow-hidden">
+                    <Card key={match.influencer.influencerId} className="overflow-hidden">
                       <div className="p-6">
                         <div className="flex items-start gap-6">
                           {/* Match Score Badge */}
@@ -204,7 +205,7 @@ export default function CampaignMatchPage() {
                           {/* Influencer Info */}
                           <div className="flex-1 min-w-0">
                             <Link
-                              href={`/dashboard/influencers/${match.influencer.id}`}
+                              href={`/dashboard/influencers/${match.influencer.influencerId}`}
                               className="text-xl font-semibold text-gray-900 hover:text-purple-600"
                             >
                               {match.influencer.displayName || match.influencer.fullName}
@@ -232,20 +233,20 @@ export default function CampaignMatchPage() {
                               <div>
                                 <p className="text-xs text-gray-600">Followers</p>
                                 <p className="text-lg font-semibold text-gray-900">
-                                  {match.influencer.audienceMetrics.followers.toLocaleString()}
+                                  {parseAudienceMetrics(match.influencer).followers.toLocaleString()}
                                 </p>
                               </div>
                               <div>
                                 <p className="text-xs text-gray-600">Engagement</p>
                                 <p className="text-lg font-semibold text-green-600">
-                                  {match.influencer.audienceMetrics.engagementRate.toFixed(2)}%
+                                  {parseAudienceMetrics(match.influencer).engagementRate.toFixed(2)}%
                                 </p>
                               </div>
-                              {match.influencer.rates.perPost && (
+                              {match.influencer.ratePerPost && (
                                 <div>
                                   <p className="text-xs text-gray-600">Rate per Post</p>
                                   <p className="text-lg font-semibold text-gray-900">
-                                    {formatCurrency(match.influencer.rates.perPost)}
+                                    {formatCurrency(match.influencer.ratePerPost)}
                                   </p>
                                 </div>
                               )}
@@ -254,7 +255,7 @@ export default function CampaignMatchPage() {
 
                           {/* Actions */}
                           <div className="flex-shrink-0 flex flex-col gap-2">
-                            <Link href={`/dashboard/influencers/${match.influencer.id}`}>
+                            <Link href={`/dashboard/influencers/${match.influencer.influencerId}`}>
                               <Button variant="outline" className="w-full">
                                 View Profile
                               </Button>

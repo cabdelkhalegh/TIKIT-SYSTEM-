@@ -157,13 +157,13 @@ export default function BulkInvitePage() {
                 <div className="divide-y divide-gray-200">
                   {filteredInfluencers.map((influencer) => (
                     <label
-                      key={influencer.id}
+                      key={influencer.influencerId}
                       className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer"
                     >
                       <input
                         type="checkbox"
-                        checked={selectedInfluencers.includes(influencer.id)}
-                        onChange={() => handleToggleInfluencer(influencer.id)}
+                        checked={selectedInfluencers.includes(influencer.influencerId)}
+                        onChange={() => handleToggleInfluencer(influencer.influencerId)}
                         className="h-4 w-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
                       />
                       <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">

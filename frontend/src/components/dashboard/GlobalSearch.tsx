@@ -106,11 +106,11 @@ export default function GlobalSearch() {
     if (influencersData?.data) {
       influencersData.data.forEach((influencer: any) => {
         allResults.push({
-          id: influencer.id,
+          id: influencer.influencerId,
           type: 'influencer',
           title: influencer.displayName || influencer.fullName,
           subtitle: influencer.primaryPlatform,
-          href: `/dashboard/influencers/${influencer.id}`,
+          href: `/dashboard/influencers/${influencer.influencerId}`,
         });
       });
     }
