@@ -73,4 +73,15 @@ export class BaseService<T> {
     const response = await apiClient.delete<BaseDeleteResponse>(`${this.endpoint}/${id}`);
     return response.data;
   }
+
+  /**
+   * Factory method to create action methods (e.g., activate, pause, etc.)
+   * Eliminates duplication of status transition methods
+   */
+  protected createActionMethod<R = BaseItemResponse<T>>(action: string) {
+    return async (id: string): Promise<R> => {
+      const response = await apiClient.post<R>(`${this.endpoint}/${id}/${action}`);
+      return response.data;
+    };
+  }
 }

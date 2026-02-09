@@ -3,24 +3,25 @@ const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const { requireAuthentication, requireRole } = require('../middleware/access-control');
+const { createStatusValidator, createStatusTransitionHandler, COLLABORATION_STATUS_TRANSITIONS } = require('../utils/status-transition-helper');
+const asyncHandler = require('../middleware/async-handler');
 
 const prisma = new PrismaClient();
 
-// Collaboration status workflow
-const COLLABORATION_STATUS_TRANSITIONS = {
-  invited: ['accepted', 'declined'],
-  accepted: ['active', 'cancelled'],
-  declined: [],
-  active: ['completed', 'cancelled'],
-  completed: [],
-  cancelled: []
-};
+// Use the status validator from helper
+const canTransitionCollaborationStatus = createStatusValidator(COLLABORATION_STATUS_TRANSITIONS);
 
-// Validate status transition
-function canTransitionCollaborationStatus(currentStatus, newStatus) {
-  const allowedTransitions = COLLABORATION_STATUS_TRANSITIONS[currentStatus] || [];
-  return allowedTransitions.includes(newStatus);
-}
+// Create a reusable status transition handler for collaborations
+const handleCollaborationStatusTransition = createStatusTransitionHandler({
+  prisma,
+  modelName: 'campaignInfluencer',
+  idField: 'collaborationId',
+  validator: canTransitionCollaborationStatus,
+  includeRelations: {
+    campaign: true,
+    influencer: true
+  }
+});
 
 // List all collaborations (authenticated users only)
 router.get('/', requireAuthentication, async (req, res) => {
@@ -189,235 +190,56 @@ router.put('/:id', requireAuthentication, async (req, res) => {
 });
 
 // Accept collaboration invitation (influencer accepts)
-router.post('/:id/accept', requireAuthentication, async (req, res) => {
-  try {
-    const collaborationRecord = await prisma.campaignInfluencer.findUnique({
-      where: { collaborationId: req.params.id }
-    });
-    
-    if (!collaborationRecord) {
-      return res.status(404).json({
-        success: false,
-        error: 'Collaboration not found'
-      });
-    }
-    
-    if (!canTransitionCollaborationStatus(collaborationRecord.collaborationStatus, 'accepted')) {
-      return res.status(400).json({
-        success: false,
-        error: `Cannot accept collaboration with status ${collaborationRecord.collaborationStatus}`
-      });
-    }
-    
-    const acceptedCollaboration = await prisma.campaignInfluencer.update({
-      where: { collaborationId: req.params.id },
-      data: { 
-        collaborationStatus: 'accepted',
-        acceptedAt: new Date()
-      },
-      include: {
-        campaign: true,
-        influencer: true
-      }
-    });
-    
-    res.json({
-      success: true,
-      data: acceptedCollaboration,
-      message: 'Collaboration accepted successfully'
-    });
-  } catch (err) {
-    console.error('Error accepting collaboration:', err);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to accept collaboration'
-    });
-  }
-});
+router.post('/:id/accept', requireAuthentication, asyncHandler(async (req, res) => {
+  return handleCollaborationStatusTransition(
+    req,
+    res,
+    'accepted',
+    'Collaboration accepted successfully',
+    { acceptedAt: new Date() }
+  );
+}));
 
 // Decline collaboration invitation
-router.post('/:id/decline', requireAuthentication, async (req, res) => {
-  try {
-    const collaborationRecord = await prisma.campaignInfluencer.findUnique({
-      where: { collaborationId: req.params.id }
-    });
-    
-    if (!collaborationRecord) {
-      return res.status(404).json({
-        success: false,
-        error: 'Collaboration not found'
-      });
-    }
-    
-    if (!canTransitionCollaborationStatus(collaborationRecord.collaborationStatus, 'declined')) {
-      return res.status(400).json({
-        success: false,
-        error: `Cannot decline collaboration with status ${collaborationRecord.collaborationStatus}`
-      });
-    }
-    
-    const declinedCollaboration = await prisma.campaignInfluencer.update({
-      where: { collaborationId: req.params.id },
-      data: { 
-        collaborationStatus: 'declined'
-      },
-      include: {
-        campaign: true,
-        influencer: true
-      }
-    });
-    
-    res.json({
-      success: true,
-      data: declinedCollaboration,
-      message: 'Collaboration declined'
-    });
-  } catch (err) {
-    console.error('Error declining collaboration:', err);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to decline collaboration'
-    });
-  }
-});
+router.post('/:id/decline', requireAuthentication, asyncHandler(async (req, res) => {
+  return handleCollaborationStatusTransition(
+    req,
+    res,
+    'declined',
+    'Collaboration declined'
+  );
+}));
 
 // Start collaboration (move to active)
-router.post('/:id/start', requireAuthentication, async (req, res) => {
-  try {
-    const collaborationRecord = await prisma.campaignInfluencer.findUnique({
-      where: { collaborationId: req.params.id }
-    });
-    
-    if (!collaborationRecord) {
-      return res.status(404).json({
-        success: false,
-        error: 'Collaboration not found'
-      });
-    }
-    
-    if (!canTransitionCollaborationStatus(collaborationRecord.collaborationStatus, 'active')) {
-      return res.status(400).json({
-        success: false,
-        error: `Cannot start collaboration with status ${collaborationRecord.collaborationStatus}`
-      });
-    }
-    
-    const activeCollaboration = await prisma.campaignInfluencer.update({
-      where: { collaborationId: req.params.id },
-      data: { 
-        collaborationStatus: 'active'
-      },
-      include: {
-        campaign: true,
-        influencer: true
-      }
-    });
-    
-    res.json({
-      success: true,
-      data: activeCollaboration,
-      message: 'Collaboration started successfully'
-    });
-  } catch (err) {
-    console.error('Error starting collaboration:', err);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to start collaboration'
-    });
-  }
-});
+router.post('/:id/start', requireAuthentication, asyncHandler(async (req, res) => {
+  return handleCollaborationStatusTransition(
+    req,
+    res,
+    'active',
+    'Collaboration started successfully'
+  );
+}));
 
 // Complete collaboration
-router.post('/:id/complete', requireAuthentication, async (req, res) => {
-  try {
-    const collaborationRecord = await prisma.campaignInfluencer.findUnique({
-      where: { collaborationId: req.params.id }
-    });
-    
-    if (!collaborationRecord) {
-      return res.status(404).json({
-        success: false,
-        error: 'Collaboration not found'
-      });
-    }
-    
-    if (!canTransitionCollaborationStatus(collaborationRecord.collaborationStatus, 'completed')) {
-      return res.status(400).json({
-        success: false,
-        error: `Cannot complete collaboration with status ${collaborationRecord.collaborationStatus}`
-      });
-    }
-    
-    const completedCollaboration = await prisma.campaignInfluencer.update({
-      where: { collaborationId: req.params.id },
-      data: { 
-        collaborationStatus: 'completed',
-        completedAt: new Date()
-      },
-      include: {
-        campaign: true,
-        influencer: true
-      }
-    });
-    
-    res.json({
-      success: true,
-      data: completedCollaboration,
-      message: 'Collaboration completed successfully'
-    });
-  } catch (err) {
-    console.error('Error completing collaboration:', err);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to complete collaboration'
-    });
-  }
-});
+router.post('/:id/complete', requireAuthentication, asyncHandler(async (req, res) => {
+  return handleCollaborationStatusTransition(
+    req,
+    res,
+    'completed',
+    'Collaboration completed successfully',
+    { completedAt: new Date() }
+  );
+}));
 
 // Cancel collaboration
-router.post('/:id/cancel', requireAuthentication, async (req, res) => {
-  try {
-    const collaborationRecord = await prisma.campaignInfluencer.findUnique({
-      where: { collaborationId: req.params.id }
-    });
-    
-    if (!collaborationRecord) {
-      return res.status(404).json({
-        success: false,
-        error: 'Collaboration not found'
-      });
-    }
-    
-    if (!canTransitionCollaborationStatus(collaborationRecord.collaborationStatus, 'cancelled')) {
-      return res.status(400).json({
-        success: false,
-        error: `Cannot cancel collaboration with status ${collaborationRecord.collaborationStatus}`
-      });
-    }
-    
-    const cancelledCollaboration = await prisma.campaignInfluencer.update({
-      where: { collaborationId: req.params.id },
-      data: { 
-        collaborationStatus: 'cancelled'
-      },
-      include: {
-        campaign: true,
-        influencer: true
-      }
-    });
-    
-    res.json({
-      success: true,
-      data: cancelledCollaboration,
-      message: 'Collaboration cancelled successfully'
-    });
-  } catch (err) {
-    console.error('Error cancelling collaboration:', err);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to cancel collaboration'
-    });
-  }
+router.post('/:id/cancel', requireAuthentication, asyncHandler(async (req, res) => {
+  return handleCollaborationStatusTransition(
+    req,
+    res,
+    'cancelled',
+    'Collaboration cancelled successfully'
+  );
+}));
 });
 
 // Delete collaboration (admin only)

@@ -11,6 +11,13 @@ import type {
 } from '@/types/campaign.types';
 
 class CampaignService extends BaseService<Campaign> {
+  // Use the factory method to create action methods
+  activate = this.createActionMethod<CampaignResponse>('activate');
+  pause = this.createActionMethod<CampaignResponse>('pause');
+  resume = this.createActionMethod<CampaignResponse>('resume');
+  complete = this.createActionMethod<CampaignResponse>('complete');
+  cancel = this.createActionMethod<CampaignResponse>('cancel');
+
   constructor() {
     super('/campaigns');
   }
@@ -38,32 +45,6 @@ class CampaignService extends BaseService<Campaign> {
   // Extend update with typed request/response
   async update(id: string, data: UpdateCampaignRequest): Promise<CampaignResponse> {
     return super.update(id, data) as Promise<CampaignResponse>;
-  }
-
-  // Campaign-specific lifecycle methods
-  async activate(id: string): Promise<CampaignResponse> {
-    const response = await apiClient.post<CampaignResponse>(`${this.endpoint}/${id}/activate`);
-    return response.data;
-  }
-
-  async pause(id: string): Promise<CampaignResponse> {
-    const response = await apiClient.post<CampaignResponse>(`${this.endpoint}/${id}/pause`);
-    return response.data;
-  }
-
-  async resume(id: string): Promise<CampaignResponse> {
-    const response = await apiClient.post<CampaignResponse>(`${this.endpoint}/${id}/resume`);
-    return response.data;
-  }
-
-  async complete(id: string): Promise<CampaignResponse> {
-    const response = await apiClient.post<CampaignResponse>(`${this.endpoint}/${id}/complete`);
-    return response.data;
-  }
-
-  async cancel(id: string): Promise<CampaignResponse> {
-    const response = await apiClient.post<CampaignResponse>(`${this.endpoint}/${id}/cancel`);
-    return response.data;
   }
 
   async getBudgetStatus(id: string): Promise<BudgetStatusResponse> {

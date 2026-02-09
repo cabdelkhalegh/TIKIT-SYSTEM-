@@ -27,16 +27,74 @@ const CAMPAIGN_STATUS_TRANSITIONS = {
 };
 
 const COLLABORATION_STATUS_TRANSITIONS = {
-  pending: ['accepted', 'rejected'],
-  accepted: ['in_progress', 'cancelled'],
-  in_progress: ['completed', 'cancelled'],
+  invited: ['accepted', 'declined'],
+  accepted: ['active', 'cancelled'],
+  declined: [],
+  active: ['completed', 'cancelled'],
   completed: [],
-  rejected: [],
   cancelled: []
 };
 
+/**
+ * Generic status transition handler factory
+ * Creates a reusable handler for status transitions to eliminate duplication
+ * 
+ * @param {Object} config - Configuration object
+ * @param {Object} config.prisma - Prisma client instance
+ * @param {string} config.modelName - Name of the Prisma model (e.g., 'campaign', 'campaignInfluencer')
+ * @param {string} config.idField - Primary key field name (e.g., 'campaignId', 'collaborationId')
+ * @param {Function} config.validator - Status validation function
+ * @param {Object} config.includeRelations - Relations to include in the query
+ * @returns {Function} Handler function for status transitions
+ */
+function createStatusTransitionHandler(config) {
+  const { prisma, modelName, idField, validator, includeRelations = {} } = config;
+
+  return async (req, res, newStatus, successMessage, additionalData = {}) => {
+    const id = req.params.id;
+
+    // Find the record
+    const record = await prisma[modelName].findUnique({
+      where: { [idField]: id }
+    });
+
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        error: `${modelName.charAt(0).toUpperCase() + modelName.slice(1)} not found`
+      });
+    }
+
+    // Validate status transition
+    if (!validator(record.status, newStatus)) {
+      return res.status(400).json({
+        success: false,
+        error: `Cannot transition to ${newStatus} from current status ${record.status}`,
+        currentStatus: record.status
+      });
+    }
+
+    // Update the record
+    const updatedRecord = await prisma[modelName].update({
+      where: { [idField]: id },
+      data: {
+        status: newStatus,
+        ...additionalData
+      },
+      include: includeRelations
+    });
+
+    return res.json({
+      success: true,
+      data: updatedRecord,
+      message: successMessage
+    });
+  };
+}
+
 module.exports = {
   createStatusValidator,
+  createStatusTransitionHandler,
   CAMPAIGN_STATUS_TRANSITIONS,
   COLLABORATION_STATUS_TRANSITIONS
 };

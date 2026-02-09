@@ -3,7 +3,7 @@ const router = express.Router();
 const { upload, handleMulterError } = require('../middleware/upload-handler');
 const fileUploadService = require('../services/file-upload-service');
 const { requireAuthentication } = require('../middleware/access-control');
-const { ValidationError } = require('../utils/error-types');
+const { createUploadHandler } = require('../utils/upload-handler-factory');
 
 // All routes require authentication
 router.use(requireAuthentication);
@@ -11,111 +11,51 @@ router.use(requireAuthentication);
 /**
  * Upload profile image
  */
-router.post('/upload/profile', upload.single('file'), async (req, res, next) => {
-  try {
-    if (!req.file) {
-      throw new ValidationError('No file uploaded');
-    }
-
-    // Validate image dimensions
-    await fileUploadService.validateImageDimensions(req.file.path);
-
-    const media = await fileUploadService.processUpload(req.file, req.user.id, {
-      purpose: 'profile',
-      entityType: 'user',
-      entityId: req.user.id,
-      isPublic: true
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Profile image uploaded successfully',
-      data: media
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+router.post('/upload/profile', upload.single('file'), createUploadHandler({
+  fileUploadService,
+  purpose: 'profile',
+  entityType: 'user',
+  getEntityId: (req) => req.user.id,
+  isPublic: true,
+  successMessage: 'Profile image uploaded successfully',
+  validateDimensions: true
+}));
 
 /**
  * Upload campaign media
  */
-router.post('/upload/campaign/:campaignId', upload.single('file'), async (req, res, next) => {
-  try {
-    if (!req.file) {
-      throw new ValidationError('No file uploaded');
-    }
-
-    const { campaignId } = req.params;
-
-    const media = await fileUploadService.processUpload(req.file, req.user.id, {
-      purpose: 'campaign',
-      entityType: 'campaign',
-      entityId: campaignId,
-      isPublic: false
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Campaign media uploaded successfully',
-      data: media
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+router.post('/upload/campaign/:campaignId', upload.single('file'), createUploadHandler({
+  fileUploadService,
+  purpose: 'campaign',
+  entityType: 'campaign',
+  getEntityId: (req) => req.params.campaignId,
+  isPublic: false,
+  successMessage: 'Campaign media uploaded successfully'
+}));
 
 /**
  * Upload deliverable file
  */
-router.post('/upload/deliverable/:collaborationId', upload.single('file'), async (req, res, next) => {
-  try {
-    if (!req.file) {
-      throw new ValidationError('No file uploaded');
-    }
-
-    const { collaborationId } = req.params;
-
-    const media = await fileUploadService.processUpload(req.file, req.user.id, {
-      purpose: 'deliverable',
-      entityType: 'collaboration',
-      entityId: collaborationId,
-      isPublic: false
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Deliverable file uploaded successfully',
-      data: media
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+router.post('/upload/deliverable/:collaborationId', upload.single('file'), createUploadHandler({
+  fileUploadService,
+  purpose: 'deliverable',
+  entityType: 'collaboration',
+  getEntityId: (req) => req.params.collaborationId,
+  isPublic: false,
+  successMessage: 'Deliverable file uploaded successfully'
+}));
 
 /**
  * Upload general file
  */
-router.post('/upload/general', upload.single('file'), async (req, res, next) => {
-  try {
-    if (!req.file) {
-      throw new ValidationError('No file uploaded');
-    }
-
-    const media = await fileUploadService.processUpload(req.file, req.user.id, {
-      purpose: 'general',
-      isPublic: false
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'File uploaded successfully',
-      data: media
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+router.post('/upload/general', upload.single('file'), createUploadHandler({
+  fileUploadService,
+  purpose: 'general',
+  entityType: 'general',
+  getEntityId: (req) => req.user.id,
+  isPublic: false,
+  successMessage: 'File uploaded successfully'
+}));
 
 /**
  * Get user's media files
