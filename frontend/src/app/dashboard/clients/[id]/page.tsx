@@ -9,7 +9,7 @@ import type { Contact } from '@/types/client.types';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, safeJsonParse } from '@/lib/utils';
 
 export default function ClientDetailPage() {
   const params = useParams();
@@ -162,10 +162,7 @@ export default function ClientDetailPage() {
             <div className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Primary Contacts</h2>
               {(() => {
-                let contacts: Contact[] = [];
-                try {
-                  contacts = client.primaryContactEmails ? JSON.parse(client.primaryContactEmails) : [];
-                } catch { /* fallback to empty if JSON is invalid */ }
+                const contacts = safeJsonParse<Contact[]>(client.primaryContactEmails, []);
                 return contacts.length > 0 ? (
                   <div className="space-y-4">
                     {contacts.map((contact: Contact, index: number) => (

@@ -27,7 +27,7 @@ import CollaborationTimeline from '@/components/collaborations/CollaborationTime
 import DeliverableManager from '@/components/collaborations/DeliverableManager';
 import PaymentTracker from '@/components/collaborations/PaymentTracker';
 import NotesSection from '@/components/collaborations/NotesSection';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, safeJsonParse } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { PaymentStatus, CollaborationStatus } from '@/types/collaboration.types';
 
@@ -369,7 +369,7 @@ export default function CollaborationDetailPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Deliverables:</span>
                       <span className="font-medium text-gray-900">
-                        {(() => { try { return JSON.parse(collaboration.agreedDeliverables || '[]').length; } catch { return 0; } })()}
+                        {safeJsonParse<any[]>(collaboration.agreedDeliverables, []).length}
                       </span>
                     </div>
                   </div>
@@ -394,7 +394,7 @@ export default function CollaborationDetailPage() {
           {activeTab === 'deliverables' && (
             <DeliverableManager
               collaborationId={id}
-              deliverables={(() => { try { return JSON.parse(collaboration.agreedDeliverables || '[]'); } catch { return []; } })()}
+              deliverables={safeJsonParse<any[]>(collaboration.agreedDeliverables, [])}
               canSubmit={collaboration.collaborationStatus === 'active'}
               canReview={collaboration.collaborationStatus === 'active'}
               onSubmit={handleSubmitDeliverable}

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { safeJsonParse } from '@/lib/utils';
 import type { Client, CreateClientRequest, UpdateClientRequest } from '@/types/client.types';
 
 const contactSchema = z.object({
@@ -95,12 +96,10 @@ export default function ClientForm({ client, onSubmit, isSubmitting = false }: C
 
   useEffect(() => {
     if (client) {
-      let primaryContacts = [{ name: '', email: '', phone: '', role: '' }];
-      let billingContacts: { name: string; email: string; phone?: string; role?: string }[] = [];
-      let communicationPreferences: { channel: 'email' | 'phone' | 'slack' | 'teams'; value: string; preferred?: boolean }[] = [];
-      try { primaryContacts = client.primaryContactEmails ? JSON.parse(client.primaryContactEmails) : primaryContacts; } catch { /* fallback to default if JSON is invalid */ }
-      try { billingContacts = client.billingContactEmails ? JSON.parse(client.billingContactEmails) : []; } catch { /* fallback to empty if JSON is invalid */ }
-      try { communicationPreferences = client.preferredCommChannels ? JSON.parse(client.preferredCommChannels) : []; } catch { /* fallback to empty if JSON is invalid */ }
+      const defaultContact = [{ name: '', email: '', phone: '', role: '' }];
+      const primaryContacts = safeJsonParse(client.primaryContactEmails, defaultContact);
+      const billingContacts = safeJsonParse<{ name: string; email: string; phone?: string; role?: string }[]>(client.billingContactEmails, []);
+      const communicationPreferences = safeJsonParse<{ channel: 'email' | 'phone' | 'slack' | 'teams'; value: string; preferred?: boolean }[]>(client.preferredCommChannels, []);
 
       reset({
         legalCompanyName: client.legalCompanyName,
