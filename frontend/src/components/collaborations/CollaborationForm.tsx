@@ -13,7 +13,6 @@ import type {
   Collaboration,
   CreateCollaborationRequest,
   UpdateCollaborationRequest,
-  Deliverable,
 } from '@/types/collaboration.types';
 
 const deliverableSchema = z.object({
@@ -29,7 +28,7 @@ const collaborationFormSchema = z.object({
   influencerId: z.string().min(1, 'Influencer is required'),
   role: z.string().optional(),
   agreedDeliverables: z.array(deliverableSchema).optional(),
-  agreedAmount: z.number().min(0, 'Amount must be positive').optional(),
+  agreedPayment: z.number().min(0, 'Amount must be positive').optional(),
   notes: z.string().optional(),
 });
 
@@ -65,10 +64,10 @@ export default function CollaborationForm({
       campaignId: collaboration?.campaignId || '',
       influencerId: collaboration?.influencerId || '',
       role: collaboration?.role || '',
-      agreedDeliverables: collaboration?.agreedDeliverables || [
-        { name: '', description: '', dueDate: '', status: 'pending' as const },
-      ],
-      agreedAmount: collaboration?.agreedAmount || undefined,
+      agreedDeliverables: (() => { try { return JSON.parse(collaboration?.agreedDeliverables || '[]'); } catch { return []; } })().length > 0
+        ? (() => { try { return JSON.parse(collaboration?.agreedDeliverables || '[]'); } catch { return []; } })()
+        : [{ name: '', description: '', dueDate: '', status: 'pending' as const }],
+      agreedPayment: collaboration?.agreedPayment || undefined,
       notes: '',
     },
   });
@@ -84,10 +83,10 @@ export default function CollaborationForm({
         campaignId: collaboration.campaignId,
         influencerId: collaboration.influencerId,
         role: collaboration.role || '',
-        agreedDeliverables: collaboration.agreedDeliverables || [
-          { name: '', description: '', dueDate: '', status: 'pending' as const },
-        ],
-        agreedAmount: collaboration.agreedAmount,
+        agreedDeliverables: (() => { try { return JSON.parse(collaboration.agreedDeliverables || '[]'); } catch { return []; } })().length > 0
+          ? (() => { try { return JSON.parse(collaboration.agreedDeliverables || '[]'); } catch { return []; } })()
+          : [{ name: '', description: '', dueDate: '', status: 'pending' as const }],
+        agreedPayment: collaboration.agreedPayment,
         notes: '',
       });
     }
@@ -96,11 +95,13 @@ export default function CollaborationForm({
   const handleFormSubmit = async (data: CollaborationFormData) => {
     const formattedData = {
       ...data,
-      agreedAmount: data.agreedAmount ? Number(data.agreedAmount) : undefined,
-      agreedDeliverables: data.agreedDeliverables?.map((d) => ({
-        ...d,
-        id: d.id || `temp-${Date.now()}-${Math.random()}`,
-      })),
+      agreedPayment: data.agreedPayment ? Number(data.agreedPayment) : undefined,
+      agreedDeliverables: data.agreedDeliverables
+        ? JSON.stringify(data.agreedDeliverables.map((d) => ({
+            ...d,
+            id: d.id || `temp-${Date.now()}-${Math.random()}`,
+          })))
+        : undefined,
     };
     await onSubmit(formattedData);
   };
@@ -170,16 +171,16 @@ export default function CollaborationForm({
           </div>
 
           <div>
-            <Label htmlFor="agreedAmount">Agreed Amount ($)</Label>
+            <Label htmlFor="agreedPayment">Agreed Payment ($)</Label>
             <Input
-              id="agreedAmount"
+              id="agreedPayment"
               type="number"
               step="0.01"
-              {...register('agreedAmount', { valueAsNumber: true })}
+              {...register('agreedPayment', { valueAsNumber: true })}
               placeholder="0.00"
             />
-            {errors.agreedAmount && (
-              <p className="mt-1 text-sm text-red-600">{errors.agreedAmount.message}</p>
+            {errors.agreedPayment && (
+              <p className="mt-1 text-sm text-red-600">{errors.agreedPayment.message}</p>
             )}
           </div>
         </div>

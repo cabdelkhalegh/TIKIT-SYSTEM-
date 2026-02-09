@@ -10,7 +10,6 @@ interface TimelineEvent {
 interface CollaborationTimelineProps {
   invitedAt: string;
   acceptedAt?: string;
-  startedAt?: string;
   completedAt?: string;
   status: string;
 }
@@ -18,7 +17,6 @@ interface CollaborationTimelineProps {
 export default function CollaborationTimeline({
   invitedAt,
   acceptedAt,
-  startedAt,
   completedAt,
   status,
 }: CollaborationTimelineProps) {
@@ -32,11 +30,6 @@ export default function CollaborationTimeline({
       label: 'Accepted',
       date: acceptedAt,
       completed: !!acceptedAt,
-    },
-    {
-      label: 'Started',
-      date: startedAt,
-      completed: !!startedAt,
     },
     {
       label: 'Completed',

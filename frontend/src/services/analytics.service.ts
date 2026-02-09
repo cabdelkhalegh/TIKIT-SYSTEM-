@@ -95,10 +95,10 @@ function mapDashboardResponse(raw: Record<string, any>): DashboardSummary {
     },
     activeCollaborations: {
       invited: Array.isArray(activeCollabs)
-        ? activeCollabs.filter((c: any) => c.status === 'invited').length
+        ? activeCollabs.filter((c: any) => c.collaborationStatus === 'invited').length
         : 0,
       accepted: Array.isArray(activeCollabs)
-        ? activeCollabs.filter((c: any) => c.status === 'accepted').length
+        ? activeCollabs.filter((c: any) => c.collaborationStatus === 'accepted').length
         : 0,
       active: Array.isArray(activeCollabs) ? activeCollabs.length : 0,
       completed: performance.completedCollaborations || 0,

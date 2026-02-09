@@ -60,10 +60,10 @@ export interface CampaignInfluencer {
   completedAt?: string;
   influencer?: {
     influencerId: string;
-    profileName: string;
-    fullName?: string;
+    fullName: string;
+    displayName?: string;
     primaryPlatform?: string;
-    profilePictureUrl?: string;
+    profileImageUrl?: string;
   };
 }
 

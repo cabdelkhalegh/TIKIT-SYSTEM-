@@ -466,7 +466,7 @@ export default function CampaignDetailPage() {
                       <tr key={collab.id}>
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {collab.influencer?.profileName || 'Unknown'}
+                            {collab.influencer?.displayName || collab.influencer?.fullName || 'Unknown'}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">{collab.role || 'N/A'}</td>

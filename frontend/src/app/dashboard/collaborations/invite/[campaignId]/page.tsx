@@ -24,7 +24,7 @@ export default function BulkInvitePage() {
   const [selectedInfluencers, setSelectedInfluencers] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('');
-  const [agreedAmount, setAgreedAmount] = useState('');
+  const [agreedPayment, setAgreedPayment] = useState('');
   const [deliverables, setDeliverables] = useState([
     { name: '', description: '', dueDate: '' },
   ]);
@@ -103,8 +103,8 @@ export default function BulkInvitePage() {
       campaignId,
       influencerIds: selectedInfluencers,
       role: role || undefined,
-      agreedDeliverables: validDeliverables.length > 0 ? validDeliverables : undefined,
-      agreedAmount: agreedAmount ? Number(agreedAmount) : undefined,
+      agreedDeliverables: validDeliverables.length > 0 ? JSON.stringify(validDeliverables) : undefined,
+      agreedPayment: agreedPayment ? Number(agreedPayment) : undefined,
     };
 
     await bulkInviteMutation.mutateAsync(data);
@@ -201,13 +201,13 @@ export default function BulkInvitePage() {
                 />
               </div>
               <div>
-                <Label htmlFor="agreedAmount">Agreed Amount ($)</Label>
+                <Label htmlFor="agreedPayment">Agreed Payment ($)</Label>
                 <Input
-                  id="agreedAmount"
+                  id="agreedPayment"
                   type="number"
                   step="0.01"
-                  value={agreedAmount}
-                  onChange={(e) => setAgreedAmount(e.target.value)}
+                  value={agreedPayment}
+                  onChange={(e) => setAgreedPayment(e.target.value)}
                   placeholder="0.00"
                 />
               </div>

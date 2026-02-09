@@ -29,7 +29,7 @@ import PaymentTracker from '@/components/collaborations/PaymentTracker';
 import NotesSection from '@/components/collaborations/NotesSection';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
-import type { PaymentStatus } from '@/types/collaboration.types';
+import type { PaymentStatus, CollaborationStatus } from '@/types/collaboration.types';
 
 export default function CollaborationDetailPage() {
   const params = useParams();
@@ -187,10 +187,10 @@ export default function CollaborationDetailPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                {collaboration.campaign?.campaignName} × {collaboration.influencer?.profileName}
+                {collaboration.campaign?.campaignName} × {collaboration.influencer?.displayName || collaboration.influencer?.fullName}
               </h1>
               <div className="flex items-center gap-3 mt-2">
-                <CollaborationStatusBadge status={collaboration.status} />
+                <CollaborationStatusBadge status={collaboration.collaborationStatus as CollaborationStatus} />
                 <PaymentStatusBadge status={collaboration.paymentStatus} />
               </div>
             </div>
@@ -207,7 +207,7 @@ export default function CollaborationDetailPage() {
 
         {/* Action Buttons */}
         <div className="mb-6 flex flex-wrap gap-2">
-          {collaboration.status === 'invited' && (
+          {collaboration.collaborationStatus === 'invited' && (
             <>
               <Button
                 onClick={() => acceptMutation.mutate()}
@@ -227,7 +227,7 @@ export default function CollaborationDetailPage() {
               </Button>
             </>
           )}
-          {collaboration.status === 'accepted' && (
+          {collaboration.collaborationStatus === 'accepted' && (
             <Button
               onClick={() => startMutation.mutate()}
               disabled={startMutation.isPending}
@@ -237,7 +237,7 @@ export default function CollaborationDetailPage() {
               Start
             </Button>
           )}
-          {collaboration.status === 'active' && (
+          {collaboration.collaborationStatus === 'active' && (
             <Button
               onClick={() => completeMutation.mutate()}
               disabled={completeMutation.isPending}
@@ -247,7 +247,7 @@ export default function CollaborationDetailPage() {
               Complete
             </Button>
           )}
-          {['invited', 'accepted', 'active'].includes(collaboration.status) && (
+          {['invited', 'accepted', 'active'].includes(collaboration.collaborationStatus) && (
             <Button
               onClick={() => cancelMutation.mutate()}
               disabled={cancelMutation.isPending}
@@ -317,20 +317,20 @@ export default function CollaborationDetailPage() {
                   <div className="flex items-start gap-4">
                     <div className="h-16 w-16 rounded-full bg-purple-100 flex items-center justify-center">
                       <span className="text-2xl font-medium text-purple-700">
-                        {collaboration.influencer?.profileName.charAt(0).toUpperCase()}
+                        {(collaboration.influencer?.displayName || collaboration.influencer?.fullName || '?').charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="flex-1 space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Profile Name:</span>
+                        <span className="text-gray-600">Name:</span>
                         <Link
                           href={`/dashboard/influencers/${collaboration.influencerId}`}
                           className="font-medium text-purple-600 hover:text-purple-700"
                         >
-                          {collaboration.influencer?.profileName}
+                          {collaboration.influencer?.displayName || collaboration.influencer?.fullName}
                         </Link>
                       </div>
-                      {collaboration.influencer?.fullName && (
+                      {collaboration.influencer?.displayName && collaboration.influencer?.fullName && (
                         <div className="flex justify-between">
                           <span className="text-gray-600">Full Name:</span>
                           <span className="font-medium text-gray-900">
@@ -361,15 +361,15 @@ export default function CollaborationDetailPage() {
                       </div>
                     )}
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Agreed Amount:</span>
+                      <span className="text-gray-600">Agreed Payment:</span>
                       <span className="font-medium text-gray-900">
-                        {formatCurrency(collaboration.agreedAmount || 0)}
+                        {formatCurrency(collaboration.agreedPayment || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Deliverables:</span>
                       <span className="font-medium text-gray-900">
-                        {collaboration.agreedDeliverables?.length || 0}
+                        {(() => { try { return JSON.parse(collaboration.agreedDeliverables || '[]').length; } catch { return 0; } })()}
                       </span>
                     </div>
                   </div>
@@ -383,9 +383,8 @@ export default function CollaborationDetailPage() {
                   <CollaborationTimeline
                     invitedAt={collaboration.invitedAt}
                     acceptedAt={collaboration.acceptedAt}
-                    startedAt={collaboration.startedAt}
                     completedAt={collaboration.completedAt}
-                    status={collaboration.status}
+                    status={collaboration.collaborationStatus}
                   />
                 </Card>
               </div>
@@ -395,9 +394,9 @@ export default function CollaborationDetailPage() {
           {activeTab === 'deliverables' && (
             <DeliverableManager
               collaborationId={id}
-              deliverables={collaboration.agreedDeliverables || []}
-              canSubmit={collaboration.status === 'active'}
-              canReview={collaboration.status === 'active'}
+              deliverables={(() => { try { return JSON.parse(collaboration.agreedDeliverables || '[]'); } catch { return []; } })()}
+              canSubmit={collaboration.collaborationStatus === 'active'}
+              canReview={collaboration.collaborationStatus === 'active'}
               onSubmit={handleSubmitDeliverable}
               onApprove={handleApproveDeliverable}
               onReject={handleRejectDeliverable}
@@ -406,7 +405,7 @@ export default function CollaborationDetailPage() {
 
           {activeTab === 'payment' && (
             <PaymentTracker
-              agreedAmount={collaboration.agreedAmount}
+              agreedAmount={collaboration.agreedPayment}
               paymentStatus={collaboration.paymentStatus}
               onUpdateStatus={async (status) => {
                 await updatePaymentMutation.mutateAsync(status);

@@ -45,16 +45,16 @@ export default function CollaborationsPage() {
     const searchLower = search.toLowerCase();
     return (
       collab.campaign?.campaignName.toLowerCase().includes(searchLower) ||
-      collab.influencer?.profileName.toLowerCase().includes(searchLower) ||
+      (collab.influencer?.displayName || collab.influencer?.fullName || '').toLowerCase().includes(searchLower) ||
       collab.role?.toLowerCase().includes(searchLower)
     );
   });
 
   const stats = {
     total: collaborations.length,
-    active: collaborations.filter((c) => c.status === 'active').length,
-    completed: collaborations.filter((c) => c.status === 'completed').length,
-    totalValue: collaborations.reduce((sum, c) => sum + (c.agreedAmount || 0), 0),
+    active: collaborations.filter((c) => c.collaborationStatus === 'active').length,
+    completed: collaborations.filter((c) => c.collaborationStatus === 'completed').length,
+    totalValue: collaborations.reduce((sum, c) => sum + (c.agreedPayment || 0), 0),
   };
 
   return (
@@ -218,14 +218,14 @@ export default function CollaborationsPage() {
                         <div className="flex items-center">
                           <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center mr-3">
                             <span className="text-sm font-medium text-purple-700">
-                              {collaboration.influencer?.profileName.charAt(0).toUpperCase()}
+                              {(collaboration.influencer?.displayName || collaboration.influencer?.fullName || '?').charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {collaboration.influencer?.profileName}
+                              {collaboration.influencer?.displayName || collaboration.influencer?.fullName}
                             </div>
-                            {collaboration.influencer?.fullName && (
+                            {collaboration.influencer?.displayName && collaboration.influencer?.fullName && (
                               <div className="text-xs text-gray-500">
                                 {collaboration.influencer.fullName}
                               </div>
@@ -237,14 +237,14 @@ export default function CollaborationsPage() {
                         <div className="text-sm text-gray-900">{collaboration.role || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <CollaborationStatusBadge status={collaboration.status} />
+                        <CollaborationStatusBadge status={collaboration.collaborationStatus as CollaborationStatus} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <PaymentStatusBadge status={collaboration.paymentStatus} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {formatCurrency(collaboration.agreedAmount || 0)}
+                          {formatCurrency(collaboration.agreedPayment || 0)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

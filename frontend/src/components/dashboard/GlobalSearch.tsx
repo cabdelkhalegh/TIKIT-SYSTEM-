@@ -121,7 +121,7 @@ export default function GlobalSearch() {
           id: collab.id,
           type: 'collaboration',
           title: `Collaboration #${collab.id.substring(0, 8)}`,
-          subtitle: collab.status,
+          subtitle: collab.collaborationStatus,
           href: `/dashboard/collaborations/${collab.id}`,
         });
       });
