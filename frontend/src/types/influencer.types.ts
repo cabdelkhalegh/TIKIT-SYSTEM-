@@ -91,13 +91,46 @@ export function parseSocialHandles(influencer: Influencer): SocialMediaHandles {
   return safeJsonParse<SocialMediaHandles>(influencer.socialMediaHandles, {});
 }
 
-/** Parse audienceMetrics JSON string into AudienceMetrics object. */
+/** Parse audienceMetrics JSON string into AudienceMetrics object.
+ *  Backend stores metrics per-platform, e.g. { instagram: { followers, engagement_rate, avg_likes } }.
+ *  This flattens them using the influencer's primary platform (or first available). */
 export function parseAudienceMetrics(influencer: Influencer): AudienceMetrics {
-  return safeJsonParse<AudienceMetrics>(influencer.audienceMetrics, {
-    followers: 0,
-    engagementRate: 0,
-    avgViews: 0,
-  });
+  const defaultMetrics: AudienceMetrics = { followers: 0, engagementRate: 0, avgViews: 0 };
+  const raw = safeJsonParse<Record<string, any>>(influencer.audienceMetrics, {});
+
+  // If already flat (has top-level followers), use directly
+  if (typeof raw.followers === 'number') {
+    return {
+      followers: raw.followers || 0,
+      engagementRate: raw.engagementRate || raw.engagement_rate || 0,
+      avgViews: raw.avgViews || raw.avg_views || 0,
+      avgLikes: raw.avgLikes || raw.avg_likes,
+      avgComments: raw.avgComments || raw.avg_comments,
+      avgShares: raw.avgShares || raw.avg_shares,
+    };
+  }
+
+  // Nested per-platform: pick primary platform or first available
+  const platformKey = influencer.primaryPlatform || Object.keys(raw)[0];
+  const platformData = raw[platformKey] || {};
+
+  // Sum followers across all platforms for total
+  let totalFollowers = 0;
+  for (const key of Object.keys(raw)) {
+    const p = raw[key];
+    if (p && typeof p === 'object') {
+      totalFollowers += p.followers || p.subscribers || 0;
+    }
+  }
+
+  return {
+    followers: totalFollowers || platformData.followers || platformData.subscribers || 0,
+    engagementRate: platformData.engagement_rate || platformData.engagementRate || 0,
+    avgViews: platformData.avg_views || platformData.avgViews || 0,
+    avgLikes: platformData.avg_likes || platformData.avgLikes,
+    avgComments: platformData.avg_comments || platformData.avgComments,
+    avgShares: platformData.avg_shares || platformData.avgShares,
+  };
 }
 
 /** Parse contentCategories JSON string into ContentCategory array. */

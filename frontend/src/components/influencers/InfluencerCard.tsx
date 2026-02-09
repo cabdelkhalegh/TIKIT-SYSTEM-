@@ -88,14 +88,14 @@ export default function InfluencerCard({ influencer }: InfluencerCardProps) {
             <div>
               <p className="text-xs text-gray-500 mb-1">Engagement</p>
               <p className="text-lg font-semibold text-green-600">
-                {metrics.engagementRate.toFixed(2)}%
+                {(metrics.engagementRate || 0).toFixed(2)}%
               </p>
             </div>
           </div>
 
           {/* Quality Score */}
           <div className="mb-4">
-            <QualityScoreIndicator score={influencer.qualityScore} size="sm" />
+            <QualityScoreIndicator score={influencer.qualityScore || 0} size="sm" />
           </div>
 
           {/* Location */}

@@ -6,7 +6,7 @@ export type CollaborationStatus =
   | 'cancelled' 
   | 'declined';
 
-export type PaymentStatus = 'pending' | 'processing' | 'paid';
+export type PaymentStatus = 'pending' | 'processing' | 'paid' | 'partial';
 
 export type DeliverableStatus = 'pending' | 'submitted' | 'approved' | 'rejected';
 

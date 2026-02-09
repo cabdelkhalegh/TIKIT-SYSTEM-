@@ -22,9 +22,16 @@ export default function PaymentStatusBadge({ status, className = '' }: PaymentSt
       label: 'Paid',
       className: 'bg-green-100 text-green-700 border-green-300',
     },
+    partial: {
+      label: 'Partial',
+      className: 'bg-orange-100 text-orange-700 border-orange-300',
+    },
   };
 
-  const config = statusConfig[status];
+  const config = statusConfig[status] || {
+    label: status || 'Unknown',
+    className: 'bg-gray-100 text-gray-700 border-gray-300',
+  };
 
   return (
     <span
