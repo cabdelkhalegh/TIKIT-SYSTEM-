@@ -240,7 +240,6 @@ router.post('/:id/cancel', requireAuthentication, asyncHandler(async (req, res) 
     'Collaboration cancelled successfully'
   );
 }));
-});
 
 // Delete collaboration (admin only)
 router.delete('/:id', requireAuthentication, requireRole(['admin']), async (req, res) => {
