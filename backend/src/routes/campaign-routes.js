@@ -86,20 +86,14 @@ router.use('/', createRoleBasedMethodMiddleware({
 
 // Activate campaign (change status from draft to active)
 router.post('/:id/activate', asyncHandler(async (req, res) => {
-  const record = await prisma.campaign.findUnique({
-    where: { campaignId: req.params.id }
-  });
-
-  const additionalData = {
-    launchDate: record?.launchDate || new Date()
-  };
-
   return handleCampaignStatusTransition(
     req,
     res,
     'active',
     'Campaign activated successfully',
-    additionalData
+    (record) => ({
+      launchDate: record.launchDate || new Date()
+    })
   );
 }));
 
@@ -125,20 +119,14 @@ router.post('/:id/resume', asyncHandler(async (req, res) => {
 
 // Complete campaign
 router.post('/:id/complete', asyncHandler(async (req, res) => {
-  const record = await prisma.campaign.findUnique({
-    where: { campaignId: req.params.id }
-  });
-
-  const additionalData = {
-    endDate: record?.endDate || new Date()
-  };
-
   return handleCampaignStatusTransition(
     req,
     res,
     'completed',
     'Campaign completed successfully',
-    additionalData
+    (record) => ({
+      endDate: record.endDate || new Date()
+    })
   );
 }));
 

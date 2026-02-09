@@ -45,7 +45,8 @@ const COLLABORATION_STATUS_TRANSITIONS = {
  * @param {string} config.idField - Primary key field name (e.g., 'campaignId', 'collaborationId')
  * @param {Function} config.validator - Status validation function
  * @param {Object} config.includeRelations - Relations to include in the query
- * @returns {Function} Handler function for status transitions
+ * @returns {Function} Handler function for status transitions that accepts (req, res, newStatus, successMessage, additionalData)
+ *   - additionalData can be an object or a function(record) => object to compute data based on the current record
  */
 function createStatusTransitionHandler(config) {
   const { prisma, modelName, idField, validator, includeRelations = {} } = config;
@@ -74,12 +75,17 @@ function createStatusTransitionHandler(config) {
       });
     }
 
+    // Compute additional data (support both functions and objects)
+    const extraData = typeof additionalData === 'function' 
+      ? additionalData(record) 
+      : additionalData;
+
     // Update the record
     const updatedRecord = await prisma[modelName].update({
       where: { [idField]: id },
       data: {
         status: newStatus,
-        ...additionalData
+        ...extraData
       },
       include: includeRelations
     });
