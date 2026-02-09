@@ -15,6 +15,13 @@ import type {
 } from '@/types/collaboration.types';
 
 class CollaborationService extends BaseService<Collaboration> {
+  // Use the factory method to create action methods
+  accept = this.createActionMethod<CollaborationResponse>('accept');
+  decline = this.createActionMethod<CollaborationResponse>('decline');
+  start = this.createActionMethod<CollaborationResponse>('start');
+  complete = this.createActionMethod<CollaborationResponse>('complete');
+  cancel = this.createActionMethod<CollaborationResponse>('cancel');
+
   constructor() {
     super('/collaborations');
   }
@@ -43,32 +50,6 @@ class CollaborationService extends BaseService<Collaboration> {
   // Extend update with typed request/response
   async update(id: string, data: UpdateCollaborationRequest): Promise<CollaborationResponse> {
     return super.update(id, data) as Promise<CollaborationResponse>;
-  }
-
-  // Collaboration-specific lifecycle methods
-  async accept(id: string): Promise<CollaborationResponse> {
-    const response = await apiClient.post<CollaborationResponse>(`${this.endpoint}/${id}/accept`);
-    return response.data;
-  }
-
-  async decline(id: string): Promise<CollaborationResponse> {
-    const response = await apiClient.post<CollaborationResponse>(`${this.endpoint}/${id}/decline`);
-    return response.data;
-  }
-
-  async start(id: string): Promise<CollaborationResponse> {
-    const response = await apiClient.post<CollaborationResponse>(`${this.endpoint}/${id}/start`);
-    return response.data;
-  }
-
-  async complete(id: string): Promise<CollaborationResponse> {
-    const response = await apiClient.post<CollaborationResponse>(`${this.endpoint}/${id}/complete`);
-    return response.data;
-  }
-
-  async cancel(id: string): Promise<CollaborationResponse> {
-    const response = await apiClient.post<CollaborationResponse>(`${this.endpoint}/${id}/cancel`);
-    return response.data;
   }
 
   async bulkInvite(data: BulkInviteRequest): Promise<{ success: boolean; data: Collaboration[] }> {
