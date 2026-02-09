@@ -116,9 +116,9 @@ export default function EditCampaignPage() {
   };
 
   const clients = (clientsData?.data || []).map((client) => ({
-    clientId: client.id,
-    brandName: client.brandName,
-    companyLegalName: client.companyLegalName,
+    clientId: client.clientId,
+    brandDisplayName: client.brandDisplayName,
+    legalCompanyName: client.legalCompanyName,
   }));
 
   return (

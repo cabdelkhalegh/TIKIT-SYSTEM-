@@ -13,7 +13,7 @@ router.use(requireAuthentication);
 // Get user notifications
 router.get('/', async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.authenticatedUser.userId;
     const {
       unreadOnly = 'false',
       limit = '50',
@@ -37,7 +37,7 @@ router.get('/', async (req, res, next) => {
 // Get unread count
 router.get('/unread-count', async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.authenticatedUser.userId;
     const count = await notificationService.getUnreadCount(userId);
     
     res.json({ unreadCount: count });
@@ -49,7 +49,7 @@ router.get('/unread-count', async (req, res, next) => {
 // Mark notification as read
 router.patch('/:id/read', async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.authenticatedUser.userId;
     const { id } = req.params;
     
     const result = await notificationService.markAsRead(id, userId);
@@ -67,7 +67,7 @@ router.patch('/:id/read', async (req, res, next) => {
 // Mark all as read
 router.patch('/mark-all-read', async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.authenticatedUser.userId;
     
     const result = await notificationService.markAllAsRead(userId);
     
@@ -84,7 +84,7 @@ router.patch('/mark-all-read', async (req, res, next) => {
 // Delete notification
 router.delete('/:id', async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.authenticatedUser.userId;
     const { id } = req.params;
     
     const result = await notificationService.deleteNotification(id, userId);
@@ -102,7 +102,7 @@ router.delete('/:id', async (req, res, next) => {
 // Clear all read notifications
 router.delete('/clear-all', async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.authenticatedUser.userId;
     
     const result = await notificationService.clearAllRead(userId);
     
@@ -119,7 +119,7 @@ router.delete('/clear-all', async (req, res, next) => {
 // Get notification preferences
 router.get('/preferences', async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.authenticatedUser.userId;
     
     const preferences = await notificationService.getPreferences(userId);
     
@@ -132,7 +132,7 @@ router.get('/preferences', async (req, res, next) => {
 // Update notification preferences
 router.put('/preferences', async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.authenticatedUser.userId;
     const updates = req.body;
     
     // Validate preference fields

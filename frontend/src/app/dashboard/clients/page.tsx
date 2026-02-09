@@ -114,7 +114,7 @@ export default function ClientsPage() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {clients.map((client) => (
-                      <tr key={client.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={client.clientId} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center">
@@ -122,19 +122,19 @@ export default function ClientsPage() {
                             </div>
                             <div className="ml-4">
                               <Link 
-                                href={`/dashboard/clients/${client.id}`}
+                                href={`/dashboard/clients/${client.clientId}`}
                                 className="text-sm font-medium text-gray-900 hover:text-purple-600"
                               >
-                                {client.brandName || client.companyLegalName}
+                                {client.brandDisplayName || client.legalCompanyName}
                               </Link>
-                              {client.brandName !== client.companyLegalName && (
-                                <div className="text-sm text-gray-500">{client.companyLegalName}</div>
+                              {client.brandDisplayName !== client.legalCompanyName && (
+                                <div className="text-sm text-gray-500">{client.legalCompanyName}</div>
                               )}
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">{client.industry || 'N/A'}</span>
+                          <span className="text-sm text-gray-900">{client.industryVertical || 'N/A'}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -143,21 +143,21 @@ export default function ClientsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center text-sm text-gray-900">
-                            {formatCurrency(client.spendTotals || 0)}
+                            {formatCurrency(client.totalAdSpend || 0)}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(client.createdAt)}
+                          {formatDate(client.accountCreatedAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <Link
-                            href={`/dashboard/clients/${client.id}`}
+                            href={`/dashboard/clients/${client.clientId}`}
                             className="text-purple-600 hover:text-purple-900 mr-4"
                           >
                             View
                           </Link>
                           <Link
-                            href={`/dashboard/clients/${client.id}/edit`}
+                            href={`/dashboard/clients/${client.clientId}/edit`}
                             className="text-blue-600 hover:text-blue-900"
                           >
                             Edit

@@ -25,9 +25,9 @@ export interface Campaign {
   updatedAt: string;
   client?: {
     clientId: string;
-    companyLegalName: string;
-    brandName: string;
-    industry?: string;
+    legalCompanyName: string;
+    brandDisplayName: string;
+    industryVertical?: string;
   };
   _count?: {
     campaignInfluencers: number;
@@ -60,10 +60,10 @@ export interface CampaignInfluencer {
   completedAt?: string;
   influencer?: {
     influencerId: string;
-    profileName: string;
-    fullName?: string;
+    fullName: string;
+    displayName?: string;
     primaryPlatform?: string;
-    profilePictureUrl?: string;
+    profileImageUrl?: string;
   };
 }
 
@@ -78,6 +78,7 @@ export interface BudgetStatus {
 export interface CampaignListResponse {
   success: boolean;
   data: Campaign[];
+  count: number;
   pagination?: {
     page: number;
     perPage: number;

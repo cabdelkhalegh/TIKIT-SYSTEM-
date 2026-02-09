@@ -1,16 +1,16 @@
 export interface Client {
-  id: string;
-  companyLegalName: string;
-  brandName: string;
-  industry?: string;
+  clientId: string;
+  legalCompanyName: string;
+  brandDisplayName: string;
+  industryVertical?: string;
   websiteUrl?: string;
-  primaryContacts: Contact[];
-  billingContacts: Contact[];
-  communicationPreferences: CommunicationPreference[];
-  spendTotals?: number;
-  performanceTrends?: string;
-  createdAt: string;
-  updatedAt: string;
+  primaryContactEmails: string;
+  billingContactEmails: string;
+  preferredCommChannels: string;
+  totalAdSpend?: number;
+  performanceMetricsJson?: string;
+  accountCreatedAt: string;
+  lastModifiedAt: string;
   campaigns?: Campaign[];
   _count?: {
     campaigns: number;
@@ -31,10 +31,10 @@ export interface CommunicationPreference {
 }
 
 export interface Campaign {
-  id: string;
-  title: string;
+  campaignId: string;
+  campaignName: string;
   status: 'draft' | 'active' | 'paused' | 'completed' | 'cancelled';
-  budget: number;
+  totalBudget: number;
   startDate?: string;
   endDate?: string;
 }
@@ -42,6 +42,7 @@ export interface Campaign {
 export interface ClientListResponse {
   success: boolean;
   data: Client[];
+  count: number;
   pagination?: {
     page: number;
     perPage: number;
@@ -56,13 +57,13 @@ export interface ClientResponse {
 }
 
 export interface CreateClientRequest {
-  companyLegalName: string;
-  brandName: string;
-  industry?: string;
+  legalCompanyName: string;
+  brandDisplayName: string;
+  industryVertical?: string;
   websiteUrl?: string;
-  primaryContacts: Contact[];
-  billingContacts?: Contact[];
-  communicationPreferences?: CommunicationPreference[];
+  primaryContactEmails: string;
+  billingContactEmails?: string;
+  preferredCommChannels?: string;
 }
 
 export interface UpdateClientRequest extends Partial<CreateClientRequest> {}

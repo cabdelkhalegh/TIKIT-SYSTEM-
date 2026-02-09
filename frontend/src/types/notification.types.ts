@@ -29,7 +29,8 @@ export interface NotificationFilters {
 }
 
 export interface UnreadCountResponse {
-  count: number;
+  count?: number;
+  unreadCount?: number;
 }
 
 export interface NotificationPreferences {

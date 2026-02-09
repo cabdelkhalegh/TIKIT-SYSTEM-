@@ -372,12 +372,12 @@ export default function CampaignDetailPage() {
                         href={`/dashboard/clients/${campaign.client.clientId}`}
                         className="text-purple-600 hover:text-purple-700 font-medium"
                       >
-                        {campaign.client.brandName || campaign.client.companyLegalName}
+                        {campaign.client.brandDisplayName || campaign.client.legalCompanyName}
                       </Link>
                     </div>
-                    {campaign.client.industry && (
+                    {campaign.client.industryVertical && (
                       <div className="text-sm text-gray-600">
-                        Industry: {campaign.client.industry}
+                        Industry: {campaign.client.industryVertical}
                       </div>
                     )}
                   </div>
@@ -466,7 +466,7 @@ export default function CampaignDetailPage() {
                       <tr key={collab.id}>
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {collab.influencer?.profileName || 'Unknown'}
+                            {collab.influencer?.displayName || collab.influencer?.fullName || 'Unknown'}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">{collab.role || 'N/A'}</td>

@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import QualityScoreIndicator from '@/components/influencers/QualityScoreIndicator';
 import PlatformBadge from '@/components/influencers/PlatformBadge';
 import { formatNumber, formatCurrency } from '@/lib/utils';
+import { parseAudienceMetrics, parseContentCategories, getDisplayLocation } from '@/types/influencer.types';
 
 export default function CompareInfluencersPage() {
   const [influencerIds, setInfluencerIds] = useState<string[]>([]);
@@ -76,9 +77,9 @@ export default function CompareInfluencersPage() {
                 <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                   {searchResults.data.map((influencer) => (
                     <button
-                      key={influencer.id}
-                      onClick={() => handleAddInfluencer(influencer.id)}
-                      disabled={influencerIds.includes(influencer.id)}
+                      key={influencer.influencerId}
+                      onClick={() => handleAddInfluencer(influencer.influencerId)}
+                      disabled={influencerIds.includes(influencer.influencerId)}
                       className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3 disabled:opacity-50"
                     >
                       <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
@@ -87,10 +88,10 @@ export default function CompareInfluencersPage() {
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{influencer.displayName || influencer.fullName}</p>
                         <p className="text-sm text-gray-600">
-                          {formatNumber(influencer.audienceMetrics.followers)} followers
+                          {formatNumber(parseAudienceMetrics(influencer).followers)} followers
                         </p>
                       </div>
-                      {influencerIds.includes(influencer.id) && (
+                      {influencerIds.includes(influencer.influencerId) && (
                         <span className="text-xs text-green-600">Added</span>
                       )}
                     </button>
@@ -104,12 +105,12 @@ export default function CompareInfluencersPage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 {influencers.map((influencer) => (
                   <div
-                    key={influencer.id}
+                    key={influencer.influencerId}
                     className="inline-flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-full"
                   >
                     <span className="text-sm font-medium">{influencer.displayName || influencer.fullName}</span>
                     <button
-                      onClick={() => handleRemoveInfluencer(influencer.id)}
+                      onClick={() => handleRemoveInfluencer(influencer.influencerId)}
                       className="hover:bg-purple-200 rounded-full p-0.5"
                     >
                       <X className="h-4 w-4" />
@@ -131,7 +132,7 @@ export default function CompareInfluencersPage() {
                     Metric
                   </th>
                   {influencers.map((influencer) => (
-                    <th key={influencer.id} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
+                    <th key={influencer.influencerId} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                       <div className="flex items-center gap-2">
                         <div className="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
                           {influencer.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
@@ -149,7 +150,7 @@ export default function CompareInfluencersPage() {
                     Primary Platform
                   </td>
                   {influencers.map((influencer) => (
-                    <td key={influencer.id} className="px-6 py-4 whitespace-nowrap">
+                    <td key={influencer.influencerId} className="px-6 py-4 whitespace-nowrap">
                       <PlatformBadge platform={influencer.primaryPlatform} />
                     </td>
                   ))}
@@ -161,8 +162,8 @@ export default function CompareInfluencersPage() {
                     Followers
                   </td>
                   {influencers.map((influencer) => (
-                    <td key={influencer.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatNumber(influencer.audienceMetrics.followers)}
+                    <td key={influencer.influencerId} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatNumber(parseAudienceMetrics(influencer).followers)}
                     </td>
                   ))}
                 </tr>
@@ -173,8 +174,8 @@ export default function CompareInfluencersPage() {
                     Engagement Rate
                   </td>
                   {influencers.map((influencer) => (
-                    <td key={influencer.id} className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">
-                      {influencer.audienceMetrics.engagementRate.toFixed(2)}%
+                    <td key={influencer.influencerId} className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">
+                      {parseAudienceMetrics(influencer).engagementRate.toFixed(2)}%
                     </td>
                   ))}
                 </tr>
@@ -185,8 +186,8 @@ export default function CompareInfluencersPage() {
                     Avg Views
                   </td>
                   {influencers.map((influencer) => (
-                    <td key={influencer.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatNumber(influencer.audienceMetrics.avgViews)}
+                    <td key={influencer.influencerId} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatNumber(parseAudienceMetrics(influencer).avgViews)}
                     </td>
                   ))}
                 </tr>
@@ -197,7 +198,7 @@ export default function CompareInfluencersPage() {
                     Quality Score
                   </td>
                   {influencers.map((influencer) => (
-                    <td key={influencer.id} className="px-6 py-4 whitespace-nowrap">
+                    <td key={influencer.influencerId} className="px-6 py-4 whitespace-nowrap">
                       <QualityScoreIndicator score={influencer.qualityScore} size="sm" showLabel={false} />
                     </td>
                   ))}
@@ -209,8 +210,8 @@ export default function CompareInfluencersPage() {
                     Rate per Post
                   </td>
                   {influencers.map((influencer) => (
-                    <td key={influencer.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {influencer.rates.perPost ? formatCurrency(influencer.rates.perPost) : 'N/A'}
+                    <td key={influencer.influencerId} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {influencer.ratePerPost ? formatCurrency(influencer.ratePerPost) : 'N/A'}
                     </td>
                   ))}
                 </tr>
@@ -221,8 +222,8 @@ export default function CompareInfluencersPage() {
                     Rate per Video
                   </td>
                   {influencers.map((influencer) => (
-                    <td key={influencer.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {influencer.rates.perVideo ? formatCurrency(influencer.rates.perVideo) : 'N/A'}
+                    <td key={influencer.influencerId} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {influencer.ratePerVideo ? formatCurrency(influencer.ratePerVideo) : 'N/A'}
                     </td>
                   ))}
                 </tr>
@@ -233,8 +234,8 @@ export default function CompareInfluencersPage() {
                     Location
                   </td>
                   {influencers.map((influencer) => (
-                    <td key={influencer.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {influencer.location || 'N/A'}
+                    <td key={influencer.influencerId} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {getDisplayLocation(influencer) || 'N/A'}
                     </td>
                   ))}
                 </tr>
@@ -245,11 +246,11 @@ export default function CompareInfluencersPage() {
                     Verified
                   </td>
                   {influencers.map((influencer) => (
-                    <td key={influencer.id} className="px-6 py-4 whitespace-nowrap">
+                    <td key={influencer.influencerId} className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        influencer.verified ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                        influencer.isVerified ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {influencer.verified ? 'Yes' : 'No'}
+                        {influencer.isVerified ? 'Yes' : 'No'}
                       </span>
                     </td>
                   ))}
@@ -261,15 +262,15 @@ export default function CompareInfluencersPage() {
                     Status
                   </td>
                   {influencers.map((influencer) => (
-                    <td key={influencer.id} className="px-6 py-4 whitespace-nowrap">
+                    <td key={influencer.influencerId} className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        influencer.status === 'active'
+                        influencer.availabilityStatus === 'available'
                           ? 'bg-green-100 text-green-800'
-                          : influencer.status === 'paused'
+                          : influencer.availabilityStatus === 'busy'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {influencer.status}
+                        {influencer.availabilityStatus}
                       </span>
                     </td>
                   ))}
@@ -280,20 +281,23 @@ export default function CompareInfluencersPage() {
                   <td className="px-6 py-4 text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">
                     Categories
                   </td>
-                  {influencers.map((influencer) => (
-                    <td key={influencer.id} className="px-6 py-4">
-                      <div className="flex flex-wrap gap-1">
-                        {influencer.contentCategories.slice(0, 3).map((cat) => (
-                          <span key={cat} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
-                            {cat}
-                          </span>
-                        ))}
-                        {influencer.contentCategories.length > 3 && (
-                          <span className="text-xs text-gray-500">+{influencer.contentCategories.length - 3}</span>
-                        )}
-                      </div>
-                    </td>
-                  ))}
+                  {influencers.map((influencer) => {
+                    const cats = parseContentCategories(influencer);
+                    return (
+                      <td key={influencer.influencerId} className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1">
+                          {cats.slice(0, 3).map((cat) => (
+                            <span key={cat} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                              {cat}
+                            </span>
+                          ))}
+                          {cats.length > 3 && (
+                            <span className="text-xs text-gray-500">+{cats.length - 3}</span>
+                          )}
+                        </div>
+                      </td>
+                    );
+                  })}
                 </tr>
 
                 {/* Actions */}
@@ -302,9 +306,9 @@ export default function CompareInfluencersPage() {
                     Actions
                   </td>
                   {influencers.map((influencer) => (
-                    <td key={influencer.id} className="px-6 py-4 whitespace-nowrap">
+                    <td key={influencer.influencerId} className="px-6 py-4 whitespace-nowrap">
                       <Link
-                        href={`/dashboard/influencers/${influencer.id}`}
+                        href={`/dashboard/influencers/${influencer.influencerId}`}
                         className="text-purple-600 hover:text-purple-900 text-sm font-medium"
                       >
                         View Details

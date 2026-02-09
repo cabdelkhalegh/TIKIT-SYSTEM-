@@ -24,7 +24,7 @@ export default function BulkInvitePage() {
   const [selectedInfluencers, setSelectedInfluencers] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('');
-  const [agreedAmount, setAgreedAmount] = useState('');
+  const [agreedPayment, setAgreedPayment] = useState('');
   const [deliverables, setDeliverables] = useState([
     { name: '', description: '', dueDate: '' },
   ]);
@@ -103,8 +103,8 @@ export default function BulkInvitePage() {
       campaignId,
       influencerIds: selectedInfluencers,
       role: role || undefined,
-      agreedDeliverables: validDeliverables.length > 0 ? validDeliverables : undefined,
-      agreedAmount: agreedAmount ? Number(agreedAmount) : undefined,
+      agreedDeliverables: validDeliverables.length > 0 ? JSON.stringify(validDeliverables) : undefined,
+      agreedPayment: agreedPayment ? Number(agreedPayment) : undefined,
     };
 
     await bulkInviteMutation.mutateAsync(data);
@@ -157,13 +157,13 @@ export default function BulkInvitePage() {
                 <div className="divide-y divide-gray-200">
                   {filteredInfluencers.map((influencer) => (
                     <label
-                      key={influencer.id}
+                      key={influencer.influencerId}
                       className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer"
                     >
                       <input
                         type="checkbox"
-                        checked={selectedInfluencers.includes(influencer.id)}
-                        onChange={() => handleToggleInfluencer(influencer.id)}
+                        checked={selectedInfluencers.includes(influencer.influencerId)}
+                        onChange={() => handleToggleInfluencer(influencer.influencerId)}
                         className="h-4 w-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
                       />
                       <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
@@ -201,13 +201,13 @@ export default function BulkInvitePage() {
                 />
               </div>
               <div>
-                <Label htmlFor="agreedAmount">Agreed Amount ($)</Label>
+                <Label htmlFor="agreedPayment">Agreed Payment ($)</Label>
                 <Input
-                  id="agreedAmount"
+                  id="agreedPayment"
                   type="number"
                   step="0.01"
-                  value={agreedAmount}
-                  onChange={(e) => setAgreedAmount(e.target.value)}
+                  value={agreedPayment}
+                  onChange={(e) => setAgreedPayment(e.target.value)}
                   placeholder="0.00"
                 />
               </div>

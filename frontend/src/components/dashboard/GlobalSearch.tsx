@@ -82,11 +82,11 @@ export default function GlobalSearch() {
     if (clientsData?.data) {
       clientsData.data.forEach((client: any) => {
         allResults.push({
-          id: client.id,
+          id: client.clientId,
           type: 'client',
-          title: client.brandName || client.companyLegalName,
-          subtitle: client.industry,
-          href: `/dashboard/clients/${client.id}`,
+          title: client.brandDisplayName || client.legalCompanyName,
+          subtitle: client.industryVertical,
+          href: `/dashboard/clients/${client.clientId}`,
         });
       });
     }
@@ -106,11 +106,11 @@ export default function GlobalSearch() {
     if (influencersData?.data) {
       influencersData.data.forEach((influencer: any) => {
         allResults.push({
-          id: influencer.id,
+          id: influencer.influencerId,
           type: 'influencer',
           title: influencer.displayName || influencer.fullName,
           subtitle: influencer.primaryPlatform,
-          href: `/dashboard/influencers/${influencer.id}`,
+          href: `/dashboard/influencers/${influencer.influencerId}`,
         });
       });
     }
@@ -121,7 +121,7 @@ export default function GlobalSearch() {
           id: collab.id,
           type: 'collaboration',
           title: `Collaboration #${collab.id.substring(0, 8)}`,
-          subtitle: collab.status,
+          subtitle: collab.collaborationStatus,
           href: `/dashboard/collaborations/${collab.id}`,
         });
       });

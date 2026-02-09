@@ -6,7 +6,7 @@ export type CollaborationStatus =
   | 'cancelled' 
   | 'declined';
 
-export type PaymentStatus = 'pending' | 'processing' | 'paid';
+export type PaymentStatus = 'pending' | 'processing' | 'paid' | 'partial';
 
 export type DeliverableStatus = 'pending' | 'submitted' | 'approved' | 'rejected';
 
@@ -44,22 +44,15 @@ export interface Collaboration {
   campaignId: string;
   influencerId: string;
   role?: string;
-  status: CollaborationStatus;
-  agreedDeliverables?: Deliverable[];
-  agreedDeliverablesJson?: string;
-  agreedAmount?: number;
+  collaborationStatus: string;
+  agreedDeliverables?: string;
+  deliveredContent?: string;
+  agreedPayment?: number;
   paymentStatus: PaymentStatus;
-  notes?: Note[];
-  notesJson?: string;
-  performanceMetrics?: PerformanceMetrics;
-  performanceMetricsJson?: string;
+  performanceMetrics?: string;
   invitedAt: string;
   acceptedAt?: string;
-  startedAt?: string;
   completedAt?: string;
-  cancelledAt?: string;
-  createdAt: string;
-  updatedAt: string;
   campaign?: {
     campaignId: string;
     campaignName: string;
@@ -68,17 +61,17 @@ export interface Collaboration {
   };
   influencer?: {
     influencerId: string;
-    profileName: string;
-    fullName?: string;
+    fullName: string;
+    displayName?: string;
     primaryPlatform?: string;
-    profilePictureUrl?: string;
-    audienceSize?: number;
+    profileImageUrl?: string;
   };
 }
 
 export interface CollaborationListResponse {
   success: boolean;
   data: Collaboration[];
+  count: number;
   pagination?: {
     page: number;
     perPage: number;
@@ -96,15 +89,15 @@ export interface CreateCollaborationRequest {
   campaignId: string;
   influencerId: string;
   role?: string;
-  agreedDeliverables?: Deliverable[];
-  agreedAmount?: number;
+  agreedDeliverables?: string;
+  agreedPayment?: number;
   notes?: string;
 }
 
 export interface UpdateCollaborationRequest {
   role?: string;
-  agreedDeliverables?: Deliverable[];
-  agreedAmount?: number;
+  agreedDeliverables?: string;
+  agreedPayment?: number;
   paymentStatus?: PaymentStatus;
 }
 
@@ -112,8 +105,8 @@ export interface BulkInviteRequest {
   campaignId: string;
   influencerIds: string[];
   role?: string;
-  agreedDeliverables?: Deliverable[];
-  agreedAmount?: number;
+  agreedDeliverables?: string;
+  agreedPayment?: number;
 }
 
 export interface SubmitDeliverableRequest {
@@ -139,13 +132,12 @@ export interface CollaborationAnalytics {
   pendingDeliverables: number;
   performanceMetrics: PerformanceMetrics;
   paymentInfo: {
-    agreedAmount: number;
+    agreedPayment: number;
     paymentStatus: PaymentStatus;
   };
   timeline: {
     invitedAt: string;
     acceptedAt?: string;
-    startedAt?: string;
     completedAt?: string;
   };
 }

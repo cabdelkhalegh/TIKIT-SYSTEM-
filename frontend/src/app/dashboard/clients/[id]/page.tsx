@@ -5,10 +5,11 @@ import { useParams, useRouter } from 'next/navigation';
 import { Building2, Mail, Phone, Globe, Calendar, TrendingUp, ArrowLeft, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { clientService } from '@/services/client.service';
+import type { Contact } from '@/types/client.types';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, safeJsonParse } from '@/lib/utils';
 
 export default function ClientDetailPage() {
   const params = useParams();
@@ -64,10 +65,10 @@ export default function ClientDetailPage() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
-                  {client.brandName || client.companyLegalName}
+                  {client.brandDisplayName || client.legalCompanyName}
                 </h1>
-                {client.brandName !== client.companyLegalName && (
-                  <p className="text-gray-600 mt-1">{client.companyLegalName}</p>
+                {client.brandDisplayName !== client.legalCompanyName && (
+                  <p className="text-gray-600 mt-1">{client.legalCompanyName}</p>
                 )}
               </div>
             </div>
@@ -100,7 +101,7 @@ export default function ClientDetailPage() {
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </div>
               <p className="text-2xl font-bold text-gray-900">
-                {formatCurrency(client.spendTotals || 0)}
+                {formatCurrency(client.totalAdSpend || 0)}
               </p>
             </div>
           </Card>
@@ -111,7 +112,7 @@ export default function ClientDetailPage() {
                 <Calendar className="h-4 w-4 text-purple-600" />
               </div>
               <p className="text-2xl font-bold text-gray-900">
-                {formatDate(client.createdAt)}
+                {formatDate(client.accountCreatedAt)}
               </p>
             </div>
           </Card>
@@ -124,10 +125,10 @@ export default function ClientDetailPage() {
             <div className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Company Information</h2>
               <div className="space-y-3">
-                {client.industry && (
+                {client.industryVertical && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Industry</span>
-                    <span className="font-medium text-gray-900">{client.industry}</span>
+                    <span className="font-medium text-gray-900">{client.industryVertical}</span>
                   </div>
                 )}
                 {client.websiteUrl && (
@@ -146,11 +147,11 @@ export default function ClientDetailPage() {
                 )}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Created</span>
-                  <span className="font-medium text-gray-900">{formatDate(client.createdAt)}</span>
+                  <span className="font-medium text-gray-900">{formatDate(client.accountCreatedAt)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Last Updated</span>
-                  <span className="font-medium text-gray-900">{formatDate(client.updatedAt)}</span>
+                  <span className="font-medium text-gray-900">{formatDate(client.lastModifiedAt)}</span>
                 </div>
               </div>
             </div>
@@ -160,32 +161,35 @@ export default function ClientDetailPage() {
           <Card>
             <div className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Primary Contacts</h2>
-              {client.primaryContacts && client.primaryContacts.length > 0 ? (
-                <div className="space-y-4">
-                  {client.primaryContacts.map((contact, index) => (
-                    <div key={index} className="border-b border-gray-200 pb-3 last:border-0 last:pb-0">
-                      <p className="font-medium text-gray-900">{contact.name}</p>
-                      {contact.role && (
-                        <p className="text-sm text-gray-600">{contact.role}</p>
-                      )}
-                      {contact.email && (
-                        <a href={`mailto:${contact.email}`} className="flex items-center text-sm text-purple-600 hover:text-purple-700 mt-1">
-                          <Mail className="h-3 w-3 mr-1" />
-                          {contact.email}
-                        </a>
-                      )}
-                      {contact.phone && (
-                        <a href={`tel:${contact.phone}`} className="flex items-center text-sm text-gray-600 hover:text-gray-700 mt-1">
-                          <Phone className="h-3 w-3 mr-1" />
-                          {contact.phone}
-                        </a>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">No contacts added</p>
-              )}
+              {(() => {
+                const contacts = safeJsonParse<Contact[]>(client.primaryContactEmails, []);
+                return contacts.length > 0 ? (
+                  <div className="space-y-4">
+                    {contacts.map((contact: Contact, index: number) => (
+                      <div key={index} className="border-b border-gray-200 pb-3 last:border-0 last:pb-0">
+                        <p className="font-medium text-gray-900">{contact.name}</p>
+                        {contact.role && (
+                          <p className="text-sm text-gray-600">{contact.role}</p>
+                        )}
+                        {contact.email && (
+                          <a href={`mailto:${contact.email}`} className="flex items-center text-sm text-purple-600 hover:text-purple-700 mt-1">
+                            <Mail className="h-3 w-3 mr-1" />
+                            {contact.email}
+                          </a>
+                        )}
+                        {contact.phone && (
+                          <a href={`tel:${contact.phone}`} className="flex items-center text-sm text-gray-600 hover:text-gray-700 mt-1">
+                            <Phone className="h-3 w-3 mr-1" />
+                            {contact.phone}
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No contacts added</p>
+                );
+              })()}
             </div>
           </Card>
         </div>
@@ -205,13 +209,13 @@ export default function ClientDetailPage() {
               <div className="space-y-3">
                 {client.campaigns.map((campaign) => (
                   <Link
-                    key={campaign.id}
-                    href={`/dashboard/campaigns/${campaign.id}`}
+                    key={campaign.campaignId}
+                    href={`/dashboard/campaigns/${campaign.campaignId}`}
                     className="block p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors"
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium text-gray-900">{campaign.title}</h3>
+                        <h3 className="font-medium text-gray-900">{campaign.campaignName}</h3>
                         <div className="flex items-center gap-4 mt-1">
                           <span className={`text-xs px-2 py-1 rounded-full ${
                             campaign.status === 'active' ? 'bg-green-100 text-green-800' :
@@ -221,9 +225,9 @@ export default function ClientDetailPage() {
                           }`}>
                             {campaign.status}
                           </span>
-                          {campaign.budget && (
+                          {campaign.totalBudget && (
                             <span className="text-sm text-gray-600">
-                              Budget: {formatCurrency(campaign.budget)}
+                              Budget: {formatCurrency(campaign.totalBudget)}
                             </span>
                           )}
                         </div>

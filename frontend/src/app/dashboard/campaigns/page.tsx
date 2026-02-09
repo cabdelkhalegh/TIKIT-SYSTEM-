@@ -194,7 +194,7 @@ export default function CampaignsPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="text-sm text-gray-900">
-                              {campaign.client?.brandName || 'N/A'}
+                              {campaign.client?.brandDisplayName || 'N/A'}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">

@@ -13,6 +13,7 @@ export function formatCurrency(amount: number, currency: string = 'USD'): string
 }
 
 export function formatNumber(num: number): string {
+  if (num == null || isNaN(num)) return '0';
   if (num >= 1000000) {
     return (num / 1000000).toFixed(1) + 'M'
   }
@@ -40,4 +41,13 @@ export function formatRelativeTime(date: string | Date): string {
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`
   return formatDate(date)
+}
+
+export function safeJsonParse<T>(value: string | undefined | null, fallback: T): T {
+  if (!value) return fallback
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return fallback
+  }
 }

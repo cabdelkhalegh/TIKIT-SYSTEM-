@@ -53,7 +53,7 @@ export class BaseService<T> {
   /**
    * Create a new entity
    */
-  async create(data: Partial<T>): Promise<BaseItemResponse<T>> {
+  async create(data: Record<string, any>): Promise<BaseItemResponse<T>> {
     const response = await apiClient.post<BaseItemResponse<T>>(this.endpoint, data);
     return response.data;
   }
@@ -61,7 +61,7 @@ export class BaseService<T> {
   /**
    * Update an existing entity
    */
-  async update(id: string, data: Partial<T>): Promise<BaseItemResponse<T>> {
+  async update(id: string, data: Record<string, any>): Promise<BaseItemResponse<T>> {
     const response = await apiClient.put<BaseItemResponse<T>>(`${this.endpoint}/${id}`, data);
     return response.data;
   }

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Influencer, Platform, ContentCategory } from '@/types/influencer.types';
+import { parseSocialHandles, parseAudienceMetrics, parseContentCategories } from '@/types/influencer.types';
 
 const influencerSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -34,15 +35,14 @@ const influencerSchema = z.object({
   avgComments: z.number().min(0).optional(),
   
   // Rates
-  perPost: z.number().min(0).optional(),
-  perVideo: z.number().min(0).optional(),
-  perStory: z.number().min(0).optional(),
-  perReel: z.number().min(0).optional(),
+  ratePerPost: z.number().min(0).optional(),
+  ratePerVideo: z.number().min(0).optional(),
+  ratePerStory: z.number().min(0).optional(),
   
-  location: z.string().optional(),
-  languages: z.string(), // Comma-separated
-  verified: z.boolean().default(false),
-  status: z.enum(['active', 'inactive', 'paused']).default('active'),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  isVerified: z.boolean().default(false),
+  availabilityStatus: z.enum(['available', 'busy', 'unavailable']).default('available'),
 });
 
 type InfluencerFormData = z.infer<typeof influencerSchema>;
@@ -66,6 +66,10 @@ export default function InfluencerForm({
   onCancel,
   isLoading = false,
 }: InfluencerFormProps) {
+  const handles = influencer ? parseSocialHandles(influencer) : {};
+  const metrics = influencer ? parseAudienceMetrics(influencer) : null;
+  const existingCategories = influencer ? parseContentCategories(influencer) : [];
+
   const {
     register,
     handleSubmit,
@@ -78,35 +82,33 @@ export default function InfluencerForm({
       bio: influencer.bio || '',
       email: influencer.email,
       phone: influencer.phone || '',
-      instagramHandle: influencer.socialMediaHandles.instagram || '',
-      tiktokHandle: influencer.socialMediaHandles.tiktok || '',
-      youtubeHandle: influencer.socialMediaHandles.youtube || '',
-      twitterHandle: influencer.socialMediaHandles.twitter || '',
-      facebookHandle: influencer.socialMediaHandles.facebook || '',
-      linkedinHandle: influencer.socialMediaHandles.linkedin || '',
+      instagramHandle: handles.instagram || '',
+      tiktokHandle: handles.tiktok || '',
+      youtubeHandle: handles.youtube || '',
+      twitterHandle: handles.twitter || '',
+      facebookHandle: handles.facebook || '',
+      linkedinHandle: handles.linkedin || '',
       primaryPlatform: influencer.primaryPlatform,
-      followers: influencer.audienceMetrics.followers,
-      engagementRate: influencer.audienceMetrics.engagementRate,
-      avgViews: influencer.audienceMetrics.avgViews,
-      avgLikes: influencer.audienceMetrics.avgLikes || 0,
-      avgComments: influencer.audienceMetrics.avgComments || 0,
-      perPost: influencer.rates.perPost || 0,
-      perVideo: influencer.rates.perVideo || 0,
-      perStory: influencer.rates.perStory || 0,
-      perReel: influencer.rates.perReel || 0,
-      location: influencer.location || '',
-      languages: influencer.languages.join(', '),
-      verified: influencer.verified,
-      status: influencer.status,
+      followers: metrics?.followers || 0,
+      engagementRate: metrics?.engagementRate || 0,
+      avgViews: metrics?.avgViews || 0,
+      avgLikes: metrics?.avgLikes || 0,
+      avgComments: metrics?.avgComments || 0,
+      ratePerPost: influencer.ratePerPost || 0,
+      ratePerVideo: influencer.ratePerVideo || 0,
+      ratePerStory: influencer.ratePerStory || 0,
+      city: influencer.city || '',
+      country: influencer.country || '',
+      isVerified: influencer.isVerified,
+      availabilityStatus: influencer.availabilityStatus as 'available' | 'busy' | 'unavailable',
     } : {
-      verified: false,
-      status: 'active' as const,
-      languages: 'English',
+      isVerified: false,
+      availabilityStatus: 'available' as const,
     },
   });
 
   const [selectedCategories, setSelectedCategories] = React.useState<ContentCategory[]>(
-    influencer?.contentCategories || []
+    existingCategories
   );
 
   const handleFormSubmit = (data: InfluencerFormData) => {
@@ -116,33 +118,30 @@ export default function InfluencerForm({
       bio: data.bio,
       email: data.email,
       phone: data.phone,
-      socialMediaHandles: {
+      socialMediaHandles: JSON.stringify({
         instagram: data.instagramHandle,
         tiktok: data.tiktokHandle,
         youtube: data.youtubeHandle,
         twitter: data.twitterHandle,
         facebook: data.facebookHandle,
         linkedin: data.linkedinHandle,
-      },
+      }),
       primaryPlatform: data.primaryPlatform,
-      contentCategories: selectedCategories,
-      audienceMetrics: {
+      contentCategories: JSON.stringify(selectedCategories),
+      audienceMetrics: JSON.stringify({
         followers: Number(data.followers),
         engagementRate: Number(data.engagementRate),
         avgViews: Number(data.avgViews),
         avgLikes: data.avgLikes ? Number(data.avgLikes) : undefined,
         avgComments: data.avgComments ? Number(data.avgComments) : undefined,
-      },
-      rates: {
-        perPost: data.perPost ? Number(data.perPost) : undefined,
-        perVideo: data.perVideo ? Number(data.perVideo) : undefined,
-        perStory: data.perStory ? Number(data.perStory) : undefined,
-        perReel: data.perReel ? Number(data.perReel) : undefined,
-      },
-      location: data.location,
-      languages: data.languages.split(',').map(l => l.trim()),
-      verified: data.verified,
-      status: data.status,
+      }),
+      ratePerPost: data.ratePerPost ? Number(data.ratePerPost) : undefined,
+      ratePerVideo: data.ratePerVideo ? Number(data.ratePerVideo) : undefined,
+      ratePerStory: data.ratePerStory ? Number(data.ratePerStory) : undefined,
+      city: data.city,
+      country: data.country,
+      isVerified: data.isVerified,
+      availabilityStatus: data.availabilityStatus,
     };
 
     onSubmit(formattedData);
@@ -389,42 +388,32 @@ export default function InfluencerForm({
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Rates (USD)</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="perPost">Per Post</Label>
+            <Label htmlFor="ratePerPost">Per Post</Label>
             <Input
-              id="perPost"
+              id="ratePerPost"
               type="number"
-              {...register('perPost', { valueAsNumber: true })}
+              {...register('ratePerPost', { valueAsNumber: true })}
               placeholder="500"
             />
           </div>
 
           <div>
-            <Label htmlFor="perVideo">Per Video</Label>
+            <Label htmlFor="ratePerVideo">Per Video</Label>
             <Input
-              id="perVideo"
+              id="ratePerVideo"
               type="number"
-              {...register('perVideo', { valueAsNumber: true })}
+              {...register('ratePerVideo', { valueAsNumber: true })}
               placeholder="1000"
             />
           </div>
 
           <div>
-            <Label htmlFor="perStory">Per Story</Label>
+            <Label htmlFor="ratePerStory">Per Story</Label>
             <Input
-              id="perStory"
+              id="ratePerStory"
               type="number"
-              {...register('perStory', { valueAsNumber: true })}
+              {...register('ratePerStory', { valueAsNumber: true })}
               placeholder="200"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="perReel">Per Reel</Label>
-            <Input
-              id="perReel"
-              type="number"
-              {...register('perReel', { valueAsNumber: true })}
-              placeholder="750"
             />
           </div>
         </div>
@@ -435,44 +424,44 @@ export default function InfluencerForm({
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="city">City</Label>
             <Input
-              id="location"
-              {...register('location')}
-              placeholder="Los Angeles, CA"
+              id="city"
+              {...register('city')}
+              placeholder="Los Angeles"
             />
           </div>
 
           <div>
-            <Label htmlFor="languages">Languages (comma-separated)</Label>
+            <Label htmlFor="country">Country</Label>
             <Input
-              id="languages"
-              {...register('languages')}
-              placeholder="English, Spanish"
+              id="country"
+              {...register('country')}
+              placeholder="United States"
             />
           </div>
 
           <div>
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="availabilityStatus">Availability Status</Label>
             <select
-              id="status"
-              {...register('status')}
+              id="availabilityStatus"
+              {...register('availabilityStatus')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="paused">Paused</option>
+              <option value="available">Available</option>
+              <option value="busy">Busy</option>
+              <option value="unavailable">Unavailable</option>
             </select>
           </div>
 
           <div className="flex items-center gap-2 pt-6">
             <input
-              id="verified"
+              id="isVerified"
               type="checkbox"
-              {...register('verified')}
+              {...register('isVerified')}
               className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
             />
-            <Label htmlFor="verified" className="mb-0">Verified Influencer</Label>
+            <Label htmlFor="isVerified" className="mb-0">Verified Influencer</Label>
           </div>
         </div>
       </div>

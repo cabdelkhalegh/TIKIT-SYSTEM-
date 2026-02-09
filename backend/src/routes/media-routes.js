@@ -20,10 +20,10 @@ router.post('/upload/profile', upload.single('file'), async (req, res, next) => 
     // Validate image dimensions
     await fileUploadService.validateImageDimensions(req.file.path);
 
-    const media = await fileUploadService.processUpload(req.file, req.user.id, {
+    const media = await fileUploadService.processUpload(req.file, req.authenticatedUser.userId, {
       purpose: 'profile',
       entityType: 'user',
-      entityId: req.user.id,
+      entityId: req.authenticatedUser.userId,
       isPublic: true
     });
 
@@ -48,7 +48,7 @@ router.post('/upload/campaign/:campaignId', upload.single('file'), async (req, r
 
     const { campaignId } = req.params;
 
-    const media = await fileUploadService.processUpload(req.file, req.user.id, {
+    const media = await fileUploadService.processUpload(req.file, req.authenticatedUser.userId, {
       purpose: 'campaign',
       entityType: 'campaign',
       entityId: campaignId,
@@ -76,7 +76,7 @@ router.post('/upload/deliverable/:collaborationId', upload.single('file'), async
 
     const { collaborationId } = req.params;
 
-    const media = await fileUploadService.processUpload(req.file, req.user.id, {
+    const media = await fileUploadService.processUpload(req.file, req.authenticatedUser.userId, {
       purpose: 'deliverable',
       entityType: 'collaboration',
       entityId: collaborationId,
@@ -102,7 +102,7 @@ router.post('/upload/general', upload.single('file'), async (req, res, next) => 
       throw new ValidationError('No file uploaded');
     }
 
-    const media = await fileUploadService.processUpload(req.file, req.user.id, {
+    const media = await fileUploadService.processUpload(req.file, req.authenticatedUser.userId, {
       purpose: 'general',
       isPublic: false
     });
@@ -124,7 +124,7 @@ router.get('/', async (req, res, next) => {
   try {
     const { purpose, entityType, entityId, mimeType, page, limit } = req.query;
 
-    const result = await fileUploadService.getUserMedia(req.user.id, {
+    const result = await fileUploadService.getUserMedia(req.authenticatedUser.userId, {
       purpose,
       entityType,
       entityId,
@@ -148,7 +148,7 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/:id', async (req, res, next) => {
   try {
-    const media = await fileUploadService.getMediaById(req.params.id, req.user.id);
+    const media = await fileUploadService.getMediaById(req.params.id, req.authenticatedUser.userId);
 
     res.json({
       success: true,
@@ -164,7 +164,7 @@ router.get('/:id', async (req, res, next) => {
  */
 router.delete('/:id', async (req, res, next) => {
   try {
-    const result = await fileUploadService.deleteMedia(req.params.id, req.user.id);
+    const result = await fileUploadService.deleteMedia(req.params.id, req.authenticatedUser.userId);
 
     res.json({
       success: true,

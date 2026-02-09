@@ -36,7 +36,10 @@ export default function CollaborationStatusBadge({ status, className = '' }: Col
     },
   };
 
-  const config = statusConfig[status];
+  const config = statusConfig[status] || {
+    label: status || 'Unknown',
+    className: 'bg-gray-100 text-gray-700 border-gray-300',
+  };
 
   return (
     <span

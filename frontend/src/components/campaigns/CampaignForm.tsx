@@ -53,7 +53,7 @@ type CampaignFormData = z.infer<typeof campaignFormSchema>;
 
 interface CampaignFormProps {
   campaign?: Campaign;
-  clients: Array<{ clientId: string; brandName: string; companyLegalName: string }>;
+  clients: Array<{ clientId: string; brandDisplayName: string; legalCompanyName: string }>;
   onSubmit: (data: CreateCampaignRequest | UpdateCampaignRequest) => Promise<void>;
   isSubmitting?: boolean;
 }
@@ -269,7 +269,7 @@ export default function CampaignForm({
                 <option value="">Select a client</option>
                 {clients.map((client) => (
                   <option key={client.clientId} value={client.clientId}>
-                    {client.brandName || client.companyLegalName}
+                    {client.brandDisplayName || client.legalCompanyName}
                   </option>
                 ))}
               </select>
@@ -546,7 +546,7 @@ export default function CampaignForm({
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Client:</dt>
                   <dd className="font-medium text-gray-900">
-                    {clients.find((c) => c.clientId === watch('clientId'))?.brandName}
+                    {clients.find((c) => c.clientId === watch('clientId'))?.brandDisplayName}
                   </dd>
                 </div>
               </dl>

@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Edit, Trash2, Mail, Phone, MapPin, CheckCircle, Users } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Mail, Phone, MapPin, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { influencerService } from '@/services/influencer.service';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -10,10 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import PlatformBadge from '@/components/influencers/PlatformBadge';
 import SocialHandles from '@/components/influencers/SocialHandles';
-import AudienceMetrics from '@/components/influencers/AudienceMetrics';
+import AudienceMetricsComponent from '@/components/influencers/AudienceMetrics';
 import QualityScoreIndicator from '@/components/influencers/QualityScoreIndicator';
 import InfluencerCard from '@/components/influencers/InfluencerCard';
 import { formatCurrency } from '@/lib/utils';
+import { parseSocialHandles, parseAudienceMetrics, parseContentCategories, parsePerformanceHistory, getDisplayLocation } from '@/types/influencer.types';
 
 export default function InfluencerDetailPage() {
   const params = useParams();
@@ -140,6 +141,11 @@ export default function InfluencerDetailPage() {
   }
 
   const influencer = data.data;
+  const handles = parseSocialHandles(influencer);
+  const metrics = parseAudienceMetrics(influencer);
+  const categories = parseContentCategories(influencer);
+  const perfHistory = parsePerformanceHistory(influencer);
+  const location = getDisplayLocation(influencer);
   const initials = influencer.fullName
     .split(' ')
     .map(n => n[0])
@@ -179,7 +185,7 @@ export default function InfluencerDetailPage() {
                       <h1 className="text-3xl font-bold text-gray-900">
                         {influencer.displayName || influencer.fullName}
                       </h1>
-                      {influencer.verified && (
+                      {influencer.isVerified && (
                         <CheckCircle className="h-6 w-6 text-blue-500" />
                       )}
                     </div>
@@ -214,7 +220,7 @@ export default function InfluencerDetailPage() {
 
                 {/* Categories */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {influencer.contentCategories.map((category) => (
+                  {categories.map((category) => (
                     <span
                       key={category}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700"
@@ -240,16 +246,10 @@ export default function InfluencerDetailPage() {
                       </a>
                     </div>
                   )}
-                  {influencer.location && (
+                  {location && (
                     <div className="flex items-center gap-2 text-gray-700">
                       <MapPin className="h-4 w-4 text-gray-500" />
-                      <span>{influencer.location}</span>
-                    </div>
-                  )}
-                  {influencer.languages.length > 0 && (
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Users className="h-4 w-4 text-gray-500" />
-                      <span>{influencer.languages.join(', ')}</span>
+                      <span>{location}</span>
                     </div>
                   )}
                 </div>
@@ -268,7 +268,7 @@ export default function InfluencerDetailPage() {
             <Card>
               <div className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Social Media</h2>
-                <SocialHandles handles={influencer.socialMediaHandles} />
+                <SocialHandles handles={handles} />
               </div>
             </Card>
 
@@ -276,17 +276,17 @@ export default function InfluencerDetailPage() {
             <Card>
               <div className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Audience Metrics</h2>
-                <AudienceMetrics metrics={influencer.audienceMetrics} />
+                <AudienceMetricsComponent metrics={metrics} />
               </div>
             </Card>
 
             {/* Performance History */}
-            {influencer.performanceHistory && influencer.performanceHistory.length > 0 && (
+            {perfHistory.length > 0 && (
               <Card>
                 <div className="p-6">
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">Performance History</h2>
                   <div className="space-y-3">
-                    {influencer.performanceHistory.map((record, index) => (
+                    {perfHistory.map((record, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
                           <p className="text-sm font-medium text-gray-900">{record.date}</p>
@@ -311,39 +311,31 @@ export default function InfluencerDetailPage() {
               <div className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Rates</h2>
                 <div className="space-y-3">
-                  {influencer.rates.perPost && (
+                  {influencer.ratePerPost && (
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Per Post</span>
                       <span className="text-lg font-semibold text-gray-900">
-                        {formatCurrency(influencer.rates.perPost)}
+                        {formatCurrency(influencer.ratePerPost)}
                       </span>
                     </div>
                   )}
-                  {influencer.rates.perVideo && (
+                  {influencer.ratePerVideo && (
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Per Video</span>
                       <span className="text-lg font-semibold text-gray-900">
-                        {formatCurrency(influencer.rates.perVideo)}
+                        {formatCurrency(influencer.ratePerVideo)}
                       </span>
                     </div>
                   )}
-                  {influencer.rates.perStory && (
+                  {influencer.ratePerStory && (
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Per Story</span>
                       <span className="text-lg font-semibold text-gray-900">
-                        {formatCurrency(influencer.rates.perStory)}
+                        {formatCurrency(influencer.ratePerStory)}
                       </span>
                     </div>
                   )}
-                  {influencer.rates.perReel && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Per Reel</span>
-                      <span className="text-lg font-semibold text-gray-900">
-                        {formatCurrency(influencer.rates.perReel)}
-                      </span>
-                    </div>
-                  )}
-                  {!influencer.rates.perPost && !influencer.rates.perVideo && !influencer.rates.perStory && !influencer.rates.perReel && (
+                  {!influencer.ratePerPost && !influencer.ratePerVideo && !influencer.ratePerStory && (
                     <p className="text-sm text-gray-500">No rates available</p>
                   )}
                 </div>
@@ -356,14 +348,14 @@ export default function InfluencerDetailPage() {
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Status</h2>
                 <span
                   className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    influencer.status === 'active'
+                    influencer.availabilityStatus === 'available'
                       ? 'bg-green-100 text-green-800'
-                      : influencer.status === 'paused'
+                      : influencer.availabilityStatus === 'busy'
                       ? 'bg-yellow-100 text-yellow-800'
                       : 'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  {influencer.status.charAt(0).toUpperCase() + influencer.status.slice(1)}
+                  {influencer.availabilityStatus.charAt(0).toUpperCase() + influencer.availabilityStatus.slice(1)}
                 </span>
               </div>
             </Card>
@@ -376,7 +368,7 @@ export default function InfluencerDetailPage() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">Similar Influencers</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {similarInfluencers.slice(0, 4).map((similar) => (
-                <InfluencerCard key={similar.id} influencer={similar} />
+                <InfluencerCard key={similar.influencerId} influencer={similar} />
               ))}
             </div>
           </div>

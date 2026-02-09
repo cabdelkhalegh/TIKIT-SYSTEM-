@@ -9,7 +9,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import InfluencerCard from '@/components/influencers/InfluencerCard';
-import type { Platform, InfluencerStatus, ContentCategory } from '@/types/influencer.types';
+import type { Platform, ContentCategory } from '@/types/influencer.types';
 
 const platforms: Platform[] = ['instagram', 'tiktok', 'youtube', 'twitter', 'facebook', 'linkedin'];
 
@@ -17,7 +17,7 @@ export default function InfluencersPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | ''>('');
-  const [selectedStatus, setSelectedStatus] = useState<InfluencerStatus | ''>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -112,13 +112,13 @@ export default function InfluencersPage() {
                   </label>
                   <select
                     value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value as InfluencerStatus | '')}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                   >
                     <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="paused">Paused</option>
+                    <option value="available">Available</option>
+                    <option value="busy">Busy</option>
+                    <option value="unavailable">Unavailable</option>
                   </select>
                 </div>
 
@@ -191,7 +191,7 @@ export default function InfluencersPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {influencers.map((influencer) => (
-                  <InfluencerCard key={influencer.id} influencer={influencer} />
+                  <InfluencerCard key={influencer.influencerId} influencer={influencer} />
                 ))}
               </div>
             )}
