@@ -31,7 +31,24 @@ export const GET = withAuth(async (req: NextRequest, { params }: any) => {
       return errorResponse('Campaign not found', 404);
     }
 
-    return successResponse(campaign);
+    // Transform JSON strings back to objects/arrays for frontend
+    const transformedCampaign = {
+      ...campaign,
+      campaignObjectives: campaign.campaignObjectives 
+        ? JSON.parse(campaign.campaignObjectives) 
+        : [],
+      targetAudience: campaign.targetAudienceJson 
+        ? JSON.parse(campaign.targetAudienceJson) 
+        : null,
+      targetPlatforms: campaign.targetPlatformsJson 
+        ? JSON.parse(campaign.targetPlatformsJson) 
+        : [],
+      performanceKPIs: campaign.performanceKPIsJson 
+        ? JSON.parse(campaign.performanceKPIsJson) 
+        : {},
+    };
+
+    return successResponse(transformedCampaign);
   } catch (error: any) {
     console.error('Error fetching campaign:', error);
     return errorResponse('Failed to fetch campaign');
@@ -59,15 +76,57 @@ export const PUT = withAuth(async (req: NextRequest, { params }: any) => {
       }
     }
 
+    // Transform form data to match database schema (same as POST)
+    const updateData: any = {};
+    
+    if (body.campaignName !== undefined) updateData.campaignName = body.campaignName;
+    if (body.campaignDescription !== undefined) updateData.campaignDescription = body.campaignDescription;
+    if (body.clientId !== undefined) updateData.clientId = body.clientId;
+    if (body.status !== undefined) updateData.status = body.status;
+    if (body.totalBudget !== undefined) updateData.totalBudget = body.totalBudget;
+    if (body.startDate !== undefined) updateData.startDate = body.startDate ? new Date(body.startDate) : null;
+    if (body.endDate !== undefined) updateData.endDate = body.endDate ? new Date(body.endDate) : null;
+
+    // Convert arrays/objects to JSON strings
+    if (body.campaignObjectives !== undefined) {
+      updateData.campaignObjectives = JSON.stringify(body.campaignObjectives);
+    }
+    if (body.targetAudience !== undefined) {
+      updateData.targetAudienceJson = JSON.stringify(body.targetAudience);
+    }
+    if (body.targetPlatforms !== undefined) {
+      updateData.targetPlatformsJson = JSON.stringify(body.targetPlatforms);
+    }
+    if (body.performanceKPIs !== undefined) {
+      updateData.performanceKPIsJson = JSON.stringify(body.performanceKPIs);
+    }
+
     const campaign = await prisma.campaign.update({
       where: { campaignId: params.id },
-      data: body,
+      data: updateData,
       include: {
         client: true,
       },
     });
 
-    return successResponse(campaign, 'Campaign updated successfully');
+    // Transform response back
+    const transformedCampaign = {
+      ...campaign,
+      campaignObjectives: campaign.campaignObjectives 
+        ? JSON.parse(campaign.campaignObjectives) 
+        : [],
+      targetAudience: campaign.targetAudienceJson 
+        ? JSON.parse(campaign.targetAudienceJson) 
+        : null,
+      targetPlatforms: campaign.targetPlatformsJson 
+        ? JSON.parse(campaign.targetPlatformsJson) 
+        : [],
+      performanceKPIs: campaign.performanceKPIsJson 
+        ? JSON.parse(campaign.performanceKPIsJson) 
+        : {},
+    };
+
+    return successResponse(transformedCampaign, 'Campaign updated successfully');
   } catch (error: any) {
     console.error('Error updating campaign:', error);
     if (error.code === 'P2025') {
