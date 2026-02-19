@@ -1,6 +1,8 @@
 import axios from 'axios'
 
+// Force relative URL for same-origin API routes on Vercel
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1'
+console.log('[api-client] baseURL:', API_BASE_URL)
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
