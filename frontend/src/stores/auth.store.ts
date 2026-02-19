@@ -14,6 +14,10 @@ export const useAuthStore = create<AuthStore>()(
         // Set token in API client headers
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
+        // Set cookie for middleware auth check
+        const cookieData = JSON.stringify({ state: { token, isAuthenticated: true } });
+        document.cookie = `tikit-auth-storage=${encodeURIComponent(cookieData)}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+        
         set({
           user,
           token,
@@ -24,6 +28,9 @@ export const useAuthStore = create<AuthStore>()(
       logout: () => {
         // Remove token from API client headers
         delete apiClient.defaults.headers.common['Authorization'];
+        
+        // Clear auth cookie
+        document.cookie = 'tikit-auth-storage=; path=/; max-age=0';
         
         set({
           user: null,
