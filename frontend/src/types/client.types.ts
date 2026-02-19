@@ -42,6 +42,7 @@ export interface Campaign {
 export interface ClientListResponse {
   success: boolean;
   data: Client[];
+  count: number;
   pagination?: {
     page: number;
     perPage: number;

@@ -79,6 +79,7 @@ export interface Collaboration {
 export interface CollaborationListResponse {
   success: boolean;
   data: Collaboration[];
+  count: number;
   pagination?: {
     page: number;
     perPage: number;
