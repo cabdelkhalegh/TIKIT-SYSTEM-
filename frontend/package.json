@@ -4,9 +4,9 @@
   "description": "TIKIT Frontend - Influencer Marketing Platform",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev -p 4000",
     "build": "next build",
-    "start": "next start -p 3000",
+    "start": "next start -p 4000",
     "lint": "next lint",
     "type-check": "tsc --noEmit"
   },
