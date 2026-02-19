@@ -1,29 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user ID from auth (in a real app, extract from JWT)
-    // For now, we'll get the first user or use a default
+    // Note: Auth middleware can be added via withAuth wrapper if needed
+    // For now, allowing unauthenticated access for public analytics
     
-    // Get total counts
+    // Get total counts with error handling
     const [totalClients, totalCampaigns, totalInfluencers, totalCollaborations] = await Promise.all([
-      prisma.client.count(),
-      prisma.campaign.count(),
-      prisma.influencer.count(),
-      prisma.collaboration.count(),
+      prisma.client.count().catch(() => 0),
+      prisma.campaign.count().catch(() => 0),
+      prisma.influencer.count().catch(() => 0),
+      prisma.collaboration.count().catch(() => 0),
     ]);
 
     // Get campaign breakdown by status
-    const campaigns = await prisma.campaign.groupBy({
-      by: ['status'],
-      _count: true,
-    });
-
     const campaignBreakdown = {
       draft: 0,
       active: 0,
@@ -32,58 +25,78 @@ export async function GET(request: NextRequest) {
       cancelled: 0,
     };
 
-    campaigns.forEach((c) => {
-      const status = c.status.toLowerCase();
-      if (status in campaignBreakdown) {
-        campaignBreakdown[status as keyof typeof campaignBreakdown] = c._count;
-      }
-    });
+    try {
+      const campaigns = await prisma.campaign.groupBy({
+        by: ['status'],
+        _count: true,
+      });
+
+      campaigns.forEach((c) => {
+        const status = c.status.toLowerCase();
+        if (status in campaignBreakdown) {
+          campaignBreakdown[status as keyof typeof campaignBreakdown] = c._count;
+        }
+      });
+    } catch (err) {
+      console.error('Campaign breakdown error:', err);
+    }
 
     // Get budget overview
-    const allCampaigns = await prisma.campaign.findMany({
-      select: {
-        budget: true,
-        spentBudget: true,
-      },
-    });
-
     const budgetOverview = {
-      totalBudget: allCampaigns.reduce((sum, c) => sum + Number(c.budget || 0), 0),
-      allocatedBudget: allCampaigns.reduce((sum, c) => sum + Number(c.budget || 0), 0),
-      spentBudget: allCampaigns.reduce((sum, c) => sum + Number(c.spentBudget || 0), 0),
+      totalBudget: 0,
+      allocatedBudget: 0,
+      spentBudget: 0,
       utilizationPercentage: 0,
     };
 
-    if (budgetOverview.totalBudget > 0) {
-      budgetOverview.utilizationPercentage = (budgetOverview.spentBudget / budgetOverview.totalBudget) * 100;
+    try {
+      const allCampaigns = await prisma.campaign.findMany({
+        select: {
+          budget: true,
+          spentBudget: true,
+        },
+      });
+
+      budgetOverview.totalBudget = allCampaigns.reduce((sum, c) => sum + Number(c.budget || 0), 0);
+      budgetOverview.allocatedBudget = budgetOverview.totalBudget;
+      budgetOverview.spentBudget = allCampaigns.reduce((sum, c) => sum + Number(c.spentBudget || 0), 0);
+
+      if (budgetOverview.totalBudget > 0) {
+        budgetOverview.utilizationPercentage = (budgetOverview.spentBudget / budgetOverview.totalBudget) * 100;
+      }
+    } catch (err) {
+      console.error('Budget overview error:', err);
     }
 
     // Get performance metrics from collaborations
-    const collaborations = await prisma.collaboration.findMany({
-      select: {
-        reach: true,
-        engagement: true,
-        impressions: true,
-      },
-    });
-
     const performanceMetrics = {
-      totalReach: collaborations.reduce((sum, c) => sum + Number(c.reach || 0), 0),
-      totalEngagement: collaborations.reduce((sum, c) => sum + Number(c.engagement || 0), 0),
-      totalImpressions: collaborations.reduce((sum, c) => sum + Number(c.impressions || 0), 0),
+      totalReach: 0,
+      totalEngagement: 0,
+      totalImpressions: 0,
       avgEngagementRate: 0,
     };
 
-    if (performanceMetrics.totalReach > 0) {
-      performanceMetrics.avgEngagementRate = (performanceMetrics.totalEngagement / performanceMetrics.totalReach) * 100;
+    try {
+      const collaborations = await prisma.collaboration.findMany({
+        select: {
+          reach: true,
+          engagement: true,
+          impressions: true,
+        },
+      });
+
+      performanceMetrics.totalReach = collaborations.reduce((sum, c) => sum + Number(c.reach || 0), 0);
+      performanceMetrics.totalEngagement = collaborations.reduce((sum, c) => sum + Number(c.engagement || 0), 0);
+      performanceMetrics.totalImpressions = collaborations.reduce((sum, c) => sum + Number(c.impressions || 0), 0);
+
+      if (performanceMetrics.totalReach > 0) {
+        performanceMetrics.avgEngagementRate = (performanceMetrics.totalEngagement / performanceMetrics.totalReach) * 100;
+      }
+    } catch (err) {
+      console.error('Performance metrics error:', err);
     }
 
     // Get active collaborations breakdown
-    const collabsByStatus = await prisma.collaboration.groupBy({
-      by: ['status'],
-      _count: true,
-    });
-
     const activeCollaborations = {
       invited: 0,
       accepted: 0,
@@ -91,68 +104,92 @@ export async function GET(request: NextRequest) {
       completed: 0,
     };
 
-    collabsByStatus.forEach((c) => {
-      const status = c.status.toLowerCase();
-      if (status in activeCollaborations) {
-        activeCollaborations[status as keyof typeof activeCollaborations] = c._count;
-      }
-    });
+    try {
+      const collabsByStatus = await prisma.collaboration.groupBy({
+        by: ['status'],
+        _count: true,
+      });
+
+      collabsByStatus.forEach((c) => {
+        const status = c.status.toLowerCase();
+        if (status in activeCollaborations) {
+          activeCollaborations[status as keyof typeof activeCollaborations] = c._count;
+        }
+      });
+    } catch (err) {
+      console.error('Active collaborations error:', err);
+    }
 
     // Get platform distribution from influencers
-    const influencers = await prisma.influencer.findMany({
-      select: {
-        platforms: true,
-      },
-    });
-
     const platformDistribution: Record<string, number> = {};
-    influencers.forEach((inf) => {
-      if (inf.platforms && typeof inf.platforms === 'object') {
-        Object.keys(inf.platforms).forEach((platform) => {
-          platformDistribution[platform] = (platformDistribution[platform] || 0) + 1;
-        });
-      }
-    });
+    try {
+      const influencers = await prisma.influencer.findMany({
+        select: {
+          platforms: true,
+        },
+      });
+
+      influencers.forEach((inf) => {
+        if (inf.platforms && typeof inf.platforms === 'object') {
+          Object.keys(inf.platforms).forEach((platform) => {
+            platformDistribution[platform] = (platformDistribution[platform] || 0) + 1;
+          });
+        }
+      });
+    } catch (err) {
+      console.error('Platform distribution error:', err);
+    }
 
     // Get recent activity (simplified - using recent campaigns)
-    const recentCampaigns = await prisma.campaign.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        status: true,
-        createdAt: true,
-      },
-    });
+    let recentActivity: any[] = [];
+    try {
+      const recentCampaigns = await prisma.campaign.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          createdAt: true,
+        },
+      });
 
-    const recentActivity = recentCampaigns.map((campaign) => ({
-      id: campaign.id,
-      type: 'campaign',
-      description: `Campaign "${campaign.name}" ${campaign.status.toLowerCase()}`,
-      timestamp: campaign.createdAt.toISOString(),
-      user: 'System',
-    }));
+      recentActivity = recentCampaigns.map((campaign) => ({
+        id: campaign.id,
+        type: 'campaign',
+        description: `Campaign "${campaign.name}" ${campaign.status.toLowerCase()}`,
+        timestamp: campaign.createdAt.toISOString(),
+        user: 'System',
+      }));
+    } catch (err) {
+      console.error('Recent activity error:', err);
+    }
 
     // Top performers (simplified - top 3 campaigns by budget)
-    const topCampaigns = await prisma.campaign.findMany({
-      take: 3,
-      orderBy: { budget: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        budget: true,
-      },
-    });
-
     const topPerformers = {
-      campaigns: topCampaigns.map((c) => ({
+      campaigns: [],
+      influencers: [],
+    };
+
+    try {
+      const topCampaigns = await prisma.campaign.findMany({
+        take: 3,
+        orderBy: { budget: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          budget: true,
+        },
+      });
+
+      topPerformers.campaigns = topCampaigns.map((c) => ({
         id: c.id,
         name: c.name,
         performance: Number(c.budget || 0),
-      })),
-      influencers: [], // Can be enhanced later
-    };
+      }));
+    } catch (err) {
+      console.error('Top performers error:', err);
+    }
 
     // Determine trends (simplified - all up for now)
     const trends = {
