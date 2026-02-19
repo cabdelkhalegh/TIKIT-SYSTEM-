@@ -47,7 +47,37 @@ export const GET = withAuth(async (req: NextRequest) => {
       },
     });
 
-    return successResponse(collaborations);
+    // Transform to match frontend expectations
+    const transformedCollaborations = collaborations.map(collab => ({
+      id: collab.id,
+      campaignId: collab.campaignId,
+      influencerId: collab.influencerId,
+      campaign: collab.campaign,
+      influencer: collab.influencer ? {
+        ...collab.influencer,
+        profileName: collab.influencer.displayName,
+      } : null,
+      role: collab.role,
+      status: collab.collaborationStatus,
+      collaborationStatus: collab.collaborationStatus,
+      agreedDeliverables: collab.agreedDeliverables 
+        ? JSON.parse(collab.agreedDeliverables) 
+        : [],
+      deliveredContent: collab.deliveredContent 
+        ? JSON.parse(collab.deliveredContent) 
+        : [],
+      agreedPayment: collab.agreedPayment,
+      agreedAmount: collab.agreedPayment, // Alias for frontend
+      paymentStatus: collab.paymentStatus,
+      performanceMetrics: collab.performanceMetrics 
+        ? JSON.parse(collab.performanceMetrics) 
+        : null,
+      invitedAt: collab.invitedAt,
+      acceptedAt: collab.acceptedAt,
+      completedAt: collab.completedAt,
+    }));
+
+    return successResponse(transformedCollaborations);
   } catch (error: any) {
     console.error('Error fetching collaborations:', error);
     return errorResponse('Failed to fetch collaborations');

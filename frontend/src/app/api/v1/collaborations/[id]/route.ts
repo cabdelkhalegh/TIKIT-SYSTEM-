@@ -25,7 +25,37 @@ export const GET = withAuth(async (req: NextRequest, { params }: any) => {
       return errorResponse('Collaboration not found', 404);
     }
 
-    return successResponse(collaboration);
+    // Transform to match frontend expectations
+    const transformed = {
+      id: collaboration.id,
+      campaignId: collaboration.campaignId,
+      influencerId: collaboration.influencerId,
+      campaign: collaboration.campaign,
+      influencer: collaboration.influencer ? {
+        ...collaboration.influencer,
+        profileName: collaboration.influencer.displayName,
+      } : null,
+      role: collaboration.role,
+      status: collaboration.collaborationStatus,
+      collaborationStatus: collaboration.collaborationStatus,
+      agreedDeliverables: collaboration.agreedDeliverables 
+        ? JSON.parse(collaboration.agreedDeliverables) 
+        : [],
+      deliveredContent: collaboration.deliveredContent 
+        ? JSON.parse(collaboration.deliveredContent) 
+        : [],
+      agreedPayment: collaboration.agreedPayment,
+      agreedAmount: collaboration.agreedPayment, // Alias for frontend
+      paymentStatus: collaboration.paymentStatus,
+      performanceMetrics: collaboration.performanceMetrics 
+        ? JSON.parse(collaboration.performanceMetrics) 
+        : null,
+      invitedAt: collaboration.invitedAt,
+      acceptedAt: collaboration.acceptedAt,
+      completedAt: collaboration.completedAt,
+    };
+
+    return successResponse(transformed);
   } catch (error: any) {
     console.error('Error fetching collaboration:', error);
     return errorResponse('Failed to fetch collaboration');
