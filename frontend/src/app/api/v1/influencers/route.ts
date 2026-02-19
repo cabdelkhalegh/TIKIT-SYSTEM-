@@ -38,7 +38,50 @@ export const GET = withAuth(async (req: NextRequest) => {
       },
     });
 
-    return successResponse(influencers);
+    // Transform JSON strings to objects/arrays for frontend
+    const transformedInfluencers = influencers.map(influencer => {
+      const location = influencer.city && influencer.country 
+        ? `${influencer.city}, ${influencer.country}`
+        : influencer.city || influencer.country || null;
+
+      return {
+        id: influencer.influencerId,
+        influencerId: influencer.influencerId,
+        fullName: influencer.fullName,
+        displayName: influencer.displayName,
+        email: influencer.email,
+        phone: influencer.phone,
+        bio: influencer.bio,
+        profileImageUrl: influencer.profileImageUrl,
+        location,
+        city: influencer.city,
+        country: influencer.country,
+        socialMediaHandles: influencer.socialMediaHandles 
+          ? JSON.parse(influencer.socialMediaHandles) 
+          : {},
+        primaryPlatform: influencer.primaryPlatform || 'instagram',
+        audienceMetrics: influencer.audienceMetrics 
+          ? JSON.parse(influencer.audienceMetrics) 
+          : { followers: 0, engagementRate: 0 },
+        contentCategories: influencer.contentCategories 
+          ? JSON.parse(influencer.contentCategories) 
+          : [],
+        performanceHistory: influencer.performanceHistory 
+          ? JSON.parse(influencer.performanceHistory) 
+          : null,
+        status: influencer.availabilityStatus,
+        verified: influencer.isVerified,
+        qualityScore: influencer.qualityScore || 0,
+        ratePerPost: influencer.ratePerPost,
+        ratePerVideo: influencer.ratePerVideo,
+        ratePerStory: influencer.ratePerStory,
+        campaignInfluencers: influencer.campaignInfluencers,
+        createdAt: influencer.createdAt,
+        updatedAt: influencer.updatedAt,
+      };
+    });
+
+    return successResponse(transformedInfluencers);
   } catch (error: any) {
     console.error('Error fetching influencers:', error);
     return errorResponse('Failed to fetch influencers');

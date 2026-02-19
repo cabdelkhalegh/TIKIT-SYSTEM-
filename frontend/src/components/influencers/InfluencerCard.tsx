@@ -57,7 +57,7 @@ export default function InfluencerCard({ influencer }: InfluencerCardProps) {
 
           {/* Categories */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {influencer.contentCategories.slice(0, 3).map((category) => (
+            {(influencer.contentCategories || []).slice(0, 3).map((category) => (
               <span
                 key={category}
                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700"
@@ -65,9 +65,9 @@ export default function InfluencerCard({ influencer }: InfluencerCardProps) {
                 {category}
               </span>
             ))}
-            {influencer.contentCategories.length > 3 && (
+            {(influencer.contentCategories || []).length > 3 && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                +{influencer.contentCategories.length - 3} more
+                +{(influencer.contentCategories || []).length - 3} more
               </span>
             )}
           </div>
