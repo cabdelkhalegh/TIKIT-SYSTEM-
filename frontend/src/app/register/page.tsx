@@ -59,7 +59,7 @@ export default function RegisterPage() {
       login(response.token, response.user);
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError(err.response?.data?.error || err.response?.data?.message || err.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
