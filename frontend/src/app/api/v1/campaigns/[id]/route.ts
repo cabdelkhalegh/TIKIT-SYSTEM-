@@ -46,6 +46,14 @@ export const GET = withAuth(async (req: NextRequest, { params }: any) => {
       performanceKPIs: campaign.performanceKPIsJson 
         ? JSON.parse(campaign.performanceKPIsJson) 
         : {},
+      // Transform client data
+      client: campaign.client ? {
+        ...campaign.client,
+        id: campaign.client.clientId,
+        brandName: campaign.client.brandDisplayName,
+        companyLegalName: campaign.client.legalCompanyName,
+        industry: campaign.client.industryVertical,
+      } : null,
     };
 
     return successResponse(transformedCampaign);
