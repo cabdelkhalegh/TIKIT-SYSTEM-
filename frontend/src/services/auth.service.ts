@@ -5,18 +5,20 @@ export const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await apiClient.post('/auth/login', credentials);
     const body = response.data;
+    const account = body.data?.userAccount || body.user || {};
     return {
       token: body.data?.authToken || body.token,
-      user: body.data?.userAccount || body.user,
+      user: { ...account, id: account.userId || account.id },
     };
   },
 
   async register(userData: RegisterRequest): Promise<RegisterResponse> {
     const response = await apiClient.post('/auth/register', userData);
     const body = response.data;
+    const account = body.data?.userAccount || body.user || {};
     return {
       token: body.data?.authToken || body.token,
-      user: body.data?.userAccount || body.user,
+      user: { ...account, id: account.userId || account.id },
     };
   },
 
