@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // Resume campaign
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';

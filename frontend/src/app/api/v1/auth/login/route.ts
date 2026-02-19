@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // User login endpoint
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // Clients CRUD - Get, Update, Delete by ID
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';

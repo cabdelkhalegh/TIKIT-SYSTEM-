@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // Collaborations CRUD - List and Create
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';

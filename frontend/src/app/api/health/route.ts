@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // Health check endpoint
 import { NextResponse } from 'next/server';
 
