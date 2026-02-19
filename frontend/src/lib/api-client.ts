@@ -13,9 +13,18 @@ export const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    // Read token from Zustand persisted state
+    const authStorage = localStorage.getItem('tikit-auth-storage')
+    if (authStorage) {
+      try {
+        const parsed = JSON.parse(authStorage)
+        const token = parsed.state?.token
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`
+        }
+      } catch (error) {
+        console.error('Failed to parse auth storage:', error)
+      }
     }
     return config
   },
