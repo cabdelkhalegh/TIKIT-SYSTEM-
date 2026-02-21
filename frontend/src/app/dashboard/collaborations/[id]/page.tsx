@@ -16,6 +16,7 @@ import {
   FileText,
   DollarSign,
   MessageSquare,
+  FileCheck,
 } from 'lucide-react';
 import { collaborationService } from '@/services/collaboration.service';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -36,7 +37,7 @@ export default function CollaborationDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const id = params.id as string;
-  const [activeTab, setActiveTab] = useState<'overview' | 'deliverables' | 'payment' | 'analytics' | 'notes'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'deliverables' | 'content' | 'payment' | 'analytics' | 'notes'>('overview');
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['collaboration', id],
@@ -167,6 +168,7 @@ export default function CollaborationDetailPage() {
   const tabs = [
     { id: 'overview' as const, label: 'Overview', icon: FileText },
     { id: 'deliverables' as const, label: 'Deliverables', icon: CheckCircle },
+    { id: 'content' as const, label: 'Content', icon: FileCheck },
     { id: 'payment' as const, label: 'Payment', icon: DollarSign },
     { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
     { id: 'notes' as const, label: 'Notes', icon: MessageSquare },
@@ -402,6 +404,22 @@ export default function CollaborationDetailPage() {
               onApprove={handleApproveDeliverable}
               onReject={handleRejectDeliverable}
             />
+          )}
+
+          {activeTab === 'content' && (
+            <Card className="p-8 text-center">
+              <FileCheck className="h-12 w-12 text-purple-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Content Workflow</h3>
+              <p className="text-gray-600 mb-4">
+                Manage scripts, drafts, and final content with approval workflows.
+              </p>
+              <Link href={`/dashboard/collaborations/${id}/content`}>
+                <Button className="bg-purple-600 hover:bg-purple-700">
+                  <FileCheck className="h-4 w-4 mr-2" />
+                  Open Content Workflow
+                </Button>
+              </Link>
+            </Card>
           )}
 
           {activeTab === 'payment' && (

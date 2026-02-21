@@ -247,6 +247,9 @@ model CampaignInfluencer {
   acceptedAt               DateTime? @map("accepted_at")
   completedAt              DateTime? @map("completed_at")
   
+  // Content items for this collaboration
+  content              Content[]
+
   @@map("campaign_influencers")
   @@unique([campaignId, influencerId])
   @@index([campaignId])
@@ -371,4 +374,29 @@ model Invoice {
   @@map("invoices")
   @@index([campaignId])
   @@index([status])
+}
+
+// Content Entity - Tracks content workflow (Script → Draft → Final)
+// Slice 4: Content Workflow
+model Content {
+  id               String             @id @default(uuid())
+  type             String             // 'script' | 'draft' | 'final'
+  version          Int                @default(1)
+  approvalStatus   String             @default("pending") @map("approval_status") // pending | internal_approved | client_approved | rejected
+  internalFeedback String?            @map("internal_feedback")
+  clientFeedback   String?            @map("client_feedback")
+  livePostUrl      String?            @map("live_post_url")
+  fileUrl          String?            @map("file_url")
+  description      String?
+
+  collaborationId  String             @map("collaboration_id")
+  collaboration    CampaignInfluencer @relation(fields: [collaborationId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  @@map("content")
+  @@index([collaborationId])
+  @@index([type])
+  @@index([approvalStatus])
 }
