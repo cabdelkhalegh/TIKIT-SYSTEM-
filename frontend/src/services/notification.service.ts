@@ -26,12 +26,12 @@ export const notificationService = {
   },
 
   async markAsRead(id: string): Promise<Notification> {
-    const response = await apiClient.post<Notification>(`/notifications/mark-read/${id}`);
+    const response = await apiClient.put<Notification>(`/notifications/${id}/read`);
     return response.data;
   },
 
   async markAllAsRead(): Promise<void> {
-    await apiClient.post('/notifications/mark-all-read');
+    await apiClient.put('/notifications/read-all');
   },
 
   async delete(id: string): Promise<void> {
