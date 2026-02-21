@@ -21,6 +21,7 @@ import {
   Target,
   Globe,
   Loader2,
+  FileText,
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ import { campaignService } from '@/services/campaign.service';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { Campaign, CampaignStatus } from '@/types/campaign.types';
 
-type TabType = 'overview' | 'influencers' | 'budget' | 'analytics';
+type TabType = 'overview' | 'influencers' | 'budget' | 'invoices' | 'analytics';
 
 export default function CampaignDetailPage() {
   const params = useParams();
@@ -162,6 +163,7 @@ export default function CampaignDetailPage() {
     { id: 'overview' as TabType, label: 'Overview', icon: TrendingUp },
     { id: 'influencers' as TabType, label: 'Influencers', icon: Users },
     { id: 'budget' as TabType, label: 'Budget', icon: DollarSign },
+    { id: 'invoices' as TabType, label: 'Invoices', icon: FileText },
     { id: 'analytics' as TabType, label: 'Analytics', icon: BarChart3 },
   ];
 
@@ -521,6 +523,25 @@ export default function CampaignDetailPage() {
               </div>
             </Card>
           </div>
+        )}
+
+        {activeTab === 'invoices' && (
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-purple-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Invoices</h3>
+              </div>
+              <Link href={`/dashboard/campaigns/${campaignId}/invoices`}>
+                <Button variant="outline">
+                  View All Invoices
+                </Button>
+              </Link>
+            </div>
+            <p className="text-gray-600">
+              Manage client and influencer invoices for this campaign.
+            </p>
+          </Card>
         )}
 
         {activeTab === 'analytics' && (

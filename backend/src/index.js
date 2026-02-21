@@ -15,6 +15,7 @@ const collaborationRoutes = require('./routes/collaboration-routes');
 const analyticsRoutes = require('./routes/analytics-routes');
 const notificationRoutes = require('./routes/notification-routes');
 const mediaRoutes = require('./routes/media-routes');
+const invoiceRoutes = require('./routes/invoice-routes');
 
 // Import middleware
 const requestLogger = require('./middleware/request-logger');
@@ -53,6 +54,7 @@ app.use('/api/v1/collaborations', collaborationRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/media', mediaRoutes);
+app.use('/api/v1/invoices', invoiceRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
