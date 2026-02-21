@@ -118,18 +118,15 @@ export default function CampaignDetailPage() {
       case 'draft':
         return [
           { label: 'Activate', icon: Play, action: activateMutation, color: 'green' },
-          { label: 'Cancel', icon: XCircle, action: cancelMutation, color: 'red' },
         ];
       case 'active':
         return [
           { label: 'Pause', icon: Pause, action: pauseMutation, color: 'yellow' },
           { label: 'Complete', icon: CheckCircle, action: completeMutation, color: 'blue' },
-          { label: 'Cancel', icon: XCircle, action: cancelMutation, color: 'red' },
         ];
       case 'paused':
         return [
           { label: 'Resume', icon: Play, action: resumeMutation, color: 'green' },
-          { label: 'Complete', icon: CheckCircle, action: completeMutation, color: 'blue' },
           { label: 'Cancel', icon: XCircle, action: cancelMutation, color: 'red' },
         ];
       default:
