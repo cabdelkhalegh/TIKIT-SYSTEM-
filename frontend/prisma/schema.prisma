@@ -135,7 +135,10 @@ model Campaign {
   
   // Influencer relationships (many-to-many)
   campaignInfluencers      CampaignInfluencer[]
-  
+
+  // Invoice relationships
+  invoices                 Invoice[]
+
   // Timestamps
   createdAt                DateTime @default(now()) @map("created_at")
   updatedAt                DateTime @updatedAt @map("updated_at")
@@ -346,4 +349,26 @@ model Media {
   @@index([userId])
   @@index([entityType, entityId])
   @@index([purpose])
+}
+
+// Invoice Entity - Tracks client and influencer invoices per campaign
+model Invoice {
+  id            String    @id @default(uuid())
+  invoiceNumber String?   @map("invoice_number")
+  type          String    // 'client' | 'influencer'
+  status        String    @default("draft") // draft | sent | approved | paid
+  amount        Float
+  dueDate       DateTime? @map("due_date")
+  fileUrl       String?   @map("file_url")
+  notes         String?
+
+  campaignId    String    @map("campaign_id")
+  campaign      Campaign  @relation(fields: [campaignId], references: [campaignId], onDelete: Cascade)
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("invoices")
+  @@index([campaignId])
+  @@index([status])
 }
