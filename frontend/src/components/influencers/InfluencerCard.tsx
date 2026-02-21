@@ -11,14 +11,17 @@ interface InfluencerCardProps {
 }
 
 export default function InfluencerCard({ influencer }: InfluencerCardProps) {
-  const initials = influencer.fullName
+  const fullName = influencer?.fullName || influencer?.displayName || 'Unknown Influencer';
+  const initials = fullName
     .split(' ')
-    .map(n => n[0])
+    .map(n => n?.[0] || '')
     .join('')
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || 'UN';
 
-  const primaryHandle = influencer.socialMediaHandles[influencer.primaryPlatform];
+  const primaryPlatform = influencer?.primaryPlatform || 'instagram';
+  const socialHandles = (influencer?.socialMediaHandles || {}) as Record<string, string>;
+  const primaryHandle = socialHandles[primaryPlatform] || '';
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -41,7 +44,7 @@ export default function InfluencerCard({ influencer }: InfluencerCardProps) {
                   <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
                 )}
               </div>
-              <PlatformBadge platform={influencer.primaryPlatform} />
+              <PlatformBadge platform={(primaryPlatform as any)} />
               {primaryHandle && (
                 <p className="text-sm text-gray-600 mt-1">@{primaryHandle}</p>
               )}
@@ -77,13 +80,13 @@ export default function InfluencerCard({ influencer }: InfluencerCardProps) {
             <div>
               <p className="text-xs text-gray-500 mb-1">Followers</p>
               <p className="text-lg font-semibold text-gray-900">
-                {formatNumber(influencer.audienceMetrics.followers)}
+                {formatNumber(influencer?.audienceMetrics?.followers)}
               </p>
             </div>
             <div>
               <p className="text-xs text-gray-500 mb-1">Engagement</p>
               <p className="text-lg font-semibold text-green-600">
-                {influencer.audienceMetrics.engagementRate.toFixed(2)}%
+                {((influencer?.audienceMetrics?.engagementRate ?? 0)).toFixed(2)}%
               </p>
             </div>
           </div>

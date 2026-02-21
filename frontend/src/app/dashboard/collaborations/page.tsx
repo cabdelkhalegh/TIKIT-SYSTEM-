@@ -43,10 +43,13 @@ export default function CollaborationsPage() {
   const collaborations = data?.data || [];
   const filteredCollaborations = collaborations.filter((collab) => {
     const searchLower = search.toLowerCase();
+    const campaignName = (collab.campaign?.campaignName || '').toLowerCase();
+    const influencerName = (collab.influencer?.profileName || collab.influencer?.fullName || '').toLowerCase();
+    const role = (collab.role || '').toLowerCase();
     return (
-      collab.campaign?.campaignName.toLowerCase().includes(searchLower) ||
-      collab.influencer?.profileName.toLowerCase().includes(searchLower) ||
-      collab.role?.toLowerCase().includes(searchLower)
+      campaignName.includes(searchLower) ||
+      influencerName.includes(searchLower) ||
+      role.includes(searchLower)
     );
   });
 
@@ -218,7 +221,7 @@ export default function CollaborationsPage() {
                         <div className="flex items-center">
                           <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center mr-3">
                             <span className="text-sm font-medium text-purple-700">
-                              {collaboration.influencer?.profileName.charAt(0).toUpperCase()}
+                              {(collaboration.influencer?.profileName?.charAt(0) || collaboration.influencer?.fullName?.charAt(0) || '?').toUpperCase()}
                             </span>
                           </div>
                           <div>

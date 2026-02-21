@@ -1,7 +1,7 @@
 import type { CollaborationStatus } from '@/types/collaboration.types';
 
 interface CollaborationStatusBadgeProps {
-  status: CollaborationStatus;
+  status?: CollaborationStatus | string;
   className?: string;
 }
 
@@ -36,7 +36,11 @@ export default function CollaborationStatusBadge({ status, className = '' }: Col
     },
   };
 
-  const config = statusConfig[status];
+  const normalizedStatus = (status || 'invited') as CollaborationStatus;
+  const config = statusConfig[normalizedStatus] || {
+    label: 'Unknown',
+    className: 'bg-gray-100 text-gray-700 border-gray-300',
+  };
 
   return (
     <span

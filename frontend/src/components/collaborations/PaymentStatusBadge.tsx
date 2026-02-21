@@ -1,7 +1,7 @@
 import type { PaymentStatus } from '@/types/collaboration.types';
 
 interface PaymentStatusBadgeProps {
-  status: PaymentStatus;
+  status?: PaymentStatus | string;
   className?: string;
 }
 
@@ -24,7 +24,11 @@ export default function PaymentStatusBadge({ status, className = '' }: PaymentSt
     },
   };
 
-  const config = statusConfig[status];
+  const normalizedStatus = (status || 'pending') as PaymentStatus;
+  const config = statusConfig[normalizedStatus] || {
+    label: 'Pending',
+    className: 'bg-yellow-100 text-yellow-700 border-yellow-300',
+  };
 
   return (
     <span
