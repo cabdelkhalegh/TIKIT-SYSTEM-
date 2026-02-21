@@ -139,6 +139,9 @@ model Campaign {
   // Invoice relationships
   invoices                 Invoice[]
 
+  // Brief relationships
+  briefs                   Brief[]
+
   // Timestamps
   createdAt                DateTime @default(now()) @map("created_at")
   updatedAt                DateTime @updatedAt @map("updated_at")
@@ -399,4 +402,29 @@ model Content {
   @@index([collaborationId])
   @@index([type])
   @@index([approvalStatus])
+}
+
+// Brief Entity - Campaign brief upload and AI extraction
+// Slice 5: Brief Upload + Gemini AI Extraction
+model Brief {
+  id               String   @id @default(cuid())
+  campaignId       String   @map("campaign_id")
+  campaign         Campaign @relation(fields: [campaignId], references: [campaignId], onDelete: Cascade)
+  version          Int      @default(1)
+  rawText          String?  @map("raw_text")
+  fileName         String?  @map("file_name")
+  objectives       String?
+  kpis             String?
+  targetAudience   String?  @map("target_audience")
+  keyMessages      String?  @map("key_messages")
+  contentPillars   String?  @map("content_pillars")
+  matchingCriteria String?  @map("matching_criteria")
+  strategy         String?
+  aiStatus         String   @default("pending") @map("ai_status")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("briefs")
+  @@index([campaignId])
+  @@index([aiStatus])
 }

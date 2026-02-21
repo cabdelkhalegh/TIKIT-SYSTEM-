@@ -22,6 +22,7 @@ import {
   Globe,
   Loader2,
   FileText,
+  Sparkles,
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,7 @@ import { campaignService } from '@/services/campaign.service';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { Campaign, CampaignStatus } from '@/types/campaign.types';
 
-type TabType = 'overview' | 'influencers' | 'budget' | 'invoices' | 'analytics';
+type TabType = 'overview' | 'influencers' | 'budget' | 'invoices' | 'briefs' | 'analytics';
 
 export default function CampaignDetailPage() {
   const params = useParams();
@@ -164,6 +165,7 @@ export default function CampaignDetailPage() {
     { id: 'influencers' as TabType, label: 'Influencers', icon: Users },
     { id: 'budget' as TabType, label: 'Budget', icon: DollarSign },
     { id: 'invoices' as TabType, label: 'Invoices', icon: FileText },
+    { id: 'briefs' as TabType, label: 'Briefs', icon: Sparkles },
     { id: 'analytics' as TabType, label: 'Analytics', icon: BarChart3 },
   ];
 
@@ -546,6 +548,25 @@ export default function CampaignDetailPage() {
             </div>
             <p className="text-gray-600">
               Manage client and influencer invoices for this campaign.
+            </p>
+          </Card>
+        )}
+
+        {activeTab === 'briefs' && (
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Campaign Briefs</h3>
+              </div>
+              <Link href={`/dashboard/campaigns/${campaignId}/briefs`}>
+                <Button variant="outline">
+                  Manage Briefs
+                </Button>
+              </Link>
+            </div>
+            <p className="text-gray-600">
+              Upload briefs and use AI to extract objectives, KPIs, target audience, and strategy.
             </p>
           </Card>
         )}
