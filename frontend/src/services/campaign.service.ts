@@ -9,6 +9,18 @@ import type {
   BudgetStatusResponse,
   CampaignInfluencer,
 } from '@/types/campaign.types';
+import type { BriefFields } from '@/lib/brief-extractor';
+
+export interface BriefExtractionResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    campaignId: string;
+    campaignName: string;
+    extraction_method: 'openai' | 'keyword';
+    fields: BriefFields;
+  };
+}
 
 class CampaignService extends BaseService<Campaign> {
   constructor() {
@@ -74,6 +86,33 @@ class CampaignService extends BaseService<Campaign> {
   async getInfluencers(id: string): Promise<{ success: boolean; data: CampaignInfluencer[] }> {
     const response = await apiClient.get<{ success: boolean; data: CampaignInfluencer[] }>(
       `${this.endpoint}/${id}/influencers`
+    );
+    return response.data;
+  }
+  // Brief extraction
+  async extractBrief(id: string, text: string): Promise<BriefExtractionResponse> {
+    const response = await apiClient.post<BriefExtractionResponse>(
+      `${this.endpoint}/${id}/brief`,
+      { text }
+    );
+    return response.data;
+  }
+
+  async extractBriefFromFile(id: string, file: File): Promise<BriefExtractionResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post<BriefExtractionResponse>(
+      `${this.endpoint}/${id}/brief`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data;
+  }
+
+  async applyBrief(id: string, fields: BriefFields): Promise<CampaignResponse> {
+    const response = await apiClient.put<CampaignResponse>(
+      `${this.endpoint}/${id}/brief`,
+      { fields }
     );
     return response.data;
   }

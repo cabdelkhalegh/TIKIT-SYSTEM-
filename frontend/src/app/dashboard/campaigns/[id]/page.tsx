@@ -21,6 +21,7 @@ import {
   Target,
   Globe,
   Loader2,
+  FileText,
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -187,6 +188,12 @@ export default function CampaignDetailPage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
+            <Link href={`/dashboard/campaigns/${campaignId}/brief`}>
+              <Button variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
+                Brief
+              </Button>
+            </Link>
             <Link href={`/dashboard/campaigns/${campaignId}/edit`}>
               <Button variant="outline">
                 <Edit className="h-4 w-4 mr-2" />
