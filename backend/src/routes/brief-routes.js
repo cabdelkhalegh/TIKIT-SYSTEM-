@@ -230,4 +230,71 @@ router.post(
   })
 );
 
+// POST /briefs/analyze — standalone AI analysis (no DB save)
+// Accepts { text } JSON body OR multipart file upload
+router.post(
+  '/briefs/analyze',
+  upload.single('file'),
+  asyncHandler(async (req, res) => {
+    let rawText = req.body?.text || null;
+
+    // If a file was uploaded, extract text from it
+    if (req.file) {
+      const { buffer, mimetype } = req.file;
+      if (mimetype === 'application/pdf') {
+        rawText = buffer.toString('latin1');
+      } else {
+        rawText = buffer.toString('utf8');
+      }
+    }
+
+    if (!rawText) {
+      return res.status(400).json({ success: false, error: 'No text or file provided for analysis' });
+    }
+
+    try {
+      const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_KEY;
+      if (!apiKey) {
+        throw new Error('Gemini API key not configured');
+      }
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+      const prompt = `Analyze this campaign brief and extract the following as JSON with these exact keys:
+campaignName (string — a short campaign title derived from the brief),
+description (string — a 1-2 sentence campaign description),
+objectives (array of strings),
+targetAudience (string — describe the target audience),
+kpis (string — key performance indicators mentioned),
+keyMessages (string — key messages or themes),
+contentPillars (string — content pillars if any),
+matchingCriteria (string — influencer matching criteria if any),
+strategy (string — overall campaign strategy),
+suggestedBudget (number or null — budget in USD if mentioned).
+Return ONLY valid JSON, no markdown.
+Brief text: ${rawText}`;
+
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
+
+      let parsed;
+      const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        parsed = JSON.parse(jsonMatch[1].trim());
+      } else {
+        parsed = JSON.parse(responseText.trim());
+      }
+
+      res.json({ success: true, data: parsed });
+    } catch (error) {
+      console.error('Brief analysis error:', error);
+      res.status(500).json({
+        success: false,
+        error: `AI analysis failed: ${error.message}`,
+      });
+    }
+  })
+);
+
 module.exports = router;

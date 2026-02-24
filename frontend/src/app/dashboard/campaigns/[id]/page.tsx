@@ -23,6 +23,8 @@ import {
   Loader2,
   FileText,
   Sparkles,
+  Upload,
+  ChevronRight,
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -31,6 +33,7 @@ import CampaignStatusBadge from '@/components/campaigns/CampaignStatusBadge';
 import BudgetProgressCard from '@/components/campaigns/BudgetProgressCard';
 import CampaignTimeline from '@/components/campaigns/CampaignTimeline';
 import { campaignService } from '@/services/campaign.service';
+import { briefService } from '@/services/brief.service';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { Campaign, CampaignStatus } from '@/types/campaign.types';
 
@@ -55,8 +58,15 @@ export default function CampaignDetailPage() {
     enabled: !!campaignId && activeTab === 'influencers',
   });
 
+  const { data: briefsData } = useQuery({
+    queryKey: ['campaign-briefs', campaignId],
+    queryFn: () => briefService.getBriefs(campaignId),
+    enabled: !!campaignId && activeTab === 'briefs',
+  });
+
   const campaign = campaignData?.data;
   const influencers = influencersData?.data || [];
+  const briefs = briefsData?.data || [];
 
   // Status transition mutations
   const activateMutation = useMutation({
@@ -547,22 +557,93 @@ export default function CampaignDetailPage() {
         )}
 
         {activeTab === 'briefs' && (
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-purple-600" />
                 <h3 className="text-lg font-semibold text-gray-900">Campaign Briefs</h3>
               </div>
-              <Link href={`/dashboard/campaigns/${campaignId}/briefs`}>
-                <Button variant="outline">
-                  Manage Briefs
-                </Button>
-              </Link>
+              <div className="flex gap-2">
+                <Link href={`/dashboard/campaigns/${campaignId}/briefs`}>
+                  <Button variant="outline" size="sm">
+                    + Add Brief
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <p className="text-gray-600">
-              Upload briefs and use AI to extract objectives, KPIs, target audience, and strategy.
-            </p>
-          </Card>
+
+            {briefs.length === 0 ? (
+              <Card className="p-12 text-center">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No briefs yet</h3>
+                <p className="text-gray-600 mb-4">
+                  Upload briefs and use AI to extract objectives, KPIs, target audience, and strategy.
+                </p>
+                <Link href={`/dashboard/campaigns/${campaignId}/briefs`}>
+                  <Button className="bg-purple-600 hover:bg-purple-700">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload First Brief
+                  </Button>
+                </Link>
+              </Card>
+            ) : (
+              <>
+                {/* Latest brief mini-view */}
+                {(() => {
+                  const latest = briefs[0];
+                  const statusColors: Record<string, string> = {
+                    pending: 'bg-gray-100 text-gray-700',
+                    extracting: 'bg-yellow-100 text-yellow-700',
+                    extracted: 'bg-green-100 text-green-700',
+                    failed: 'bg-red-100 text-red-700',
+                  };
+                  return (
+                    <Card className="p-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium text-gray-500">v{latest.version}</span>
+                          {latest.fileName && (
+                            <span className="text-sm text-gray-700">{latest.fileName}</span>
+                          )}
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[latest.aiStatus] || statusColors.pending}`}>
+                            {latest.aiStatus === 'extracting' ? 'Extracting...' : latest.aiStatus.charAt(0).toUpperCase() + latest.aiStatus.slice(1)}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {formatDate(latest.createdAt)}
+                        </span>
+                      </div>
+
+                      {latest.aiStatus === 'extracted' && latest.objectives && (
+                        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Target className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium text-gray-900">Objectives</span>
+                          </div>
+                          <p className="text-sm text-gray-700 line-clamp-3">{latest.objectives}</p>
+                        </div>
+                      )}
+
+                      <div className="mt-4 flex justify-end">
+                        <Link href={`/dashboard/campaigns/${campaignId}/briefs`}>
+                          <Button variant="link" size="sm" className="text-purple-600">
+                            Manage All Briefs
+                            <ChevronRight className="h-4 w-4 ml-1" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </Card>
+                  );
+                })()}
+
+                {briefs.length > 1 && (
+                  <p className="text-sm text-gray-500 text-center">
+                    + {briefs.length - 1} more brief{briefs.length - 1 > 1 ? 's' : ''}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
         )}
 
         {activeTab === 'analytics' && (
