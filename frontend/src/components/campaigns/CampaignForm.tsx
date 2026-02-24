@@ -16,6 +16,7 @@ import {
   Plus,
   Trash2,
   Loader2,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,13 +50,15 @@ const campaignFormSchema = z.object({
   performanceKPIs: z.record(z.number()).optional(),
 });
 
-type CampaignFormData = z.infer<typeof campaignFormSchema>;
+export type CampaignFormData = z.infer<typeof campaignFormSchema>;
 
 interface CampaignFormProps {
   campaign?: Campaign;
   clients: Array<{ clientId: string; brandName: string; companyLegalName: string }>;
   onSubmit: (data: CreateCampaignRequest | UpdateCampaignRequest) => Promise<void>;
   isSubmitting?: boolean;
+  initialData?: Partial<CampaignFormData>;
+  aiFilledFields?: Set<string>;
 }
 
 const STEPS = [
@@ -72,6 +75,8 @@ export default function CampaignForm({
   clients,
   onSubmit,
   isSubmitting = false,
+  initialData,
+  aiFilledFields = new Set(),
 }: CampaignFormProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
@@ -87,11 +92,11 @@ export default function CampaignForm({
   } = useForm<CampaignFormData>({
     resolver: zodResolver(campaignFormSchema),
     defaultValues: {
-      campaignName: '',
-      campaignDescription: '',
-      clientId: '',
-      campaignObjectives: [''],
-      targetAudience: {
+      campaignName: initialData?.campaignName || '',
+      campaignDescription: initialData?.campaignDescription || '',
+      clientId: initialData?.clientId || '',
+      campaignObjectives: initialData?.campaignObjectives?.length ? initialData.campaignObjectives : [''],
+      targetAudience: initialData?.targetAudience || {
         demographics: {
           ageRange: '',
           gender: '',
@@ -100,11 +105,11 @@ export default function CampaignForm({
         interests: [],
         behaviors: [],
       },
-      targetPlatforms: [],
-      totalBudget: 0,
-      startDate: '',
-      endDate: '',
-      performanceKPIs: {},
+      targetPlatforms: initialData?.targetPlatforms || [],
+      totalBudget: initialData?.totalBudget || 0,
+      startDate: initialData?.startDate || '',
+      endDate: initialData?.endDate || '',
+      performanceKPIs: initialData?.performanceKPIs || {},
     },
   });
 
@@ -138,6 +143,14 @@ export default function CampaignForm({
   } as any);
 
   const selectedPlatforms = watch('targetPlatforms') || [];
+
+  const AiBadge = ({ field }: { field: string }) =>
+    aiFilledFields.has(field) ? (
+      <span className="inline-flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+        <Sparkles className="h-3 w-3" />
+        AI-filled
+      </span>
+    ) : null;
 
   useEffect(() => {
     if (campaign) {
@@ -237,7 +250,7 @@ export default function CampaignForm({
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Basic Information</h2>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="campaignName">Campaign Name *</Label>
+              <Label htmlFor="campaignName" className="flex items-center">Campaign Name *<AiBadge field="campaignName" /></Label>
               <Input
                 id="campaignName"
                 {...register('campaignName')}
@@ -249,7 +262,7 @@ export default function CampaignForm({
             </div>
 
             <div>
-              <Label htmlFor="campaignDescription">Description</Label>
+              <Label htmlFor="campaignDescription" className="flex items-center">Description<AiBadge field="campaignDescription" /></Label>
               <textarea
                 id="campaignDescription"
                 {...register('campaignDescription')}
@@ -289,7 +302,7 @@ export default function CampaignForm({
             {/* Objectives */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label>Campaign Objectives *</Label>
+                <Label className="flex items-center">Campaign Objectives *<AiBadge field="campaignObjectives" /></Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -456,7 +469,7 @@ export default function CampaignForm({
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Budget & Timeline</h2>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="totalBudget">Total Budget (USD)</Label>
+              <Label htmlFor="totalBudget" className="flex items-center">Total Budget (USD)<AiBadge field="totalBudget" /></Label>
               <Input
                 id="totalBudget"
                 type="number"

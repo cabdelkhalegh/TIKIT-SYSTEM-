@@ -18,6 +18,25 @@ export interface Brief {
   updatedAt: string;
 }
 
+export interface BriefAnalysis {
+  campaignName?: string;
+  description?: string;
+  objectives?: string[];
+  targetAudience?: string;
+  kpis?: string;
+  keyMessages?: string;
+  contentPillars?: string;
+  matchingCriteria?: string;
+  strategy?: string;
+  suggestedBudget?: number | null;
+}
+
+interface BriefAnalysisResponse {
+  success: boolean;
+  data: BriefAnalysis;
+  error?: string;
+}
+
 interface BriefListResponse {
   success: boolean;
   data: Brief[];
@@ -34,6 +53,22 @@ function briefsUrl(campaignId: string) {
 }
 
 class BriefService {
+  async analyzeText(text: string): Promise<BriefAnalysisResponse> {
+    const response = await apiClient.post<BriefAnalysisResponse>('/briefs/analyze', { text });
+    return response.data;
+  }
+
+  async analyzeFile(file: File): Promise<BriefAnalysisResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post<BriefAnalysisResponse>(
+      '/briefs/analyze',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data;
+  }
+
   async getBriefs(campaignId: string): Promise<BriefListResponse> {
     const response = await apiClient.get<BriefListResponse>(briefsUrl(campaignId));
     return response.data;
