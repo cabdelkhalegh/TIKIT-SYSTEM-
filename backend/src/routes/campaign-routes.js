@@ -418,7 +418,7 @@ router.post('/:id/activate', asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, error: 'Campaign not found' });
   }
 
-  if (!canTransitionStatus(campaignRecord.status, 'active')) {
+  if (!canTransitionStatus(campaignRecord.status, 'live')) {
     return res.status(400).json({
       success: false,
       error: `Cannot activate campaign with status ${campaignRecord.status}`,
@@ -429,8 +429,10 @@ router.post('/:id/activate', asyncHandler(async (req, res) => {
   const activatedCampaign = await prisma.campaign.update({
     where: { campaignId: req.params.id },
     data: {
-      status: 'active',
+      status: 'live',
+      phase: STATUS_TO_PHASE['live'],
       launchDate: campaignRecord.launchDate || new Date(),
+      version: { increment: 1 },
     },
     include: { client: true },
   });
@@ -451,17 +453,20 @@ router.post('/:id/pause', asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, error: 'Campaign not found' });
   }
 
-  if (!canTransitionStatus(campaignRecord.status, 'paused')) {
+  if (campaignRecord.status !== 'live') {
     return res.status(400).json({
       success: false,
-      error: `Cannot pause campaign with status ${campaignRecord.status}`,
+      error: `Can only pause a live campaign, current status is ${campaignRecord.status}`,
       currentStatus: campaignRecord.status,
     });
   }
 
   const pausedCampaign = await prisma.campaign.update({
     where: { campaignId: req.params.id },
-    data: { status: 'paused' },
+    data: {
+      status: 'paused',
+      version: { increment: 1 },
+    },
     include: { client: true },
   });
 
@@ -491,7 +496,11 @@ router.post('/:id/resume', asyncHandler(async (req, res) => {
 
   const resumedCampaign = await prisma.campaign.update({
     where: { campaignId: req.params.id },
-    data: { status: 'active' },
+    data: {
+      status: 'live',
+      phase: STATUS_TO_PHASE['live'],
+      version: { increment: 1 },
+    },
     include: { client: true },
   });
 
@@ -511,10 +520,10 @@ router.post('/:id/complete', asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, error: 'Campaign not found' });
   }
 
-  if (!canTransitionStatus(campaignRecord.status, 'completed')) {
+  if (campaignRecord.status !== 'reporting') {
     return res.status(400).json({
       success: false,
-      error: `Cannot complete campaign with status ${campaignRecord.status}`,
+      error: `Can only complete a campaign in reporting status, current status is ${campaignRecord.status}`,
       currentStatus: campaignRecord.status,
     });
   }
@@ -522,8 +531,11 @@ router.post('/:id/complete', asyncHandler(async (req, res) => {
   const completedCampaign = await prisma.campaign.update({
     where: { campaignId: req.params.id },
     data: {
-      status: 'completed',
+      status: 'closed',
+      phase: STATUS_TO_PHASE['closed'],
+      closedAt: new Date(),
       endDate: campaignRecord.endDate || new Date(),
+      version: { increment: 1 },
     },
     include: { client: true },
   });
@@ -556,7 +568,10 @@ router.post('/:id/cancel', asyncHandler(async (req, res) => {
 
   const cancelledCampaign = await prisma.campaign.update({
     where: { campaignId: req.params.id },
-    data: { status: 'cancelled' },
+    data: {
+      status: 'cancelled',
+      version: { increment: 1 },
+    },
     include: { client: true },
   });
 
