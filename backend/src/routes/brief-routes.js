@@ -1,5 +1,5 @@
 // Brief Routes — Campaign brief upload + Gemini AI extraction
-// Slice 5
+// Slice 5 + T035 enhancements (re-extract, review, versions, auto-versioning, auto-link client)
 
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
@@ -7,6 +7,7 @@ const multer = require('multer');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { requireAuthentication } = require('../middleware/access-control');
 const asyncHandler = require('../middleware/async-handler');
+const { extractBrief } = require('../services/gemini-service');
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -116,14 +117,40 @@ router.get(
 );
 
 // PUT /campaigns/:campaignId/briefs/:id — update brief
+// T035: Auto-create BriefVersion with previous state before applying update (§VII append-only)
 router.put(
   '/campaigns/:campaignId/briefs/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const updateData = {};
 
+    // Fetch current state before update
+    const currentBrief = await prisma.brief.findUnique({ where: { id } });
+    if (!currentBrief) {
+      return res.status(404).json({ success: false, error: 'Brief not found' });
+    }
+
+    // Create BriefVersion snapshot of previous state (append-only per §VII)
+    await prisma.briefVersion.create({
+      data: {
+        briefId: id,
+        versionNumber: currentBrief.version || 1,
+        objectives: currentBrief.objectives,
+        kpis: currentBrief.kpis,
+        targetAudience: currentBrief.targetAudience,
+        deliverables: currentBrief.deliverables,
+        budgetSignals: currentBrief.budgetSignals,
+        clientInfo: currentBrief.clientInfo,
+        keyMessages: currentBrief.keyMessages,
+        contentPillars: currentBrief.contentPillars,
+        matchingCriteria: currentBrief.matchingCriteria,
+        changedBy: req.user?.userId || null,
+      },
+    });
+
+    const updateData = {};
     const allowedFields = [
       'rawText', 'fileName', 'objectives', 'kpis', 'targetAudience',
+      'deliverables', 'budgetSignals', 'clientInfo',
       'keyMessages', 'contentPillars', 'matchingCriteria', 'strategy', 'aiStatus',
     ];
 
@@ -132,6 +159,9 @@ router.put(
         updateData[field] = req.body[field];
       }
     }
+
+    // Increment version
+    updateData.version = (currentBrief.version || 1) + 1;
 
     const brief = await prisma.brief.update({
       where: { id },
@@ -155,10 +185,11 @@ router.delete(
 );
 
 // POST /campaigns/:campaignId/briefs/:id/extract — AI extraction with Gemini
+// T035: Now uses centralized gemini-service, stores confidence scores, auto-links client
 router.post(
   '/campaigns/:campaignId/briefs/:id/extract',
   asyncHandler(async (req, res) => {
-    const { id } = req.params;
+    const { campaignId, id } = req.params;
 
     const brief = await prisma.brief.findUnique({ where: { id } });
     if (!brief) {
@@ -172,61 +203,201 @@ router.post(
     // Update status to extracting
     await prisma.brief.update({
       where: { id },
-      data: { aiStatus: 'extracting' },
+      data: { aiStatus: 'extracting', extractionStatus: 'processing' },
     });
 
-    try {
-      const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_KEY;
-      if (!apiKey) {
-        throw new Error('Gemini API key not configured');
-      }
+    // Use centralized gemini-service for extraction
+    const extraction = await extractBrief(brief.rawText);
 
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-
-      const prompt = `Analyze this campaign brief and extract the following as JSON with these exact keys: objectives (string), kpis (string), targetAudience (string), keyMessages (string), contentPillars (string), matchingCriteria (string), strategy (string). Brief text: ${brief.rawText}`;
-
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
-
-      // Parse JSON from response — handle markdown code blocks
-      let parsed;
-      const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (jsonMatch) {
-        parsed = JSON.parse(jsonMatch[1].trim());
-      } else {
-        parsed = JSON.parse(responseText.trim());
-      }
-
-      const updated = await prisma.brief.update({
-        where: { id },
-        data: {
-          objectives: parsed.objectives || null,
-          kpis: parsed.kpis || null,
-          targetAudience: parsed.targetAudience || null,
-          keyMessages: parsed.keyMessages || null,
-          contentPillars: parsed.contentPillars || null,
-          matchingCriteria: parsed.matchingCriteria || null,
-          strategy: parsed.strategy || null,
-          aiStatus: 'extracted',
-        },
-      });
-
-      res.json({ success: true, data: updated, message: 'Brief extracted successfully' });
-    } catch (error) {
-      console.error('Gemini extraction error:', error);
-
+    if (!extraction.success) {
       const failed = await prisma.brief.update({
         where: { id },
-        data: { aiStatus: 'failed' },
+        data: { aiStatus: 'failed', extractionStatus: 'failed' },
       });
-
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
-        error: `AI extraction failed: ${error.message}`,
+        error: `AI extraction failed: ${extraction.error}`,
+        fallbackRequired: true,
         data: failed,
       });
     }
+
+    const parsed = extraction.data;
+
+    // Store extracted fields — serialize objects/arrays to JSON strings for DB
+    const updated = await prisma.brief.update({
+      where: { id },
+      data: {
+        objectives: parsed.objectives ? JSON.stringify(parsed.objectives) : null,
+        kpis: parsed.kpis ? JSON.stringify(parsed.kpis) : null,
+        targetAudience: parsed.targetAudience ? JSON.stringify(parsed.targetAudience) : null,
+        deliverables: parsed.deliverables ? JSON.stringify(parsed.deliverables) : null,
+        budgetSignals: parsed.budgetSignals ? JSON.stringify(parsed.budgetSignals) : null,
+        clientInfo: parsed.clientInfo ? JSON.stringify(parsed.clientInfo) : null,
+        keyMessages: parsed.keyMessages ? JSON.stringify(parsed.keyMessages) : null,
+        contentPillars: parsed.contentPillars ? JSON.stringify(parsed.contentPillars) : null,
+        matchingCriteria: parsed.matchingCriteria ? JSON.stringify(parsed.matchingCriteria) : null,
+        confidenceScores: parsed.confidenceScores ? JSON.stringify(parsed.confidenceScores) : null,
+        aiStatus: 'extracted',
+        extractionStatus: 'completed',
+      },
+    });
+
+    // T035: Auto-link client — if clientInfo.companyName exists, find or create Client
+    if (parsed.clientInfo?.companyName) {
+      try {
+        let client = await prisma.client.findFirst({
+          where: { brandDisplayName: parsed.clientInfo.companyName },
+        });
+        if (!client) {
+          client = await prisma.client.create({
+            data: {
+              brandDisplayName: parsed.clientInfo.companyName,
+              legalCompanyName: parsed.clientInfo.companyName,
+              contactPersonName: parsed.clientInfo.contactName || null,
+              contactEmail: parsed.clientInfo.contactEmail || null,
+            },
+          });
+        }
+        // Link client to campaign if not already linked
+        const campaign = await prisma.campaign.findUnique({ where: { campaignId } });
+        if (campaign && !campaign.clientId) {
+          await prisma.campaign.update({
+            where: { campaignId },
+            data: { clientId: client.clientId },
+          });
+        }
+      } catch (clientError) {
+        console.error('Auto-link client error (non-fatal):', clientError.message);
+      }
+    }
+
+    res.json({ success: true, data: updated, message: 'Brief extracted successfully' });
+  })
+);
+
+// POST /campaigns/:campaignId/briefs/:id/re-extract — T035: re-run Gemini extraction
+router.post(
+  '/campaigns/:campaignId/briefs/:id/re-extract',
+  asyncHandler(async (req, res) => {
+    const { campaignId, id } = req.params;
+
+    const brief = await prisma.brief.findUnique({ where: { id } });
+    if (!brief) {
+      return res.status(404).json({ success: false, error: 'Brief not found' });
+    }
+
+    if (!brief.rawText && !brief.fileUrl) {
+      return res.status(400).json({ success: false, error: 'Brief has no raw text or file to extract from' });
+    }
+
+    // Create BriefVersion snapshot before re-extraction (append-only per §VII)
+    await prisma.briefVersion.create({
+      data: {
+        briefId: id,
+        versionNumber: brief.version || 1,
+        objectives: brief.objectives,
+        kpis: brief.kpis,
+        targetAudience: brief.targetAudience,
+        deliverables: brief.deliverables,
+        budgetSignals: brief.budgetSignals,
+        clientInfo: brief.clientInfo,
+        keyMessages: brief.keyMessages,
+        contentPillars: brief.contentPillars,
+        matchingCriteria: brief.matchingCriteria,
+        changedBy: req.user?.userId || null,
+      },
+    });
+
+    // Update status to extracting
+    await prisma.brief.update({
+      where: { id },
+      data: { aiStatus: 'extracting', extractionStatus: 'processing' },
+    });
+
+    const extraction = await extractBrief(brief.rawText);
+
+    if (!extraction.success) {
+      const failed = await prisma.brief.update({
+        where: { id },
+        data: { aiStatus: 'failed', extractionStatus: 'failed' },
+      });
+      return res.status(500).json({
+        success: false,
+        error: `AI re-extraction failed: ${extraction.error}`,
+        fallbackRequired: true,
+        data: failed,
+      });
+    }
+
+    const parsed = extraction.data;
+    const updated = await prisma.brief.update({
+      where: { id },
+      data: {
+        objectives: parsed.objectives ? JSON.stringify(parsed.objectives) : null,
+        kpis: parsed.kpis ? JSON.stringify(parsed.kpis) : null,
+        targetAudience: parsed.targetAudience ? JSON.stringify(parsed.targetAudience) : null,
+        deliverables: parsed.deliverables ? JSON.stringify(parsed.deliverables) : null,
+        budgetSignals: parsed.budgetSignals ? JSON.stringify(parsed.budgetSignals) : null,
+        clientInfo: parsed.clientInfo ? JSON.stringify(parsed.clientInfo) : null,
+        keyMessages: parsed.keyMessages ? JSON.stringify(parsed.keyMessages) : null,
+        contentPillars: parsed.contentPillars ? JSON.stringify(parsed.contentPillars) : null,
+        matchingCriteria: parsed.matchingCriteria ? JSON.stringify(parsed.matchingCriteria) : null,
+        confidenceScores: parsed.confidenceScores ? JSON.stringify(parsed.confidenceScores) : null,
+        aiStatus: 'extracted',
+        extractionStatus: 'completed',
+        version: (brief.version || 1) + 1,
+      },
+    });
+
+    res.json({ success: true, data: updated, message: 'Brief re-extracted successfully' });
+  })
+);
+
+// POST /campaigns/:campaignId/briefs/:id/review — T035: mark brief as reviewed
+router.post(
+  '/campaigns/:campaignId/briefs/:id/review',
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const brief = await prisma.brief.findUnique({ where: { id } });
+    if (!brief) {
+      return res.status(404).json({ success: false, error: 'Brief not found' });
+    }
+
+    if (brief.extractionStatus !== 'completed' && brief.aiStatus !== 'extracted') {
+      return res.status(400).json({ success: false, error: 'Extraction must be completed before review' });
+    }
+
+    const updated = await prisma.brief.update({
+      where: { id },
+      data: {
+        isReviewed: true,
+        reviewedBy: req.user?.userId || null,
+      },
+    });
+
+    res.json({ success: true, data: updated, message: 'Brief marked as reviewed' });
+  })
+);
+
+// GET /campaigns/:campaignId/briefs/:id/versions — T035: version history
+router.get(
+  '/campaigns/:campaignId/briefs/:id/versions',
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const brief = await prisma.brief.findUnique({ where: { id } });
+    if (!brief) {
+      return res.status(404).json({ success: false, error: 'Brief not found' });
+    }
+
+    const versions = await prisma.briefVersion.findMany({
+      where: { briefId: id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json({ success: true, data: { briefId: id, versions } });
   })
 );
 

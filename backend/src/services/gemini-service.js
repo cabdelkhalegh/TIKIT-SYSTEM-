@@ -37,31 +37,77 @@ function getModel() {
 }
 
 /**
- * Extract structured brief data from raw text
+ * Extract structured brief data from raw text with per-field confidence scores
+ * T033: Returns { success, data } where data includes confidenceScores (0.0-1.0)
  */
 async function extractBrief(rawText) {
   try {
     trackRequest();
     const model = getModel();
-    const prompt = `Extract structured data from this campaign brief. Return valid JSON with these fields:
-- objectives (array of strings)
-- kpis (array of strings)
-- targetAudience (object with demographics, interests, behaviors)
-- deliverables (array of strings)
-- budgetSignals (object with budget range, currency, constraints)
-- clientInfo (object with companyName, industry, contacts)
-- keyMessages (array of strings)
-- contentPillars (array of strings)
-- matchingCriteria (object with platform, followerRange, engagementMin, niches, locations)
-- confidenceScores (object mapping each field to a score 0-1)
+    const prompt = `You are a campaign brief analyst. Extract structured data from this campaign brief text.
+
+Return ONLY valid JSON (no markdown) with these exact top-level keys:
+
+1. "objectives" — array of strings (campaign goals)
+2. "kpis" — array of strings (key performance indicators)
+3. "targetAudience" — object with keys: ageRange (string), gender (string), location (string), interests (array of strings)
+4. "deliverables" — array of objects, each with: type (string), quantity (number)
+5. "budgetSignals" — object with keys: totalBudget (number or null), currency (string or null), perInfluencer (number or null)
+6. "clientInfo" — object with keys: companyName (string or null), contactName (string or null), contactEmail (string or null)
+7. "keyMessages" — array of strings (brand messages / themes)
+8. "contentPillars" — array of strings (content themes / categories)
+9. "matchingCriteria" — object with keys: platform (string), minFollowers (number), minEngagement (number), niches (array of strings), locations (array of strings)
+10. "confidenceScores" — object mapping each of the 9 field names above to a confidence score between 0.0 and 1.0, indicating how confident you are that the extracted data is accurate and present in the brief. Use 0.0 if the field was not mentioned at all, and 1.0 if it was explicitly and clearly stated.
+
+Example confidenceScores:
+{
+  "objectives": 0.9,
+  "kpis": 0.7,
+  "targetAudience": 0.8,
+  "deliverables": 0.6,
+  "budgetSignals": 0.5,
+  "clientInfo": 0.3,
+  "keyMessages": 0.85,
+  "contentPillars": 0.9,
+  "matchingCriteria": 0.75
+}
+
+If a field is not mentioned in the brief, return an empty array/object for it and set its confidence to 0.0.
 
 Brief text:
 ${rawText}`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+    // Parse JSON — handle potential markdown code fences
+    let parsed;
+    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      parsed = JSON.parse(jsonMatch[1].trim());
+    } else {
+      const objMatch = text.match(/\{[\s\S]*\}/);
+      parsed = objMatch ? JSON.parse(objMatch[0]) : null;
+    }
+
+    if (!parsed) {
+      return { success: false, fallbackRequired: true, error: 'Failed to parse AI response' };
+    }
+
+    // Ensure confidenceScores exists with defaults
+    if (!parsed.confidenceScores) {
+      parsed.confidenceScores = {
+        objectives: 0.5,
+        kpis: 0.5,
+        targetAudience: 0.5,
+        deliverables: 0.5,
+        budgetSignals: 0.5,
+        clientInfo: 0.5,
+        keyMessages: 0.5,
+        contentPillars: 0.5,
+        matchingCriteria: 0.5,
+      };
+    }
+
     return { success: true, data: parsed };
   } catch (error) {
     console.error('Gemini extractBrief error:', error.message);
@@ -71,24 +117,40 @@ ${rawText}`;
 
 /**
  * Generate campaign strategy from brief data
+ * T034: Verified — returns summary, keyMessages, contentPillars, matchingCriteria
  */
 async function generateStrategy(briefData) {
   try {
     trackRequest();
     const model = getModel();
-    const prompt = `Generate a campaign strategy based on this brief data. Return valid JSON with:
-- summary (string, 2-3 paragraphs)
-- keyMessages (array of strings)
-- contentPillars (array of strings)
-- matchingCriteria (object with platform, followerRange, engagementMin, niches, locations)
+    const prompt = `You are a campaign strategist. Generate a comprehensive influencer marketing strategy based on this brief data.
+
+Return ONLY valid JSON (no markdown) with these exact keys:
+1. "summary" — string, 2-3 paragraphs describing the overall strategy
+2. "keyMessages" — array of strings (3-5 key brand messages for influencers)
+3. "contentPillars" — array of strings (3-5 content themes/categories)
+4. "matchingCriteria" — object with:
+   - platform (string, e.g. "instagram")
+   - followerRange (object with min and max numbers)
+   - engagementMin (number, minimum engagement rate percentage)
+   - niches (array of strings)
+   - locations (array of strings)
+   - languages (array of strings)
 
 Brief data:
 ${JSON.stringify(briefData)}`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+    // Parse JSON — handle potential markdown code fences
+    let parsed;
+    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      parsed = JSON.parse(jsonMatch[1].trim());
+    } else {
+      const objMatch = text.match(/\{[\s\S]*\}/);
+      parsed = objMatch ? JSON.parse(objMatch[0]) : null;
+    }
     return { success: true, data: parsed };
   } catch (error) {
     console.error('Gemini generateStrategy error:', error.message);

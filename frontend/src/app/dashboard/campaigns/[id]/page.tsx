@@ -7,15 +7,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import {
   Users,
-  DollarSign,
   BarChart3,
-  Building2,
-  Target,
-  Loader2,
-  FileText,
-  Sparkles,
-  Upload,
-  ChevronRight,
   Film,
   ClipboardList,
   Lock,
@@ -28,10 +20,11 @@ import CampaignTabs, { type CampaignTabId } from '@/components/campaigns/Campaig
 import ApprovalGateCards from '@/components/campaigns/ApprovalGateCards';
 import RiskBadge from '@/components/campaigns/RiskBadge';
 import BudgetProgressCard from '@/components/campaigns/BudgetProgressCard';
+import BriefTab from '@/components/campaigns/BriefTab';
+import StrategyTab from '@/components/campaigns/StrategyTab';
 import { campaignService } from '@/services/campaign.service';
-import { briefService } from '@/services/brief.service';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 
 export default function CampaignDetailPage() {
   const params = useParams();
@@ -56,13 +49,6 @@ export default function CampaignDetailPage() {
     enabled: !!campaignId,
   });
 
-  // Fetch briefs (for brief tab)
-  const { data: briefsData } = useQuery({
-    queryKey: ['campaign-briefs', campaignId],
-    queryFn: () => briefService.getBriefs(campaignId),
-    enabled: !!campaignId && activeTab === 'brief',
-  });
-
   // Fetch influencers (for influencers tab)
   const { data: influencersData } = useQuery({
     queryKey: ['campaign-influencers', campaignId],
@@ -72,7 +58,6 @@ export default function CampaignDetailPage() {
 
   const campaign = campaignData?.data;
   const risk = riskData?.data;
-  const briefs = briefsData?.data || [];
   const influencers = influencersData?.data || [];
 
   // Status transition mutation
@@ -180,126 +165,13 @@ export default function CampaignDetailPage() {
           onTabChange={setActiveTab}
         />
 
-        {/* Tab Content */}
+        {/* Tab Content — T042: BriefTab and StrategyTab wired in */}
         {activeTab === 'brief' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Campaign Brief</h3>
-              <Link href={`/dashboard/campaigns/${campaignId}/briefs`}>
-                <Button variant="outline" size="sm">
-                  <Upload className="h-4 w-4 mr-1.5" />
-                  Manage Briefs
-                </Button>
-              </Link>
-            </div>
-
-            {briefs.length === 0 ? (
-              <Card className="p-12 text-center">
-                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No briefs yet</h3>
-                <p className="text-gray-600 mb-4">
-                  Upload briefs and use AI to extract objectives, KPIs, target audience, and strategy.
-                </p>
-                <Link href={`/dashboard/campaigns/${campaignId}/briefs`}>
-                  <Button className="bg-purple-600 hover:bg-purple-700">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload First Brief
-                  </Button>
-                </Link>
-              </Card>
-            ) : (
-              <Card className="p-6">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-500">v{briefs[0].version}</span>
-                    {briefs[0].fileName && (
-                      <span className="text-sm text-gray-700">{briefs[0].fileName}</span>
-                    )}
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      briefs[0].isReviewed
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {briefs[0].isReviewed ? 'Reviewed' : 'Pending Review'}
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-500">{formatDate(briefs[0].createdAt)}</span>
-                </div>
-                <div className="mt-4 flex justify-end">
-                  <Link href={`/dashboard/campaigns/${campaignId}/briefs`}>
-                    <Button variant="link" size="sm" className="text-purple-600">
-                      Manage All Briefs <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-            )}
-
-            {/* Campaign overview info */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                <Card className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Description</h3>
-                  <p className="text-gray-700">
-                    {campaign.campaignDescription || 'No description provided'}
-                  </p>
-                </Card>
-
-                {campaign.client && (
-                  <Card className="p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Building2 className="h-5 w-5 text-purple-600" />
-                      <h3 className="text-lg font-semibold text-gray-900">Client</h3>
-                    </div>
-                    <div>
-                      <Link
-                        href={`/dashboard/clients/${campaign.client.clientId}`}
-                        className="text-purple-600 hover:text-purple-700 font-medium"
-                      >
-                        {campaign.client.brandDisplayName || campaign.client.legalCompanyName || campaign.client.brandName || campaign.client.companyLegalName}
-                      </Link>
-                      {campaign.client.displayId && (
-                        <span className="ml-2 text-xs text-gray-500 font-mono">{campaign.client.displayId}</span>
-                      )}
-                    </div>
-                  </Card>
-                )}
-              </div>
-
-              <div className="space-y-6">
-                <BudgetProgressCard
-                  totalBudget={campaign.totalBudget || 0}
-                  allocatedBudget={campaign.allocatedBudget || 0}
-                  spentBudget={campaign.spentBudget || 0}
-                />
-
-                {risk && (
-                  <Card className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Risk Assessment</h3>
-                    <RiskBadge
-                      score={risk.riskScore}
-                      level={risk.riskLevel}
-                      showScore
-                      showBreakdown
-                      breakdown={risk.factors?.map((f: any) => ({
-                        field: f.field,
-                        points: f.points,
-                        reason: f.field,
-                      })) || []}
-                    />
-                  </Card>
-                )}
-              </div>
-            </div>
-          </div>
+          <BriefTab campaignId={campaignId} campaign={campaign} />
         )}
 
         {activeTab === 'strategy' && (
-          <Card className="p-12 text-center">
-            <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Strategy</h3>
-            <p className="text-gray-600">Coming in next phase</p>
-          </Card>
+          <StrategyTab campaignId={campaignId} campaign={campaign} />
         )}
 
         {activeTab === 'influencers' && (

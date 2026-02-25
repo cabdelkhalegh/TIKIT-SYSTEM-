@@ -6,16 +6,41 @@ export interface Brief {
   version: number;
   rawText: string | null;
   fileName: string | null;
+  fileUrl: string | null;
   objectives: string | null;
   kpis: string | null;
   targetAudience: string | null;
+  deliverables: string | null;
+  budgetSignals: string | null;
+  clientInfo: string | null;
   keyMessages: string | null;
   contentPillars: string | null;
   matchingCriteria: string | null;
+  confidenceScores: string | null;
   strategy: string | null;
   aiStatus: 'pending' | 'extracting' | 'extracted' | 'failed';
+  extractionStatus: string;
+  isReviewed: boolean;
+  reviewedBy: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BriefVersion {
+  id: string;
+  briefId: string;
+  versionNumber: number;
+  objectives: string | null;
+  kpis: string | null;
+  targetAudience: string | null;
+  deliverables: string | null;
+  budgetSignals: string | null;
+  clientInfo: string | null;
+  keyMessages: string | null;
+  contentPillars: string | null;
+  matchingCriteria: string | null;
+  changedBy: string | null;
+  createdAt: string;
 }
 
 export interface BriefAnalysis {
@@ -46,6 +71,12 @@ interface BriefResponse {
   success: boolean;
   data: Brief;
   message?: string;
+  fallbackRequired?: boolean;
+}
+
+interface BriefVersionsResponse {
+  success: boolean;
+  data: { briefId: string; versions: BriefVersion[] };
 }
 
 function briefsUrl(campaignId: string) {
@@ -108,6 +139,30 @@ class BriefService {
   async deleteBrief(campaignId: string, briefId: string): Promise<{ success: boolean; message?: string }> {
     const response = await apiClient.delete<{ success: boolean; message?: string }>(
       `${briefsUrl(campaignId)}/${briefId}`
+    );
+    return response.data;
+  }
+
+  // T039: Re-run AI extraction on existing brief
+  async reExtract(campaignId: string, briefId: string): Promise<BriefResponse> {
+    const response = await apiClient.post<BriefResponse>(
+      `${briefsUrl(campaignId)}/${briefId}/re-extract`
+    );
+    return response.data;
+  }
+
+  // T039: Mark brief as reviewed
+  async markReviewed(campaignId: string, briefId: string): Promise<BriefResponse> {
+    const response = await apiClient.post<BriefResponse>(
+      `${briefsUrl(campaignId)}/${briefId}/review`
+    );
+    return response.data;
+  }
+
+  // T039: Get version history
+  async getVersions(campaignId: string, briefId: string): Promise<BriefVersionsResponse> {
+    const response = await apiClient.get<BriefVersionsResponse>(
+      `${briefsUrl(campaignId)}/${briefId}/versions`
     );
     return response.data;
   }
