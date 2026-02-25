@@ -1,195 +1,185 @@
-# TiKiT OS — Enterprise Influencer Marketing Operating System
+# TIKIT-SYSTEM — AI-Powered Influencer Marketing Operating System
 
-> **Powered by PrecisionFlow by AK** · Built with SpecKit spec-driven methodology
-
-TiKiT OS replaces fragmented agency tools (WhatsApp, Excel, email chains) with a single governed execution layer. Every entity — briefs, influencers, content, approvals, finances, and learnings — links back to a Campaign as the central operating container.
+> **Status**: 🏗️ Phase 2 Complete — Foundational Layer Built | Phase 3 Starting
 
 ---
 
-## 🔴 Live URL
-> [https://tikit-v2.vercel.app](https://tikit-v2.vercel.app)
+## 📊 Current Build Status
+
+| Phase | Status | Commits | What Was Built |
+|---|---|---|---|
+| Phase 1 — Setup | ✅ Complete | `ef76312` | Baseline Prisma migration, monorepo verified |
+| Phase 2 — Foundational | ✅ Complete | `87b5bb6`, `76c8b4c` | Schema (26 models), services, middleware, frontend types |
+| Phase 3 — Campaign Lifecycle (US1) | 🔜 Next | — | 8-stage campaign workflow, detail hub, risk scoring UI |
+| Phase 4–12 — User Stories 2–12 | ⏳ Pending Phase 3 | — | — |
+
+**Full spec**: [`specs/001-tikit-os-prd/`](./specs/001-tikit-os-prd/)
 
 ---
 
-## 🏗️ Build Status
+## 🎯 What TiKiT OS Is
 
-| Phase | Scope | Status |
+TiKiT OS is an enterprise influencer marketing **operating system** — a full-stack platform that manages the complete campaign lifecycle from brief intake to post-mortem, with AI assistance at every stage.
+
+### Core Capabilities (Per Spec)
+- 8-stage campaign lifecycle with hard-gated status transitions
+- AI-powered brief extraction, strategy generation, and influencer scoring (Gemini)
+- 6-role access control: Director, Campaign Manager, Reviewer, Finance, Client, Influencer
+- Human-readable display IDs: `TKT-YYYY-XXXX`, `CLI-XXXX`, `INF-XXXX`, `INV-YYYY-XXXX`
+- Optimistic concurrency for concurrent edits (field-level merge, version checks)
+- Full audit trail via `AuditLog` model
+- Client and Influencer self-serve portals (Phase 6+)
+
+---
+
+## ✅ Phase 2 — Foundational Layer (Complete)
+
+> Commits: `87b5bb6` (partial — schema migration, middleware, status helper) + `76c8b4c` (complete — frontend types, hooks, route stubs)
+
+### 2A: Prisma Schema — 11 → 26 Models
+
+Expanded from baseline 11 models to **26 models** covering the full TiKiT OS domain:
+
+**Existing models updated**: `User`, `Campaign`, `Client`, `Brief`, `Influencer`, `CampaignInfluencer`, `Content`, `Invoice`, `Notification`
+- Added `displayId` fields, V2 status enums, risk scoring fields, version fields, closure/approval/gate/posting-schedule fields
+
+**New models added**: `UserRole`, `Profile`, `CompanyRegistration`, `BriefVersion`, `Strategy`, `CampaignClientAssignment`, `KPI`, `KPISchedule`, `Report`, `BudgetRevision`, `Approval`, `Reminder`, `CXSurvey`, `PostMortem`, `AuditLog`, `InstagramConnection`
+
+**New enums**: `CampaignStatus`, `CampaignPhase`, `RiskLevel`, `RoleName`, `InfluencerLifecycleStatus`, `ContentType`, `ContentApprovalStatus`, `InvoiceType`, `InvoiceStatus`, `ReportStatus`, `ApprovalType`, `KPISource`, `ProfileStatus`, `ClientType`, `RegistrationStatus`, `ExceptionType`
+
+Migration applied to Supabase PostgreSQL (`v2-full-prd`).
+
+### 2B: Backend Services (4 New Services)
+
+| Service | File | Purpose |
 |---|---|---|
-| **Phase 1** | Setup & environment verification | ✅ Complete |
-| **Phase 2** | Foundational — schema, services, middleware, types | ✅ Complete |
-| **Phase 3** | US1 — Campaign Lifecycle (8-stage state machine) | 🔜 Next |
-| Phase 4 | US2 — Brief Intake & AI Extraction | 🔜 Queued |
-| Phase 5 | US3 — Influencer Discovery & AI Scoring | 🔜 Queued |
-| Phase 6 | US4 — RBAC & Authentication | 🔜 Queued |
-| Phase 7 | US5 — Content Workflow (Script→Draft→Final) | 🔜 Queued |
-| Phase 8 | US8 — Finance & Invoicing | 🔜 Queued |
-| Phase 9 | US9 — KPI Tracking & Auto-Capture | 🔜 Queued |
-| Phase 10 | US6 — Client Portal | 🔜 Queued |
-| Phase 11 | US7 — Influencer Portal | 🔜 Queued |
-| Phase 12–15 | Reporting, Closure, Dashboard, Polish | 🔜 Queued |
+| ID Generator | `backend/src/services/id-generator-service.js` | Atomic human-readable IDs (`TKT-`, `CLI-`, `INF-`, `INV-`) |
+| Gemini AI Shell | `backend/src/services/gemini-service.js` | Centralized AI methods with fallback handling + 1,500/day tracking |
+| Risk Scoring | `backend/src/services/risk-scoring-service.js` | Auto-calculate campaign risk score (low/medium/high thresholds) |
+| Status Transition Helper | `backend/src/utils/status-transition-helper.js` | Validate 8-stage gate requirements before status changes |
 
-**Full task breakdown:** [`specs/001-tikit-os-prd/tasks.md`](./specs/001-tikit-os-prd/tasks.md) — 133 tasks across 15 phases
+### 2C: Middleware Enhancements
+
+- **RBAC** (`backend/src/middleware/access-control.js`): Added `hasRole()`, `hasAnyRole()`, `isDirector()`, `isInternalUser()` helpers; multi-role union checks via `UserRole` junction table; Client/Influencer exclusivity enforcement
+- **Role-Based Method** (`backend/src/middleware/role-based-method.js`): Multi-role union support; per-route role configuration
+- **Prisma Campaign Immutability**: Middleware guard on `Campaign` — blocks update/delete when `status=closed`
+
+### 2D: Frontend Foundations
+
+- **TypeScript types** (`frontend/src/types/`): All 26 models and 16 enums typed for V2
+- **`useRoleAccess` hook** (`frontend/src/hooks/useRoleAccess.ts`): Boolean flags (`isDirector`, `isCampaignManager`, `isReviewer`, `isFinance`, `isClient`, `isInfluencer`), `canViewTab()` helper, nav filtering
+- **`ProtectedRoute` component** (`frontend/src/components/auth/ProtectedRoute.tsx`): `allowedRoles` prop, unauthorized redirect, uses `useRoleAccess`
+
+### 2E: Backend Route Stubs Registered
+
+All new route files registered in `backend/src/index.js`:
+`strategy-routes`, `kpi-routes`, `report-routes`, `closure-routes`, `audit-routes`, `admin-routes`, `client-portal-routes`, `influencer-portal-routes`
 
 ---
 
-## ✅ Phase 2 — What Was Built
+## 🔜 Phase 3 — Campaign Lifecycle (US1) — Next
 
-### Prisma Schema (26 models, migrated to Supabase)
-- **11 models enhanced:** User, Campaign, Client, Brief, Influencer, CampaignInfluencer, Content, Invoice, Notification, Media, NotificationPreferences
-- **15 new models added:** UserRole, Profile, CompanyRegistration, BriefVersion, Strategy, CampaignClientAssignment, KPI, KPISchedule, Report, BudgetRevision, Approval, Reminder, CXSurvey, PostMortem, AuditLog
-- **Migration applied:** `20260225175010_v2_full_prd` → Supabase PostgreSQL
+**Goal**: Campaign Managers create and manage campaigns through the full 8-stage workflow.
 
-### Backend Services
-| File | Purpose |
+**What will be built** (T019–T032 from `specs/001-tikit-os-prd/tasks.md`):
+- Enhanced campaign creation (3 modes: brief / wizard / quick) with display ID generation
+- Status transition endpoint with gate validation and Director override for high-risk
+- Risk assessment endpoint
+- Optimistic concurrency (version + field-level merge, `409 Conflict`)
+- Campaign detail hub page with 8-tab layout (Brief, Strategy, Influencers, Content, KPIs, Reports, Finance, Closure)
+- `RiskBadge`, `ApprovalGateCards`, `CampaignHeader`, `CampaignTabs` components
+- Campaign list updated with 8-stage status badges and risk indicators
+
+---
+
+## 📁 Spec & Documentation
+
+Full product spec is in [`specs/001-tikit-os-prd/`](./specs/001-tikit-os-prd/):
+
+| File | Contents |
 |---|---|
-| `backend/src/services/id-generator-service.js` | Generates TKT-/CLI-/INF-/INV- human-readable IDs |
-| `backend/src/services/gemini-service.js` | Centralized Gemini 2.0 Flash AI service (6 methods) |
-| `backend/src/services/risk-scoring-service.js` | Auto-calculates campaign risk score (Low/Medium/High) |
-| `backend/src/utils/status-transition-helper.js` | Validates 8-stage campaign gate requirements |
-| `backend/src/middleware/campaign-immutability.js` | Blocks edits on closed campaigns |
-
-### Middleware
-- **RBAC:** `access-control.js` enhanced — 6-role union support, `hasRole()`, `hasAnyRole()`, `isDirector()`, `isInternalUser()`
-- **Route methods:** `role-based-method.js` — supports role array per route
-
-### Frontend
-| File | Purpose |
-|---|---|
-| `frontend/src/types/index.ts` | TypeScript interfaces for all 26 models + 16 enums |
-| `frontend/src/hooks/useRoleAccess.ts` | Role access flags + `canViewTab()` + `canPerformAction()` |
-| `frontend/src/components/auth/ProtectedRoute.tsx` | Route guard with role-based redirect logic |
-
-### Route Registration
-- `backend/src/index.js` updated with safe stubs for all 8 future routes (strategy, KPI, reports, closure, audit, admin, portals)
+| `spec.md` | Full product spec — 12 user stories, FRs, NFRs, UX flows |
+| `plan.md` | Technical execution plan |
+| `tasks.md` | 133 implementation tasks across 12 phases |
+| `data-model.md` | 26 models, 16 enums, all relationships |
+| `contracts/` | 11 API contracts (request/response schemas) |
+| `constitution.md` | Development governance rules |
 
 ---
 
-## 🏛️ Architecture
+## 🏗️ Project Structure
 
 ```
-frontend/ (Next.js 14, TypeScript, TailwindCSS, shadcn/ui)
-    ↕ proxy via /api/v1/*
-backend/ (Node.js + Express + Prisma ORM)
-    ↕
-Supabase PostgreSQL (mijkhorasrdbwjgjmakg.supabase.co)
-Supabase Storage (briefs, content, trade licenses)
-Google Gemini 2.0 Flash (AI extraction, scoring, strategy)
+TIKIT-SYSTEM-/
+├── backend/
+│   ├── src/
+│   │   ├── routes/           # API endpoints (70+ existing + new stubs registered)
+│   │   ├── middleware/       # Auth, RBAC (6-role), immutability guard
+│   │   ├── services/         # id-generator, gemini-ai, risk-scoring
+│   │   └── utils/            # status-transition-helper
+│   └── prisma/
+│       └── schema.prisma     # 26 models, 16 enums, v2-full-prd migration
+├── frontend/
+│   └── src/
+│       ├── types/            # TypeScript types for all 26 models + 16 enums
+│       ├── hooks/            # useRoleAccess (6-role access control)
+│       ├── components/
+│       │   └── auth/         # ProtectedRoute component
+│       └── app/              # Next.js App Router pages
+├── specs/
+│   └── 001-tikit-os-prd/     # Full product spec + 133 tasks
+└── docker-compose.yml
 ```
-
-**Deploy:** Vercel (frontend, rootDirectory=frontend) + Supabase (DB + storage)
-
----
-
-## 🔐 Roles
-
-| Role | Access |
-|---|---|
-| Director | Full access, overrides, user management |
-| Campaign Manager | Campaigns, briefs, influencers, content approval |
-| Reviewer | View + approve briefs/content/reports |
-| Finance | Invoices, budget visibility |
-| Client | Client Portal only (assigned campaigns) |
-| Influencer | Influencer Portal only (assigned briefs/content) |
-
-Multi-role supported for internal users (Director+CM, Reviewer+Finance). Client and Influencer roles are exclusive — cannot be combined with internal roles.
-
----
-
-## 📊 Campaign Lifecycle (8 stages)
-
-```
-draft → in_review → pitching → live → reporting → closed
-              ↕                    ↕
-           paused              cancelled
-```
-
-Hard gates enforced at each transition. Director can override with documented reason.
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 14, TypeScript, TailwindCSS, shadcn/ui, TanStack React Query |
-| Backend | Node.js + Express + Prisma ORM |
-| Database | PostgreSQL via Supabase |
-| AI | Google Gemini 2.0 Flash |
-| File Storage | Supabase Storage (1 GB per file) |
-| Auth | JWT + localStorage |
-| Deploy | Vercel + Supabase |
-| Package Manager | npm |
+**Backend**: Node.js 18 · Express.js · Prisma ORM · PostgreSQL (Supabase) · JWT · Gemini AI (Google) · bcrypt · Multer  
+**Frontend**: Next.js 14 (App Router) · TypeScript · Tailwind CSS · Radix UI · React Query  
+**Infrastructure**: Docker · Docker Compose · npm workspaces · Vercel (frontend target)  
+**Database**: Supabase PostgreSQL · 26 models · v2-full-prd migration applied
 
 ---
 
-## 📁 Repository Structure
-
-```
-TIKIT-SYSTEM-/
-├── backend/
-│   ├── prisma/
-│   │   ├── schema.prisma          # 26 models
-│   │   ├── migrations/            # Migration history
-│   │   └── seed.js                # All 6 roles + test data
-│   └── src/
-│       ├── routes/                # 11 route files (+ 8 stubs registered)
-│       ├── services/              # Gemini, ID generator, risk scoring
-│       ├── middleware/            # RBAC, immutability, rate limiting
-│       └── utils/                 # Status transition helper
-├── frontend/
-│   └── src/
-│       ├── app/                   # Next.js pages + /api/v1 proxy routes
-│       ├── components/            # UI components + ProtectedRoute
-│       ├── hooks/                 # useRoleAccess
-│       ├── services/              # API service layer
-│       └── types/                 # TypeScript types (26 models + 16 enums)
-└── specs/
-    └── 001-tikit-os-prd/          # Full SpecKit spec
-        ├── spec.md                # 12 user stories, 40 FRs
-        ├── plan.md                # Architecture + 5 phases
-        ├── tasks.md               # 133 tasks
-        ├── data-model.md          # 26 Prisma models
-        ├── research.md            # 12 key technical decisions
-        ├── quickstart.md          # Developer onboarding
-        └── contracts/             # 11 API contract files (90+ endpoints)
-```
-
----
-
-## 🚀 Local Development
+## ⚡ Quick Start (Local Dev)
 
 ```bash
-# 1. Install dependencies
+# Backend
 cd backend && npm install
-cd ../frontend && npm install
+cp .env.example .env
+npx prisma generate
+npx prisma migrate dev
+npm run dev           # → http://localhost:3001
 
-# 2. Set up environment
-cp backend/.env.example backend/.env  # Fill in Supabase credentials
-cp frontend/.env.local.example frontend/.env.local
-
-# 3. Generate Prisma client
-cd backend && npx prisma generate
-
-# 4. Start backend
-cd backend && npm run dev  # Port 3001
-
-# 5. Start frontend
-cd frontend && npm run dev  # Port 3000
+# Frontend (new terminal)
+cd frontend && npm install
+npm run dev           # → http://localhost:3000
 ```
 
-For full setup: [`specs/001-tikit-os-prd/quickstart.md`](./specs/001-tikit-os-prd/quickstart.md)
+---
+
+## 🔒 Security & Access Control
+
+- JWT authentication with short expiry + refresh pattern
+- bcrypt password hashing (cost factor 12)
+- **6-role RBAC**: Director · Campaign Manager · Reviewer · Finance · Client · Influencer
+- Multi-role union support via `UserRole` junction table
+- Client/Influencer mutual exclusivity enforced at middleware level
+- Rate limiting on all public endpoints
+- Campaign immutability enforced: closed campaigns cannot be modified
 
 ---
 
-## 📚 Spec Documentation
+## 📈 Stats (Phase 2 Complete)
 
-The full product spec lives in [`specs/001-tikit-os-prd/`](./specs/001-tikit-os-prd/):
-- **[spec.md](./specs/001-tikit-os-prd/spec.md)** — 12 user stories, 40 functional requirements, success criteria
-- **[tasks.md](./specs/001-tikit-os-prd/tasks.md)** — 133 implementation tasks ordered by dependency
-- **[data-model.md](./specs/001-tikit-os-prd/data-model.md)** — Complete Prisma schema with all relationships
-- **[contracts/](./specs/001-tikit-os-prd/contracts/)** — 11 API contract files (90+ endpoints)
-- **[.specify/memory/constitution.md](./.specify/memory/constitution.md)** — 12 governing principles
+- **Backend**: 26 DB models · 16 enums · 4 new services · enhanced RBAC middleware
+- **Frontend**: TypeScript types for all V2 models · `useRoleAccess` hook · `ProtectedRoute` component
+- **Spec**: 133 tasks · 12 user stories · 11 API contracts
 
 ---
 
-*Built with SpecKit spec-driven methodology · Powered by Anthropic Claude · Supabase · Google Gemini*
+**Last Updated**: February 25, 2026  
+**Version**: 2.0.0 — Phase 2 Foundational Complete  
+**Active work**: Phase 3 — Campaign Lifecycle (US1)  
+**Spec**: [`specs/001-tikit-os-prd/`](./specs/001-tikit-os-prd/)
