@@ -19,6 +19,17 @@ const invoiceRoutes = require('./routes/invoice-routes');
 const contentRoutes = require('./routes/content-routes');
 const briefRoutes = require('./routes/brief-routes');
 
+// Phase 2+ routes (stubs registered, files created per phase)
+let strategyRoutes, kpiRoutes, reportRoutes, closureRoutes, auditRoutes, adminRoutes, clientPortalRoutes, influencerPortalRoutes;
+try { strategyRoutes = require('./routes/strategy-routes'); } catch {}
+try { kpiRoutes = require('./routes/kpi-routes'); } catch {}
+try { reportRoutes = require('./routes/report-routes'); } catch {}
+try { closureRoutes = require('./routes/closure-routes'); } catch {}
+try { auditRoutes = require('./routes/audit-routes'); } catch {}
+try { adminRoutes = require('./routes/admin-routes'); } catch {}
+try { clientPortalRoutes = require('./routes/client-portal-routes'); } catch {}
+try { influencerPortalRoutes = require('./routes/influencer-portal-routes'); } catch {}
+
 // Import middleware
 const requestLogger = require('./middleware/request-logger');
 const createRateLimiter = require('./middleware/rate-limiter');
@@ -58,6 +69,16 @@ app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/media', mediaRoutes);
 app.use('/api/v1/invoices', invoiceRoutes);
 app.use('/api/v1/content', contentRoutes);
+
+// Phase 2+ routes (registered when files exist)
+if (strategyRoutes) app.use('/api/v1', strategyRoutes);
+if (kpiRoutes) app.use('/api/v1', kpiRoutes);
+if (reportRoutes) app.use('/api/v1', reportRoutes);
+if (closureRoutes) app.use('/api/v1', closureRoutes);
+if (auditRoutes) app.use('/api/v1/audit-logs', auditRoutes);
+if (adminRoutes) app.use('/api/v1/admin', adminRoutes);
+if (clientPortalRoutes) app.use('/api/v1/client-portal', clientPortalRoutes);
+if (influencerPortalRoutes) app.use('/api/v1/influencer-portal', influencerPortalRoutes);
 app.use('/api/v1', briefRoutes);
 
 // Health check endpoint
