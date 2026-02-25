@@ -384,6 +384,67 @@
 
 ---
 
+## Phase 16: Gap Remediation (from Adi Audit — Feb 25, 2026)
+
+**Purpose**: Close 6 spec/implementation gaps identified in codebase diagnostic that were not covered in Phases 1–15.
+
+**Source**: TIKIT OS V2 Codebase Diagnostic & Gap Analysis document (Adi, Feb 25, 2026)
+
+### T134 [P] Add forgot/reset password flow
+
+Add `resetPasswordToken String?` and `resetPasswordExpires DateTime?` to `User` model in `backend/prisma/schema.prisma`.
+Create migration: `npx prisma migrate dev --name add-password-reset-token`.
+Add routes to `backend/src/routes/auth-routes.js`:
+- `POST /auth/forgot-password` — generate token, set expiry (+1h), send email (log to console for now)
+- `POST /auth/reset-password/:token` — validate token + expiry, update password, clear token fields
+Add frontend proxy routes in `frontend/src/app/api/v1/auth/forgot-password/route.ts` and `reset-password/[token]/route.ts`.
+Add forgot password form page at `frontend/src/app/auth/forgot-password/page.tsx` with email input + success state.
+Add reset password page at `frontend/src/app/auth/reset-password/[token]/page.tsx` with new password form.
+
+### T135 [P] Add JWT refresh token mechanism
+
+Add `refreshToken String?` and `refreshTokenExpires DateTime?` to `User` model in `backend/prisma/schema.prisma`.
+Create migration: `npx prisma migrate dev --name add-refresh-tokens`.
+Add `POST /auth/refresh` route to `backend/src/routes/auth-routes.js` — validate refresh token, issue new access JWT (15-min expiry), rotate refresh token (7-day expiry).
+Update `POST /auth/login` to issue both access token (15-min) + refresh token (7-day, stored in DB).
+Add frontend proxy route `frontend/src/app/api/v1/auth/refresh/route.ts`.
+Update frontend auth service to auto-refresh on 401 responses before failing.
+
+### T136 [P] Add invoice `voided` status
+
+Add `voided` to `InvoiceStatus` enum in `backend/prisma/schema.prisma`.
+Create migration: `npx prisma migrate dev --name add-invoice-voided-status`.
+Add `POST /invoices/:id/void` route to `backend/src/routes/invoice-routes.js` — roles: `director`, `finance` only; cannot void a `paid` invoice; sets `status='voided'`, records `voidedAt`, creates `AuditLog` entry.
+Add frontend proxy route `frontend/src/app/api/v1/invoices/[id]/void/route.ts`.
+Add void button to invoice UI (shown only for `draft` or `sent` status, roles: director/finance).
+
+### T137 [P] Auto-create CampaignClientAssignment when clientId is set
+
+In `backend/src/routes/campaign-routes.js`: after any campaign create or update that sets `clientId`, check if a `CampaignClientAssignment` record exists for that `(campaignId, clientId)` pair — if not, create it with `assignedAt = now()` and `assignedBy = req.user.userId`.
+Ensure this also runs when clientId changes (old assignment remains in history, new one is created).
+No migration needed — model already in schema.
+No frontend change needed (happens transparently server-side).
+
+### T138 Repo cleanup
+
+1. Move all `.md` files in repo root (except `README.md` and `CLAUDE.md`) to `docs/archive/` — use `git mv` to preserve history
+2. Delete stale remote branches matching `copilot/*`: `git push origin --delete <branch>` for each
+3. Fix port mismatch: align `backend/package.json` start script, `specs/001-tikit-os-prd/quickstart.md`, and any `.env.example` files to use port `3001` consistently
+4. Commit: `chore: repo cleanup — archive docs, remove stale branches, fix port alignment`
+
+### T139 [P] Document and implement Gemini rate limit fallback
+
+In `backend/src/services/gemini-service.js`: when `requestCount >= DAILY_LIMIT`, all AI methods must return `{ success: false, fallbackRequired: true, error: 'Daily Gemini request limit reached. Manual input required.' }` instead of attempting the API call.
+Add `GET /api/v1/ai/quota` route (new file `backend/src/routes/ai-routes.js`) returning `{ requestsUsed, dailyLimit, percentUsed, resetAt }` — useful for Director dashboard.
+Register in `backend/src/index.js`.
+Add frontend proxy `frontend/src/app/api/v1/ai/quota/route.ts`.
+In all AI-powered UI components (BriefTab, StrategyTab, etc.): when `fallbackRequired: true` is returned, show inline notice: *"AI quota reached for today. Please enter manually — AI will retry tomorrow."* — manual path must always be available (constitution §VI).
+Document the fallback behavior in `specs/001-tikit-os-prd/research.md` under AI constraints.
+
+**Checkpoint**: All 6 audit gaps resolved — password reset flow works, refresh tokens rotate, invoices can be voided, client assignments auto-created, repo is clean, Gemini fallback is user-visible and graceful.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
