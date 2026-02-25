@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
-// Campaigns CRUD - Get, Update, Delete by ID
-import { NextRequest } from 'next/server';
+// Campaigns CRUD - Get, Update, Delete, Patch by ID
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth, withRole, errorResponse, successResponse } from '@/lib/api-helpers';
 import { canTransitionStatus } from '@/lib/campaign-helpers';
@@ -144,19 +144,110 @@ export const PUT = withAuth(async (req: NextRequest, { params }: any) => {
   }
 });
 
-// DELETE /api/v1/campaigns/[id]
-export const DELETE = withRole(['admin'], async (req: NextRequest, { params }: any) => {
+// DELETE /api/v1/campaigns/[id] — T023: Soft-delete (draft only)
+export const DELETE = withAuth(async (req: NextRequest, { params }: any) => {
   try {
-    await prisma.campaign.delete({
+    const campaign = await prisma.campaign.findUnique({
       where: { campaignId: params.id },
     });
 
-    return successResponse(null, 'Campaign deleted successfully');
-  } catch (error: any) {
-    console.error('Error deleting campaign:', error);
-    if (error.code === 'P2025') {
+    if (!campaign) {
       return errorResponse('Campaign not found', 404);
     }
+
+    if (campaign.status !== 'draft') {
+      return errorResponse('Only draft campaigns can be deleted', 400);
+    }
+
+    await prisma.campaign.update({
+      where: { campaignId: params.id },
+      data: { isDeleted: true },
+    });
+
+    return successResponse({ message: 'Campaign soft-deleted', id: campaign.campaignId });
+  } catch (error: any) {
+    console.error('Error deleting campaign:', error);
     return errorResponse('Failed to delete campaign');
+  }
+});
+
+// PATCH /api/v1/campaigns/[id] — T022: Optimistic concurrency update
+export const PATCH = withAuth(async (req: NextRequest, { params }: any) => {
+  try {
+    const body = await req.json();
+    const { version, name, description, clientId, budget, managementFee, startDate, endDate } = body;
+
+    if (version === undefined || version === null) {
+      return errorResponse('version is required for optimistic concurrency', 400);
+    }
+
+    const campaign = await prisma.campaign.findUnique({
+      where: { campaignId: params.id },
+    });
+
+    if (!campaign) {
+      return errorResponse('Campaign not found', 404);
+    }
+
+    if (campaign.status === 'closed') {
+      return errorResponse('Cannot modify a closed campaign', 400);
+    }
+
+    if (campaign.version !== version) {
+      return NextResponse.json({
+        success: false,
+        error: `Conflict: campaign has been modified. Your version: ${version}, current version: ${campaign.version}. Please refresh and retry.`,
+        data: { currentVersion: campaign.version },
+      }, { status: 409 });
+    }
+
+    const updateData: any = {};
+    if (name !== undefined) updateData.campaignName = name;
+    if (description !== undefined) updateData.campaignDescription = description;
+    if (clientId !== undefined) updateData.clientId = clientId;
+    if (budget !== undefined) updateData.totalBudget = budget;
+    if (managementFee !== undefined) updateData.managementFee = managementFee;
+    if (startDate !== undefined) updateData.startDate = startDate ? new Date(startDate) : null;
+    if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null;
+
+    // Budget revision tracking
+    if (budget !== undefined && budget !== campaign.totalBudget) {
+      await prisma.budgetRevision.create({
+        data: {
+          campaignId: campaign.campaignId,
+          previousBudget: campaign.totalBudget || 0,
+          newBudget: budget,
+          changedBy: 'user',
+        },
+      });
+    }
+
+    // Recalculate risk score
+    const merged = { ...campaign, ...updateData };
+    let riskScore = 0;
+    if (!merged.totalBudget && merged.totalBudget !== 0) riskScore += 3;
+    if (!merged.startDate) riskScore += 2;
+    if (!merged.endDate) riskScore += 2;
+    if (!merged.clientId) riskScore += 2;
+    let inc = 0;
+    if (!merged.campaignName || merged.campaignName.trim() === '') inc += 1;
+    if (!merged.campaignDescription) inc += 1;
+    if (!merged.campaignObjectives) inc += 1;
+    riskScore += Math.min(inc, 3);
+
+    updateData.riskScore = riskScore;
+    updateData.riskLevel = riskScore < 2 ? 'low' : riskScore <= 4 ? 'medium' : 'high';
+    updateData.version = campaign.version + 1;
+
+    const updated = await prisma.campaign.update({
+      where: { campaignId: params.id },
+      data: updateData,
+      include: { client: true },
+    });
+
+    return successResponse(updated, 'Campaign updated successfully');
+  } catch (error: any) {
+    console.error('Error patching campaign:', error);
+    return errorResponse('Failed to update campaign');
   }
 });

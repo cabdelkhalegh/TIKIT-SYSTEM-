@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, TrendingUp, Users } from 'lucide-react';
 import Link from 'next/link';
 import { campaignService } from '@/services/campaign.service';
@@ -9,15 +9,20 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CampaignStatusBadge from '@/components/campaigns/CampaignStatusBadge';
+import RiskBadge from '@/components/campaigns/RiskBadge';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import type { Campaign, CampaignStatus } from '@/types/campaign.types';
+import type { Campaign } from '@/types/campaign.types';
 
+// V2 8-stage status filters
 const STATUS_FILTERS: Array<{ value: string; label: string }> = [
   { value: 'all', label: 'All' },
   { value: 'draft', label: 'Draft' },
-  { value: 'active', label: 'Active' },
+  { value: 'in_review', label: 'In Review' },
+  { value: 'pitching', label: 'Pitching' },
+  { value: 'live', label: 'Live' },
+  { value: 'reporting', label: 'Reporting' },
+  { value: 'closed', label: 'Closed' },
   { value: 'paused', label: 'Paused' },
-  { value: 'completed', label: 'Completed' },
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
@@ -38,8 +43,9 @@ export default function CampaignsPage() {
   });
 
   const campaigns = data?.data || [];
-  const filteredCampaigns = campaigns.filter((campaign) =>
-    campaign.campaignName.toLowerCase().includes(search.toLowerCase())
+  const filteredCampaigns = campaigns.filter((campaign: any) =>
+    (campaign.campaignName || '').toLowerCase().includes(search.toLowerCase()) ||
+    (campaign.displayId || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const getBudgetPercentage = (campaign: Campaign) => {
@@ -71,20 +77,23 @@ export default function CampaignsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
               type="text"
-              placeholder="Search campaigns..."
+              placeholder="Search campaigns by name or ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
             />
           </div>
 
-          {/* Status Filter */}
+          {/* Status Filter — 8-stage */}
           <div className="flex flex-wrap gap-2">
             {STATUS_FILTERS.map((filter) => (
               <button
                 key={filter.value}
-                onClick={() => setStatusFilter(filter.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                onClick={() => {
+                  setStatusFilter(filter.value);
+                  setPage(1);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   statusFilter === filter.value
                     ? 'bg-purple-600 text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
@@ -154,13 +163,13 @@ export default function CampaignsPage() {
                         Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Risk
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Budget
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Timeline
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Influencers
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
@@ -168,7 +177,7 @@ export default function CampaignsPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredCampaigns.map((campaign) => {
+                    {filteredCampaigns.map((campaign: any) => {
                       const budgetPercentage = getBudgetPercentage(campaign);
                       return (
                         <tr key={campaign.campaignId} className="hover:bg-gray-50 transition-colors">
@@ -184,9 +193,10 @@ export default function CampaignsPage() {
                                 >
                                   {campaign.campaignName}
                                 </Link>
-                                {campaign.campaignDescription && (
-                                  <div className="text-sm text-gray-500 line-clamp-1">
-                                    {campaign.campaignDescription}
+                                {/* Display ID */}
+                                {campaign.displayId && (
+                                  <div className="text-xs text-gray-500 font-mono">
+                                    {campaign.displayId}
                                   </div>
                                 )}
                               </div>
@@ -194,11 +204,20 @@ export default function CampaignsPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="text-sm text-gray-900">
-                              {campaign.client?.brandName || 'N/A'}
+                              {campaign.client?.brandDisplayName || campaign.client?.brandName || 'N/A'}
                             </span>
+                            {campaign.client?.displayId && (
+                              <div className="text-xs text-gray-500 font-mono">{campaign.client.displayId}</div>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <CampaignStatusBadge status={campaign.status as CampaignStatus} />
+                            <CampaignStatusBadge status={campaign.status} />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <RiskBadge
+                              score={campaign.riskScore || 0}
+                              level={campaign.riskLevel || 'low'}
+                            />
                           </td>
                           <td className="px-6 py-4">
                             <div className="space-y-1">
@@ -240,12 +259,6 @@ export default function CampaignsPage() {
                               ) : (
                                 <span className="text-gray-400">Not scheduled</span>
                               )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center text-sm text-gray-900">
-                              <Users className="h-4 w-4 mr-1 text-gray-400" />
-                              {campaign._count?.campaignInfluencers || 0}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

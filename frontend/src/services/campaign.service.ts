@@ -22,12 +22,35 @@ export interface BriefExtractionResponse {
   };
 }
 
+export interface StatusTransitionResponse {
+  success: boolean;
+  data: {
+    id: string;
+    previousStatus: string;
+    newStatus: string;
+    phase: string;
+    version: number;
+    updatedAt: string;
+  };
+}
+
+export interface RiskAssessmentResponse {
+  success: boolean;
+  data: {
+    campaignId: string;
+    riskScore: number;
+    riskLevel: 'low' | 'medium' | 'high';
+    factors: Array<{ field: string; missing: boolean; points: number }>;
+    requiresDirectorOverride: boolean;
+    campaign: { id: string; displayId: string; campaignName: string };
+  };
+}
+
 class CampaignService extends BaseService<Campaign> {
   constructor() {
     super('/campaigns');
   }
 
-  // Extend getAll with typed response
   async getAll(params?: {
     page?: number;
     perPage?: number;
@@ -37,22 +60,60 @@ class CampaignService extends BaseService<Campaign> {
     return super.getAll(params) as Promise<CampaignListResponse>;
   }
 
-  // Extend getById with typed response
   async getById(id: string): Promise<CampaignResponse> {
     return super.getById(id) as Promise<CampaignResponse>;
   }
 
-  // Extend create with typed request/response
   async create(data: CreateCampaignRequest): Promise<CampaignResponse> {
     return super.create(data) as Promise<CampaignResponse>;
   }
 
-  // Extend update with typed request/response
   async update(id: string, data: UpdateCampaignRequest): Promise<CampaignResponse> {
     return super.update(id, data) as Promise<CampaignResponse>;
   }
 
-  // Campaign-specific lifecycle methods
+  // ── T026: V2 campaign service functions ───────────────────────────────────
+
+  async transitionStatus(
+    id: string,
+    targetStatus: string,
+    overrideReason?: string
+  ): Promise<StatusTransitionResponse> {
+    const response = await apiClient.post<StatusTransitionResponse>(
+      `${this.endpoint}/${id}/status`,
+      { targetStatus, overrideReason }
+    );
+    return response.data;
+  }
+
+  async getRisk(id: string): Promise<RiskAssessmentResponse> {
+    const response = await apiClient.get<RiskAssessmentResponse>(
+      `${this.endpoint}/${id}/risk`
+    );
+    return response.data;
+  }
+
+  async softDelete(id: string): Promise<{ success: boolean; data: { message: string; id: string } }> {
+    const response = await apiClient.delete<{ success: boolean; data: { message: string; id: string } }>(
+      `${this.endpoint}/${id}`
+    );
+    return response.data;
+  }
+
+  async patchCampaign(
+    id: string,
+    data: Partial<Campaign>,
+    version: number
+  ): Promise<CampaignResponse> {
+    const response = await apiClient.patch<CampaignResponse>(
+      `${this.endpoint}/${id}`,
+      { ...data, version }
+    );
+    return response.data;
+  }
+
+  // ── Existing lifecycle methods ────────────────────────────────────────────
+
   async activate(id: string): Promise<CampaignResponse> {
     const response = await apiClient.post<CampaignResponse>(`${this.endpoint}/${id}/activate`);
     return response.data;
@@ -89,7 +150,7 @@ class CampaignService extends BaseService<Campaign> {
     );
     return response.data;
   }
-  // Brief extraction
+
   async extractBrief(id: string, text: string): Promise<BriefExtractionResponse> {
     const response = await apiClient.post<BriefExtractionResponse>(
       `${this.endpoint}/${id}/brief`,

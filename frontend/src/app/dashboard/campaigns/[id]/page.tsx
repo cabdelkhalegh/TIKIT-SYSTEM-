@@ -6,142 +6,123 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import {
-  ArrowLeft,
-  Edit,
-  Play,
-  Pause,
-  CheckCircle,
-  XCircle,
-  TrendingUp,
   Users,
   DollarSign,
   BarChart3,
   Building2,
-  Calendar,
   Target,
-  Globe,
   Loader2,
   FileText,
   Sparkles,
   Upload,
   ChevronRight,
+  Film,
+  ClipboardList,
+  Lock,
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import CampaignStatusBadge from '@/components/campaigns/CampaignStatusBadge';
+import CampaignHeader from '@/components/campaigns/CampaignHeader';
+import CampaignTabs, { type CampaignTabId } from '@/components/campaigns/CampaignTabs';
+import ApprovalGateCards from '@/components/campaigns/ApprovalGateCards';
+import RiskBadge from '@/components/campaigns/RiskBadge';
 import BudgetProgressCard from '@/components/campaigns/BudgetProgressCard';
-import CampaignTimeline from '@/components/campaigns/CampaignTimeline';
 import { campaignService } from '@/services/campaign.service';
 import { briefService } from '@/services/brief.service';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import type { Campaign, CampaignStatus } from '@/types/campaign.types';
-
-type TabType = 'overview' | 'influencers' | 'budget' | 'invoices' | 'briefs' | 'analytics';
 
 export default function CampaignDetailPage() {
   const params = useParams();
   const router = useRouter();
   const campaignId = params.id as string;
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeTab, setActiveTab] = useState<CampaignTabId>('brief');
   const queryClient = useQueryClient();
+  const { roles, isDirector, isCampaignManager } = useRoleAccess();
+  const userRole = roles[0] || 'campaign_manager';
 
+  // Fetch campaign data
   const { data: campaignData, isLoading } = useQuery({
     queryKey: ['campaign', campaignId],
     queryFn: () => campaignService.getById(campaignId),
     enabled: !!campaignId,
   });
 
+  // Fetch risk data
+  const { data: riskData } = useQuery({
+    queryKey: ['campaign-risk', campaignId],
+    queryFn: () => campaignService.getRisk(campaignId),
+    enabled: !!campaignId,
+  });
+
+  // Fetch briefs (for brief tab)
+  const { data: briefsData } = useQuery({
+    queryKey: ['campaign-briefs', campaignId],
+    queryFn: () => briefService.getBriefs(campaignId),
+    enabled: !!campaignId && activeTab === 'brief',
+  });
+
+  // Fetch influencers (for influencers tab)
   const { data: influencersData } = useQuery({
     queryKey: ['campaign-influencers', campaignId],
     queryFn: () => campaignService.getInfluencers(campaignId),
     enabled: !!campaignId && activeTab === 'influencers',
   });
 
-  const { data: briefsData } = useQuery({
-    queryKey: ['campaign-briefs', campaignId],
-    queryFn: () => briefService.getBriefs(campaignId),
-    enabled: !!campaignId && activeTab === 'briefs',
-  });
-
   const campaign = campaignData?.data;
-  const influencers = influencersData?.data || [];
+  const risk = riskData?.data;
   const briefs = briefsData?.data || [];
+  const influencers = influencersData?.data || [];
 
-  // Status transition mutations
-  const activateMutation = useMutation({
-    mutationFn: () => campaignService.activate(campaignId),
-    onSuccess: () => {
+  // Status transition mutation
+  const statusMutation = useMutation({
+    mutationFn: ({ targetStatus, overrideReason }: { targetStatus: string; overrideReason?: string }) =>
+      campaignService.transitionStatus(campaignId, targetStatus, overrideReason),
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
-      toast.success('Campaign activated successfully');
+      queryClient.invalidateQueries({ queryKey: ['campaign-risk', campaignId] });
+      toast.success(`Campaign advanced to ${data.data.newStatus.replace(/_/g, ' ')}`);
     },
-    onError: () => {
-      toast.error('Failed to activate campaign');
+    onError: (error: any) => {
+      const message = error.response?.data?.error || 'Failed to transition campaign status';
+      toast.error(message);
     },
   });
 
-  const pauseMutation = useMutation({
-    mutationFn: () => campaignService.pause(campaignId),
+  // Soft-delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: () => campaignService.softDelete(campaignId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
-      toast.success('Campaign paused successfully');
+      toast.success('Campaign deleted');
+      router.push('/dashboard/campaigns');
     },
-    onError: () => {
-      toast.error('Failed to pause campaign');
+    onError: (error: any) => {
+      const message = error.response?.data?.error || 'Failed to delete campaign';
+      toast.error(message);
     },
   });
 
-  const resumeMutation = useMutation({
-    mutationFn: () => campaignService.resume(campaignId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
-      toast.success('Campaign resumed successfully');
-    },
-    onError: () => {
-      toast.error('Failed to resume campaign');
-    },
-  });
+  const handleStatusChange = async (newStatus: string) => {
+    statusMutation.mutate({ targetStatus: newStatus });
+  };
 
-  const completeMutation = useMutation({
-    mutationFn: () => campaignService.complete(campaignId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
-      toast.success('Campaign completed successfully');
-    },
-    onError: () => {
-      toast.error('Failed to complete campaign');
-    },
-  });
+  const handleDelete = async () => {
+    deleteMutation.mutate();
+  };
 
-  const cancelMutation = useMutation({
-    mutationFn: () => campaignService.cancel(campaignId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
-      toast.success('Campaign cancelled');
-    },
-    onError: () => {
-      toast.error('Failed to cancel campaign');
-    },
-  });
-
-  const getStatusActions = (status: CampaignStatus) => {
-    switch (status) {
-      case 'draft':
-        return [
-          { label: 'Activate', icon: Play, action: activateMutation, color: 'green' },
-        ];
-      case 'active':
-        return [
-          { label: 'Pause', icon: Pause, action: pauseMutation, color: 'yellow' },
-          { label: 'Complete', icon: CheckCircle, action: completeMutation, color: 'blue' },
-        ];
-      case 'paused':
-        return [
-          { label: 'Resume', icon: Play, action: resumeMutation, color: 'green' },
-          { label: 'Cancel', icon: XCircle, action: cancelMutation, color: 'red' },
-        ];
-      default:
-        return [];
+  const handleApprovalComplete = () => {
+    // After approval gate is passed, try to advance status
+    const nextStatusMap: Record<string, string> = {
+      draft: 'in_review',
+      in_review: 'pitching',
+      pitching: 'live',
+      live: 'reporting',
+      reporting: 'closed',
+    };
+    const next = nextStatusMap[campaign?.status];
+    if (next) {
+      statusMutation.mutate({ targetStatus: next });
     }
   };
 
@@ -170,412 +151,46 @@ export default function CampaignDetailPage() {
     );
   }
 
-  const tabs = [
-    { id: 'overview' as TabType, label: 'Overview', icon: TrendingUp },
-    { id: 'influencers' as TabType, label: 'Influencers', icon: Users },
-    { id: 'budget' as TabType, label: 'Budget', icon: DollarSign },
-    { id: 'invoices' as TabType, label: 'Invoices', icon: FileText },
-    { id: 'briefs' as TabType, label: 'Briefs', icon: Sparkles },
-    { id: 'analytics' as TabType, label: 'Analytics', icon: BarChart3 },
-  ];
-
-  const statusActions = getStatusActions(campaign.status as CampaignStatus);
-
   return (
     <DashboardLayout>
       <div className="p-6">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <button
-              onClick={() => router.push('/dashboard/campaigns')}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <h1 className="text-3xl font-bold text-gray-900">{campaign.campaignName}</h1>
-            <CampaignStatusBadge status={campaign.status as CampaignStatus} />
+        {/* T029: Campaign Header */}
+        <CampaignHeader
+          campaign={campaign}
+          onStatusChange={handleStatusChange}
+          onDelete={handleDelete}
+          userRole={userRole}
+        />
+
+        {/* T028: Approval Gate Card */}
+        {!['closed', 'cancelled', 'paused'].includes(campaign.status) && (
+          <div className="mb-6">
+            <ApprovalGateCards
+              campaign={campaign}
+              onApprovalComplete={handleApprovalComplete}
+              userRole={userRole}
+            />
           </div>
+        )}
 
-          <div className="flex flex-wrap gap-3">
-            <Link href={`/dashboard/campaigns/${campaignId}/brief`}>
-              <Button variant="outline">
-                <FileText className="h-4 w-4 mr-2" />
-                Brief
-              </Button>
-            </Link>
-            <Link href={`/dashboard/campaigns/${campaignId}/edit`}>
-              <Button variant="outline">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Campaign
-              </Button>
-            </Link>
-
-            {statusActions.map(({ label, icon: Icon, action, color }) => (
-              <Button
-                key={label}
-                variant="outline"
-                onClick={() => action.mutate()}
-                disabled={action.isPending}
-                className={
-                  color === 'green'
-                    ? 'border-green-600 text-green-600 hover:bg-green-50'
-                    : color === 'yellow'
-                    ? 'border-yellow-600 text-yellow-600 hover:bg-yellow-50'
-                    : color === 'blue'
-                    ? 'border-blue-600 text-blue-600 hover:bg-blue-50'
-                    : 'border-red-600 text-red-600 hover:bg-red-50'
-                }
-              >
-                {action.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Icon className="h-4 w-4 mr-2" />
-                )}
-                {label}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-8">
-            {tabs.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id)}
-                className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === id
-                    ? 'border-purple-600 text-purple-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                {label}
-              </button>
-            ))}
-          </nav>
-        </div>
+        {/* T030: Campaign Tabs */}
+        <CampaignTabs
+          campaign={campaign}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
         {/* Tab Content */}
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Info */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Description */}
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Description</h3>
-                <p className="text-gray-700">
-                  {campaign.campaignDescription || 'No description provided'}
-                </p>
-              </Card>
-
-              {/* Objectives */}
-              {campaign.campaignObjectives && campaign.campaignObjectives.length > 0 && (
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Target className="h-5 w-5 text-purple-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Campaign Objectives</h3>
-                  </div>
-                  <ul className="space-y-2">
-                    {campaign.campaignObjectives.map((objective, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-700">{objective}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              )}
-
-              {/* Target Audience */}
-              {campaign.targetAudience && (
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Users className="h-5 w-5 text-purple-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Target Audience</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {campaign.targetAudience.demographics && (
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Demographics</h4>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          {campaign.targetAudience.demographics.ageRange && (
-                            <div>
-                              <span className="text-gray-600">Age Range:</span>{' '}
-                              <span className="text-gray-900">
-                                {campaign.targetAudience.demographics.ageRange}
-                              </span>
-                            </div>
-                          )}
-                          {campaign.targetAudience.demographics.gender && (
-                            <div>
-                              <span className="text-gray-600">Gender:</span>{' '}
-                              <span className="text-gray-900">
-                                {campaign.targetAudience.demographics.gender}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        {campaign.targetAudience.demographics.locations &&
-                          campaign.targetAudience.demographics.locations.length > 0 && (
-                            <div className="mt-2">
-                              <span className="text-gray-600 text-sm">Locations:</span>
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {campaign.targetAudience.demographics.locations.map((loc, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm"
-                                  >
-                                    {loc}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                      </div>
-                    )}
-                    {campaign.targetAudience.interests &&
-                      campaign.targetAudience.interests.length > 0 && (
-                        <div>
-                          <h4 className="font-medium text-gray-900 mb-2">Interests</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {campaign.targetAudience.interests.map((interest, idx) => (
-                              <span
-                                key={idx}
-                                className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-sm"
-                              >
-                                {interest}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                  </div>
-                </Card>
-              )}
-
-              {/* Platforms */}
-              {campaign.targetPlatforms && campaign.targetPlatforms.length > 0 && (
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Globe className="h-5 w-5 text-purple-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Target Platforms</h3>
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    {campaign.targetPlatforms.map((platform, idx) => (
-                      <div
-                        key={idx}
-                        className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium"
-                      >
-                        {platform}
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
-
-              {/* Client Info */}
-              {campaign.client && (
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Building2 className="h-5 w-5 text-purple-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Client</h3>
-                  </div>
-                  <div className="space-y-2">
-                    <div>
-                      <Link
-                        href={`/dashboard/clients/${campaign.client.clientId}`}
-                        className="text-purple-600 hover:text-purple-700 font-medium"
-                      >
-                        {campaign.client.brandName || campaign.client.companyLegalName}
-                      </Link>
-                    </div>
-                    {campaign.client.industry && (
-                      <div className="text-sm text-gray-600">
-                        Industry: {campaign.client.industry}
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              )}
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Budget */}
-              <BudgetProgressCard
-                totalBudget={campaign.totalBudget || 0}
-                allocatedBudget={campaign.allocatedBudget || 0}
-                spentBudget={campaign.spentBudget || 0}
-              />
-
-              {/* Timeline */}
-              <CampaignTimeline
-                status={campaign.status as CampaignStatus}
-                createdAt={campaign.createdAt}
-                startDate={campaign.startDate}
-                launchDate={campaign.launchDate}
-                endDate={campaign.endDate}
-              />
-
-              {/* KPIs */}
-              {campaign.performanceKPIs && Object.keys(campaign.performanceKPIs).length > 0 && (
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <BarChart3 className="h-5 w-5 text-purple-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Target KPIs</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {Object.entries(campaign.performanceKPIs).map(([key, value]) => (
-                      <div key={key} className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600 capitalize">
-                          {key.replace(/([A-Z])/g, ' $1').trim()}
-                        </span>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {typeof value === 'number' && value < 100
-                            ? `${value}%`
-                            : value.toLocaleString()}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'influencers' && (
-          <div>
-            {influencers.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  No influencers yet
-                </h3>
-                <p className="text-gray-600">
-                  Add influencers to this campaign to start collaborating
-                </p>
-              </Card>
-            ) : (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Influencer
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Role
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Payment
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {influencers.map((collab) => (
-                      <tr key={collab.id}>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {collab.influencer?.profileName || 'Unknown'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{collab.role || 'N/A'}</td>
-                        <td className="px-6 py-4 text-sm">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
-                            {collab.collaborationStatus}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {collab.agreedPayment ? formatCurrency(collab.agreedPayment) : 'N/A'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'budget' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <BudgetProgressCard
-              totalBudget={campaign.totalBudget || 0}
-              allocatedBudget={campaign.allocatedBudget || 0}
-              spentBudget={campaign.spentBudget || 0}
-            />
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Budget Breakdown</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between pb-2 border-b">
-                  <span className="text-gray-600">Total Budget</span>
-                  <span className="font-semibold text-gray-900">
-                    {formatCurrency(campaign.totalBudget || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between pb-2 border-b">
-                  <span className="text-gray-600">Allocated</span>
-                  <span className="font-semibold text-gray-900">
-                    {formatCurrency(campaign.allocatedBudget || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between pb-2 border-b">
-                  <span className="text-gray-600">Spent</span>
-                  <span className="font-semibold text-gray-900">
-                    {formatCurrency(campaign.spentBudget || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between pt-2">
-                  <span className="text-gray-900 font-medium">Remaining</span>
-                  <span className="font-bold text-lg text-gray-900">
-                    {formatCurrency((campaign.totalBudget || 0) - (campaign.spentBudget || 0))}
-                  </span>
-                </div>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === 'invoices' && (
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-purple-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Invoices</h3>
-              </div>
-              <Link href={`/dashboard/campaigns/${campaignId}/invoices`}>
-                <Button variant="outline">
-                  View All Invoices
-                </Button>
-              </Link>
-            </div>
-            <p className="text-gray-600">
-              Manage client and influencer invoices for this campaign.
-            </p>
-          </Card>
-        )}
-
-        {activeTab === 'briefs' && (
+        {activeTab === 'brief' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-purple-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Campaign Briefs</h3>
-              </div>
-              <div className="flex gap-2">
-                <Link href={`/dashboard/campaigns/${campaignId}/briefs`}>
-                  <Button variant="outline" size="sm">
-                    + Add Brief
-                  </Button>
-                </Link>
-              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Campaign Brief</h3>
+              <Link href={`/dashboard/campaigns/${campaignId}/briefs`}>
+                <Button variant="outline" size="sm">
+                  <Upload className="h-4 w-4 mr-1.5" />
+                  Manage Briefs
+                </Button>
+              </Link>
             </div>
 
             {briefs.length === 0 ? (
@@ -593,72 +208,197 @@ export default function CampaignDetailPage() {
                 </Link>
               </Card>
             ) : (
-              <>
-                {/* Latest brief mini-view */}
-                {(() => {
-                  const latest = briefs[0];
-                  const statusColors: Record<string, string> = {
-                    pending: 'bg-gray-100 text-gray-700',
-                    extracting: 'bg-yellow-100 text-yellow-700',
-                    extracted: 'bg-green-100 text-green-700',
-                    failed: 'bg-red-100 text-red-700',
-                  };
-                  return (
-                    <Card className="p-6">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium text-gray-500">v{latest.version}</span>
-                          {latest.fileName && (
-                            <span className="text-sm text-gray-700">{latest.fileName}</span>
-                          )}
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[latest.aiStatus] || statusColors.pending}`}>
-                            {latest.aiStatus === 'extracting' ? 'Extracting...' : latest.aiStatus.charAt(0).toUpperCase() + latest.aiStatus.slice(1)}
-                          </span>
-                        </div>
-                        <span className="text-xs text-gray-500">
-                          {formatDate(latest.createdAt)}
-                        </span>
-                      </div>
+              <Card className="p-6">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-500">v{briefs[0].version}</span>
+                    {briefs[0].fileName && (
+                      <span className="text-sm text-gray-700">{briefs[0].fileName}</span>
+                    )}
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      briefs[0].isReviewed
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}>
+                      {briefs[0].isReviewed ? 'Reviewed' : 'Pending Review'}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-500">{formatDate(briefs[0].createdAt)}</span>
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Link href={`/dashboard/campaigns/${campaignId}/briefs`}>
+                    <Button variant="link" size="sm" className="text-purple-600">
+                      Manage All Briefs <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+            )}
 
-                      {latest.aiStatus === 'extracted' && latest.objectives && (
-                        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Target className="h-4 w-4 text-purple-600" />
-                            <span className="text-sm font-medium text-gray-900">Objectives</span>
-                          </div>
-                          <p className="text-sm text-gray-700 line-clamp-3">{latest.objectives}</p>
-                        </div>
-                      )}
-
-                      <div className="mt-4 flex justify-end">
-                        <Link href={`/dashboard/campaigns/${campaignId}/briefs`}>
-                          <Button variant="link" size="sm" className="text-purple-600">
-                            Manage All Briefs
-                            <ChevronRight className="h-4 w-4 ml-1" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </Card>
-                  );
-                })()}
-
-                {briefs.length > 1 && (
-                  <p className="text-sm text-gray-500 text-center">
-                    + {briefs.length - 1} more brief{briefs.length - 1 > 1 ? 's' : ''}
+            {/* Campaign overview info */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Description</h3>
+                  <p className="text-gray-700">
+                    {campaign.campaignDescription || 'No description provided'}
                   </p>
+                </Card>
+
+                {campaign.client && (
+                  <Card className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Building2 className="h-5 w-5 text-purple-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Client</h3>
+                    </div>
+                    <div>
+                      <Link
+                        href={`/dashboard/clients/${campaign.client.clientId}`}
+                        className="text-purple-600 hover:text-purple-700 font-medium"
+                      >
+                        {campaign.client.brandDisplayName || campaign.client.legalCompanyName || campaign.client.brandName || campaign.client.companyLegalName}
+                      </Link>
+                      {campaign.client.displayId && (
+                        <span className="ml-2 text-xs text-gray-500 font-mono">{campaign.client.displayId}</span>
+                      )}
+                    </div>
+                  </Card>
                 )}
-              </>
+              </div>
+
+              <div className="space-y-6">
+                <BudgetProgressCard
+                  totalBudget={campaign.totalBudget || 0}
+                  allocatedBudget={campaign.allocatedBudget || 0}
+                  spentBudget={campaign.spentBudget || 0}
+                />
+
+                {risk && (
+                  <Card className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Risk Assessment</h3>
+                    <RiskBadge
+                      score={risk.riskScore}
+                      level={risk.riskLevel}
+                      showScore
+                      showBreakdown
+                      breakdown={risk.factors?.map((f: any) => ({
+                        field: f.field,
+                        points: f.points,
+                        reason: f.field,
+                      })) || []}
+                    />
+                  </Card>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'strategy' && (
+          <Card className="p-12 text-center">
+            <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Strategy</h3>
+            <p className="text-gray-600">Coming in next phase</p>
+          </Card>
+        )}
+
+        {activeTab === 'influencers' && (
+          <div>
+            {influencers.length === 0 ? (
+              <Card className="p-12 text-center">
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No influencers yet</h3>
+                <p className="text-gray-600">Add influencers to this campaign to start collaborating</p>
+              </Card>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Influencer</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">AI Score</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {influencers.map((collab: any) => (
+                      <tr key={collab.id}>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                          {collab.influencer?.displayName || collab.influencer?.fullName || 'Unknown'}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                            {collab.status || collab.collaborationStatus}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {collab.aiMatchScore != null ? `${collab.aiMatchScore}%` : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {collab.agreedCost ? formatCurrency(collab.agreedCost) : collab.agreedPayment ? formatCurrency(collab.agreedPayment) : 'N/A'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         )}
 
-        {activeTab === 'analytics' && (
+        {activeTab === 'content' && (
+          <Card className="p-12 text-center">
+            <Film className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Content</h3>
+            <p className="text-gray-600">Coming in next phase</p>
+          </Card>
+        )}
+
+        {activeTab === 'kpis' && (
           <Card className="p-12 text-center">
             <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Analytics Coming Soon</h3>
-            <p className="text-gray-600">
-              Campaign analytics and performance metrics will be available here
-            </p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">KPIs</h3>
+            <p className="text-gray-600">Coming in next phase</p>
+          </Card>
+        )}
+
+        {activeTab === 'reports' && (
+          <Card className="p-12 text-center">
+            <ClipboardList className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Reports</h3>
+            <p className="text-gray-600">Coming in next phase</p>
+          </Card>
+        )}
+
+        {activeTab === 'finance' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <BudgetProgressCard
+                totalBudget={campaign.totalBudget || 0}
+                allocatedBudget={campaign.allocatedBudget || 0}
+                spentBudget={campaign.spentBudget || 0}
+              />
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Invoices</h3>
+                  <Link href={`/dashboard/campaigns/${campaignId}/invoices`}>
+                    <Button variant="outline" size="sm">View All</Button>
+                  </Link>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  Manage client and influencer invoices for this campaign.
+                </p>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'closure' && (
+          <Card className="p-12 text-center">
+            <Lock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Closure</h3>
+            <p className="text-gray-600">Coming in next phase</p>
           </Card>
         )}
       </div>
