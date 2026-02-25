@@ -428,9 +428,9 @@ No frontend change needed (happens transparently server-side).
 ### T138 Repo cleanup
 
 1. Move all `.md` files in repo root (except `README.md` and `CLAUDE.md`) to `docs/archive/` — use `git mv` to preserve history
-2. Delete stale remote branches matching `copilot/*`: `git push origin --delete <branch>` for each
+2. ⚠️ **Branch audit first (AK approval required before deleting anything)**: List all remote branches (`git branch -r`), share the list with AK, and only delete branches explicitly approved for removal — do NOT auto-delete anything
 3. Fix port mismatch: align `backend/package.json` start script, `specs/001-tikit-os-prd/quickstart.md`, and any `.env.example` files to use port `3001` consistently
-4. Commit: `chore: repo cleanup — archive docs, remove stale branches, fix port alignment`
+4. Commit: `chore: repo cleanup — archive docs, fix port alignment`
 
 ### T139 [P] Document and implement Gemini rate limit fallback
 
