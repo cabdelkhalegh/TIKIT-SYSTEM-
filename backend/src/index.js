@@ -64,6 +64,7 @@ app.use('/api/v1/clients', clientRoutes);
 app.use('/api/v1/campaigns', campaignRoutes);
 app.use('/api/v1/influencers', influencerRoutes);
 app.use('/api/v1/collaborations', collaborationRoutes);
+app.use('/api/v1', collaborationRoutes); // Mount campaign-influencer lifecycle routes at /api/v1/campaigns/:campaignId/influencers
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/media', mediaRoutes);

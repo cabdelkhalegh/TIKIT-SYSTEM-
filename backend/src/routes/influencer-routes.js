@@ -6,8 +6,17 @@ const createCrudRouter = require('../utils/crud-router-factory');
 const createRoleBasedMethodMiddleware = require('../middleware/role-based-method');
 const asyncHandler = require('../middleware/async-handler');
 const InfluencerMatchingEngine = require('../utils/influencer-matching-engine');
+const instagramService = require('../services/instagram-service');
+const { generateInfluencerId } = require('../services/id-generator-service');
 
 const prisma = new PrismaClient();
+
+// Helper: determine profileStatus based on field completeness
+function determineProfileStatus(data) {
+  const requiredForComplete = ['handle', 'fullName', 'email', 'platform', 'followerCount', 'engagementRate'];
+  const hasAll = requiredForComplete.every((f) => data[f] != null && data[f] !== '');
+  return hasAll ? 'complete' : 'stub';
+}
 
 // Create base CRUD router with custom filters
 const router = createCrudRouter({
@@ -287,6 +296,175 @@ router.get('/:id/similar', requireAuthentication, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to find similar influencers'
+    });
+  }
+});
+
+// ===== T045: INSTAGRAM DISCOVERY ENDPOINT =====
+
+// POST /influencers/discover — discover influencers via Instagram
+router.post('/discover', requireAuthentication, async (req, res) => {
+  try {
+    const { mode, query, limit = 20 } = req.body;
+
+    if (!mode || !query) {
+      return res.status(400).json({
+        success: false,
+        error: 'mode and query are required',
+      });
+    }
+
+    const validModes = ['name', 'username', 'hashtag'];
+    if (!validModes.includes(mode)) {
+      return res.status(400).json({
+        success: false,
+        error: 'mode must be one of: name, username, hashtag',
+      });
+    }
+
+    let searchResult;
+    switch (mode) {
+      case 'name':
+        searchResult = await instagramService.searchByName(query);
+        break;
+      case 'username':
+        searchResult = await instagramService.searchByUsername(query);
+        break;
+      case 'hashtag':
+        searchResult = await instagramService.searchByHashtag(query);
+        break;
+    }
+
+    // Limit results
+    let results = (searchResult.results || []).slice(0, Math.min(parseInt(limit), 50));
+
+    // Check which discovered profiles already exist in our DB
+    const usernames = results.map((r) => r.username).filter(Boolean);
+    const existingInfluencers = usernames.length
+      ? await prisma.influencer.findMany({
+          where: {
+            handle: { in: usernames.map((u) => `@${u}`) },
+          },
+          select: { influencerId: true, handle: true },
+        })
+      : [];
+
+    const existingMap = new Map(
+      existingInfluencers.map((inf) => [inf.handle, inf.influencerId])
+    );
+
+    results = results.map((r) => ({
+      ...r,
+      isExisting: existingMap.has(`@${r.username}`),
+      existingInfluencerId: existingMap.get(`@${r.username}`) || null,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        results,
+        mode,
+        query,
+        resultCount: results.length,
+        isDemoData: searchResult.isDemoData || false,
+      },
+    });
+  } catch (error) {
+    console.error('Error discovering influencers:', error);
+    if (error.message?.includes('Instagram API')) {
+      return res.status(503).json({
+        success: false,
+        error: 'Instagram API is unavailable. Please try again later.',
+      });
+    }
+    res.status(500).json({
+      success: false,
+      error: 'Failed to discover influencers',
+    });
+  }
+});
+
+// ===== T046: CREATE INFLUENCER WITH INF-XXXX DISPLAY ID =====
+
+// Override the CRUD create — POST /influencers (with display ID)
+router.post('/', requireAuthentication, async (req, res) => {
+  try {
+    const { handle, displayName, email, phone, platform, niches, geo, city, country,
+      language, followerCount, engagementRate, rateCard, tier, gender, bio,
+      profileImage, representation, agentContact, tiktokHandle, tiktokLink,
+      sociataProfileUrl, profileStatus, fullName } = req.body;
+
+    if (!handle) {
+      return res.status(400).json({
+        success: false,
+        error: 'handle is required',
+      });
+    }
+
+    // Check for duplicate handle
+    const existing = await prisma.influencer.findFirst({
+      where: { handle },
+    });
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        error: 'Influencer with this handle already exists',
+      });
+    }
+
+    // Generate INF-XXXX display ID
+    const displayId = await generateInfluencerId();
+
+    // Build influencer data
+    const influencerData = {
+      displayId,
+      handle,
+      fullName: fullName || displayName || handle,
+      displayName: displayName || handle,
+      email: email || `${handle.replace('@', '')}@placeholder.tikit`,
+      phone: phone || null,
+      platform: platform || 'instagram',
+      niches: niches ? JSON.stringify(niches) : null,
+      geo: geo || null,
+      city: city || null,
+      country: country || null,
+      language: language || null,
+      followerCount: followerCount ? parseInt(followerCount) : null,
+      engagementRate: engagementRate ? parseFloat(engagementRate) : null,
+      rateCard: rateCard ? JSON.stringify(rateCard) : null,
+      tier: tier || null,
+      gender: gender || null,
+      bio: bio || null,
+      profileImageUrl: profileImage || null,
+      representation: representation || 'direct',
+      agentContact: agentContact || null,
+      tiktokHandle: tiktokHandle || null,
+      tiktokLink: tiktokLink || null,
+      sociataProfileUrl: sociataProfileUrl || null,
+    };
+
+    // Determine profile status
+    influencerData.profileStatus = profileStatus || determineProfileStatus(influencerData);
+
+    const influencer = await prisma.influencer.create({
+      data: influencerData,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: influencer.influencerId,
+        displayId: influencer.displayId,
+        handle: influencer.handle,
+        profileStatus: influencer.profileStatus,
+        createdAt: influencer.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error('Error creating influencer:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create influencer',
     });
   }
 });

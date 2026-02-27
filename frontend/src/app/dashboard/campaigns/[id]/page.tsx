@@ -22,6 +22,7 @@ import RiskBadge from '@/components/campaigns/RiskBadge';
 import BudgetProgressCard from '@/components/campaigns/BudgetProgressCard';
 import BriefTab from '@/components/campaigns/BriefTab';
 import StrategyTab from '@/components/campaigns/StrategyTab';
+import InfluencersTab from '@/components/campaigns/InfluencersTab';
 import { campaignService } from '@/services/campaign.service';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { formatCurrency } from '@/lib/utils';
@@ -49,16 +50,8 @@ export default function CampaignDetailPage() {
     enabled: !!campaignId,
   });
 
-  // Fetch influencers (for influencers tab)
-  const { data: influencersData } = useQuery({
-    queryKey: ['campaign-influencers', campaignId],
-    queryFn: () => campaignService.getInfluencers(campaignId),
-    enabled: !!campaignId && activeTab === 'influencers',
-  });
-
   const campaign = campaignData?.data;
   const risk = riskData?.data;
-  const influencers = influencersData?.data || [];
 
   // Status transition mutation
   const statusMutation = useMutation({
@@ -175,48 +168,7 @@ export default function CampaignDetailPage() {
         )}
 
         {activeTab === 'influencers' && (
-          <div>
-            {influencers.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No influencers yet</h3>
-                <p className="text-gray-600">Add influencers to this campaign to start collaborating</p>
-              </Card>
-            ) : (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Influencer</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">AI Score</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {influencers.map((collab: any) => (
-                      <tr key={collab.id}>
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                          {collab.influencer?.displayName || collab.influencer?.fullName || 'Unknown'}
-                        </td>
-                        <td className="px-6 py-4 text-sm">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                            {collab.status || collab.collaborationStatus}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {collab.aiMatchScore != null ? `${collab.aiMatchScore}%` : 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {collab.agreedCost ? formatCurrency(collab.agreedCost) : collab.agreedPayment ? formatCurrency(collab.agreedPayment) : 'N/A'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          <InfluencersTab campaignId={campaignId} campaign={campaign} />
         )}
 
         {activeTab === 'content' && (

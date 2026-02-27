@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const { requireAuthentication, requireRole } = require('../middleware/access-control');
+const { generateInfluencerId } = require('../services/id-generator-service');
+const geminiService = require('../services/gemini-service');
 
 const prisma = new PrismaClient();
 
@@ -1007,6 +1009,545 @@ router.get('/:id/notes', requireAuthentication, async (req, res) => {
       success: false,
       error: 'Failed to fetch notes'
     });
+  }
+});
+
+// ========================================
+// PHASE 5 (T047): CAMPAIGN-INFLUENCER LIFECYCLE
+// ========================================
+
+// 6-stage lifecycle transitions
+const LIFECYCLE_TRANSITIONS = {
+  proposed: ['approved'],
+  approved: ['contracted'],
+  contracted: ['brief_accepted'],
+  brief_accepted: ['live'],
+  live: ['completed'],
+  completed: [],
+};
+
+function canTransitionLifecycle(current, target) {
+  return (LIFECYCLE_TRANSITIONS[current] || []).includes(target);
+}
+
+// Helper to resolve campaign by CUID or displayId
+async function resolveCampaignId(campaignIdOrDisplayId) {
+  // Try by displayId first
+  const byDisplayId = await prisma.campaign.findFirst({
+    where: { displayId: campaignIdOrDisplayId },
+    select: { campaignId: true },
+  });
+  if (byDisplayId) return byDisplayId.campaignId;
+  // Otherwise assume it's a CUID
+  return campaignIdOrDisplayId;
+}
+
+// POST /campaigns/:campaignId/influencers — add influencer to campaign
+router.post('/campaigns/:campaignId/influencers', requireAuthentication, async (req, res) => {
+  try {
+    const resolvedCampaignId = await resolveCampaignId(req.params.campaignId);
+
+    // Verify campaign exists
+    const campaign = await prisma.campaign.findUnique({
+      where: { campaignId: resolvedCampaignId },
+    });
+    if (!campaign) {
+      return res.status(404).json({ success: false, error: 'Campaign not found' });
+    }
+
+    const { influencerId, newInfluencer, estimatedCost } = req.body;
+
+    if (!influencerId && !newInfluencer) {
+      return res.status(400).json({
+        success: false,
+        error: 'Provide either influencerId or newInfluencer',
+      });
+    }
+
+    let targetInfluencerId = influencerId;
+
+    // If newInfluencer provided, create a stub profile first
+    if (newInfluencer && !influencerId) {
+      const handle = newInfluencer.handle;
+      if (!handle) {
+        return res.status(400).json({ success: false, error: 'newInfluencer.handle is required' });
+      }
+
+      // Check if influencer with this handle already exists
+      const existing = await prisma.influencer.findFirst({
+        where: { handle },
+      });
+
+      if (existing) {
+        targetInfluencerId = existing.influencerId;
+      } else {
+        const displayId = await generateInfluencerId();
+        const created = await prisma.influencer.create({
+          data: {
+            displayId,
+            handle,
+            fullName: newInfluencer.displayName || newInfluencer.fullName || handle,
+            displayName: newInfluencer.displayName || handle,
+            email: newInfluencer.email || `${handle.replace('@', '')}@placeholder.tikit`,
+            platform: newInfluencer.platform || 'instagram',
+            followerCount: newInfluencer.followerCount ? parseInt(newInfluencer.followerCount) : null,
+            engagementRate: newInfluencer.engagementRate ? parseFloat(newInfluencer.engagementRate) : null,
+            profileImageUrl: newInfluencer.profilePicture || null,
+            bio: newInfluencer.bio || null,
+            profileStatus: 'stub',
+          },
+        });
+        targetInfluencerId = created.influencerId;
+      }
+    }
+
+    // Check for duplicate assignment
+    const existingAssignment = await prisma.campaignInfluencer.findUnique({
+      where: {
+        campaignId_influencerId: {
+          campaignId: resolvedCampaignId,
+          influencerId: targetInfluencerId,
+        },
+      },
+    });
+    if (existingAssignment) {
+      return res.status(409).json({
+        success: false,
+        error: 'Influencer is already assigned to this campaign',
+      });
+    }
+
+    const ci = await prisma.campaignInfluencer.create({
+      data: {
+        campaignId: resolvedCampaignId,
+        influencerId: targetInfluencerId,
+        status: 'proposed',
+        collaborationStatus: 'invited',
+        estimatedCost: estimatedCost ? parseFloat(estimatedCost) : null,
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: ci.id,
+        campaignId: ci.campaignId,
+        influencerId: ci.influencerId,
+        status: ci.status,
+        estimatedCost: ci.estimatedCost,
+        aiMatchScore: ci.aiMatchScore,
+        createdAt: ci.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error('Error adding influencer to campaign:', error);
+    res.status(500).json({ success: false, error: 'Failed to add influencer to campaign' });
+  }
+});
+
+// GET /campaigns/:campaignId/influencers — list campaign influencers with AI scores
+router.get('/campaigns/:campaignId/influencers', requireAuthentication, async (req, res) => {
+  try {
+    const resolvedCampaignId = await resolveCampaignId(req.params.campaignId);
+
+    const campaign = await prisma.campaign.findUnique({
+      where: { campaignId: resolvedCampaignId },
+      select: { campaignId: true },
+    });
+    if (!campaign) {
+      return res.status(404).json({ success: false, error: 'Campaign not found' });
+    }
+
+    const { status, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+    const where = { campaignId: resolvedCampaignId };
+    if (status) where.status = status;
+
+    const validSortFields = ['createdAt', 'aiMatchScore', 'status', 'estimatedCost'];
+    const orderField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+
+    const influencers = await prisma.campaignInfluencer.findMany({
+      where,
+      include: {
+        influencer: {
+          select: {
+            influencerId: true,
+            displayId: true,
+            handle: true,
+            displayName: true,
+            fullName: true,
+            followerCount: true,
+            engagementRate: true,
+            profileImageUrl: true,
+            niches: true,
+            tier: true,
+            platform: true,
+            profileStatus: true,
+          },
+        },
+      },
+      orderBy: { [orderField]: sortOrder === 'asc' ? 'asc' : 'desc' },
+    });
+
+    const mapped = influencers.map((ci) => ({
+      id: ci.id,
+      influencer: {
+        id: ci.influencer.influencerId,
+        displayId: ci.influencer.displayId,
+        handle: ci.influencer.handle,
+        displayName: ci.influencer.displayName || ci.influencer.fullName,
+        followerCount: ci.influencer.followerCount,
+        engagementRate: ci.influencer.engagementRate,
+        profileImage: ci.influencer.profileImageUrl,
+        niches: ci.influencer.niches ? JSON.parse(ci.influencer.niches) : [],
+        tier: ci.influencer.tier,
+        platform: ci.influencer.platform,
+      },
+      status: ci.status,
+      aiMatchScore: ci.aiMatchScore,
+      aiMatchRationale: ci.aiMatchRationale,
+      estimatedCost: ci.estimatedCost,
+      agreedCost: ci.agreedCost,
+      briefAccepted: ci.briefAccepted,
+      contractStatus: ci.contractStatus,
+      createdAt: ci.createdAt,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        campaignId: resolvedCampaignId,
+        influencers: mapped,
+        count: mapped.length,
+      },
+    });
+  } catch (error) {
+    console.error('Error listing campaign influencers:', error);
+    res.status(500).json({ success: false, error: 'Failed to list campaign influencers' });
+  }
+});
+
+// PATCH /campaigns/:campaignId/influencers/:influencerId/status — transition lifecycle
+router.patch('/campaigns/:campaignId/influencers/:influencerId/status', requireAuthentication, async (req, res) => {
+  try {
+    const resolvedCampaignId = await resolveCampaignId(req.params.campaignId);
+    const { influencerId } = req.params;
+    const { status: newStatus, agreedCost, contractStatus } = req.body;
+
+    if (!newStatus) {
+      return res.status(400).json({ success: false, error: 'status is required' });
+    }
+
+    const ci = await prisma.campaignInfluencer.findFirst({
+      where: {
+        id: influencerId,
+        campaignId: resolvedCampaignId,
+      },
+    });
+
+    if (!ci) {
+      return res.status(404).json({ success: false, error: 'Campaign influencer not found' });
+    }
+
+    if (!canTransitionLifecycle(ci.status, newStatus)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid transition from ${ci.status} to ${newStatus}`,
+      });
+    }
+
+    // Contracted requires agreedCost
+    if (newStatus === 'contracted' && !agreedCost && !ci.agreedCost) {
+      return res.status(400).json({
+        success: false,
+        error: 'agreedCost is required when transitioning to contracted',
+      });
+    }
+
+    const updateData = { status: newStatus };
+
+    // Set timestamps based on transition
+    switch (newStatus) {
+      case 'approved':
+        updateData.approvedAt = new Date();
+        break;
+      case 'contracted':
+        updateData.contractedAt = new Date();
+        if (agreedCost) updateData.agreedCost = parseFloat(agreedCost);
+        if (contractStatus) updateData.contractStatus = contractStatus;
+        break;
+      case 'brief_accepted':
+        updateData.briefAccepted = true;
+        updateData.briefAcceptedAt = new Date();
+        break;
+      case 'live':
+        updateData.liveAt = new Date();
+        break;
+      case 'completed':
+        updateData.completedAt = new Date();
+        break;
+    }
+
+    const updated = await prisma.campaignInfluencer.update({
+      where: { id: ci.id },
+      data: updateData,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        id: updated.id,
+        previousStatus: ci.status,
+        newStatus: updated.status,
+        approvedAt: updated.approvedAt,
+        contractedAt: updated.contractedAt,
+        updatedAt: updated.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error('Error transitioning influencer status:', error);
+    res.status(500).json({ success: false, error: 'Failed to transition influencer status' });
+  }
+});
+
+// POST /campaigns/:campaignId/influencers/:influencerId/pricing — set pricing
+router.post('/campaigns/:campaignId/influencers/:influencerId/pricing', requireAuthentication, async (req, res) => {
+  try {
+    const resolvedCampaignId = await resolveCampaignId(req.params.campaignId);
+    const { influencerId } = req.params;
+    const { estimatedCost, agreedCost } = req.body;
+
+    const ci = await prisma.campaignInfluencer.findFirst({
+      where: { id: influencerId, campaignId: resolvedCampaignId },
+    });
+
+    if (!ci) {
+      return res.status(404).json({ success: false, error: 'Campaign influencer not found' });
+    }
+
+    const updateData = {};
+    if (estimatedCost !== undefined) updateData.estimatedCost = parseFloat(estimatedCost);
+    if (agreedCost !== undefined) updateData.agreedCost = parseFloat(agreedCost);
+
+    const updated = await prisma.campaignInfluencer.update({
+      where: { id: ci.id },
+      data: updateData,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        id: updated.id,
+        estimatedCost: updated.estimatedCost,
+        agreedCost: updated.agreedCost,
+        updatedAt: updated.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error('Error setting pricing:', error);
+    res.status(500).json({ success: false, error: 'Failed to set pricing' });
+  }
+});
+
+// POST /campaigns/:campaignId/influencers/:influencerId/send-brief — trigger brief sent
+router.post('/campaigns/:campaignId/influencers/:influencerId/send-brief', requireAuthentication, async (req, res) => {
+  try {
+    const resolvedCampaignId = await resolveCampaignId(req.params.campaignId);
+    const { influencerId } = req.params;
+
+    const ci = await prisma.campaignInfluencer.findFirst({
+      where: { id: influencerId, campaignId: resolvedCampaignId },
+    });
+
+    if (!ci) {
+      return res.status(404).json({ success: false, error: 'Campaign influencer not found' });
+    }
+
+    if (ci.status !== 'contracted') {
+      return res.status(400).json({
+        success: false,
+        error: 'Influencer must be in contracted status to receive a brief',
+      });
+    }
+
+    // Verify campaign has a reviewed brief
+    const brief = await prisma.brief.findFirst({
+      where: { campaignId: resolvedCampaignId },
+    });
+
+    if (!brief) {
+      return res.status(400).json({
+        success: false,
+        error: 'Campaign does not have a reviewed brief',
+      });
+    }
+
+    const updated = await prisma.campaignInfluencer.update({
+      where: { id: ci.id },
+      data: { invitedAt: new Date() },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        id: updated.id,
+        invitedAt: updated.invitedAt,
+        message: 'Brief sent to influencer',
+      },
+    });
+  } catch (error) {
+    console.error('Error sending brief:', error);
+    res.status(500).json({ success: false, error: 'Failed to send brief' });
+  }
+});
+
+// ========================================
+// PHASE 5 (T048): AI SCORING ENDPOINT
+// ========================================
+
+// POST /campaigns/:campaignId/influencers/score — AI score all proposed influencers
+router.post('/campaigns/:campaignId/influencers/score', requireAuthentication, async (req, res) => {
+  try {
+    const resolvedCampaignId = await resolveCampaignId(req.params.campaignId);
+
+    const campaign = await prisma.campaign.findUnique({
+      where: { campaignId: resolvedCampaignId },
+      include: { strategy: true },
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ success: false, error: 'Campaign not found' });
+    }
+
+    // Parse strategy matching criteria
+    let matchingCriteria = null;
+    if (campaign.strategy?.matchingCriteria) {
+      try {
+        matchingCriteria = JSON.parse(campaign.strategy.matchingCriteria);
+      } catch {
+        matchingCriteria = null;
+      }
+    }
+
+    if (!matchingCriteria) {
+      return res.status(400).json({
+        success: false,
+        error: 'Campaign must have a strategy with matching criteria before scoring',
+      });
+    }
+
+    // Get influencers to score
+    const { influencerIds } = req.body;
+    const where = { campaignId: resolvedCampaignId };
+    if (influencerIds?.length) {
+      where.id = { in: influencerIds };
+    } else {
+      where.status = 'proposed';
+    }
+
+    const campaignInfluencers = await prisma.campaignInfluencer.findMany({
+      where,
+      include: {
+        influencer: {
+          select: {
+            influencerId: true,
+            handle: true,
+            displayName: true,
+            platform: true,
+            followerCount: true,
+            engagementRate: true,
+            niches: true,
+            geo: true,
+            language: true,
+            city: true,
+            country: true,
+          },
+        },
+      },
+    });
+
+    if (campaignInfluencers.length === 0) {
+      return res.json({
+        success: true,
+        data: { campaignId: resolvedCampaignId, scored: [], scoredCount: 0 },
+      });
+    }
+
+    // Prepare influencer data for Gemini
+    const influencerDataForAI = campaignInfluencers.map((ci) => ({
+      influencerId: ci.influencer.influencerId,
+      handle: ci.influencer.handle,
+      platform: ci.influencer.platform,
+      followerCount: ci.influencer.followerCount,
+      engagementRate: ci.influencer.engagementRate,
+      niches: ci.influencer.niches ? JSON.parse(ci.influencer.niches) : [],
+      geo: ci.influencer.geo,
+      language: ci.influencer.language,
+      city: ci.influencer.city,
+      country: ci.influencer.country,
+    }));
+
+    // Build strategy criteria including strategy summary
+    const strategyCriteria = {
+      ...matchingCriteria,
+      summary: campaign.strategy.summary,
+      keyMessages: campaign.strategy.keyMessages ? JSON.parse(campaign.strategy.keyMessages) : [],
+      contentPillars: campaign.strategy.contentPillars ? JSON.parse(campaign.strategy.contentPillars) : [],
+    };
+
+    const aiResult = await geminiService.scoreInfluencers(influencerDataForAI, strategyCriteria);
+
+    const scored = [];
+
+    if (aiResult.success && Array.isArray(aiResult.data)) {
+      // Update each CampaignInfluencer with AI scores
+      for (const scoreData of aiResult.data) {
+        const ci = campaignInfluencers.find(
+          (c) => c.influencer.influencerId === scoreData.influencerId
+        );
+        if (!ci) continue;
+
+        await prisma.campaignInfluencer.update({
+          where: { id: ci.id },
+          data: {
+            aiMatchScore: scoreData.score,
+            aiMatchRationale: scoreData.rationale,
+          },
+        });
+
+        scored.push({
+          campaignInfluencerId: ci.id,
+          influencerId: ci.influencer.influencerId,
+          handle: ci.influencer.handle,
+          aiMatchScore: scoreData.score,
+          aiMatchRationale: scoreData.rationale,
+          breakdown: scoreData.breakdown || null,
+        });
+      }
+    } else {
+      // AI failed — return advisory message
+      return res.json({
+        success: true,
+        data: {
+          campaignId: resolvedCampaignId,
+          scored: [],
+          scoredCount: 0,
+          aiError: aiResult.error || 'AI scoring unavailable — please try again later',
+        },
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        campaignId: resolvedCampaignId,
+        scored,
+        scoredCount: scored.length,
+      },
+    });
+  } catch (error) {
+    console.error('Error scoring influencers:', error);
+    res.status(500).json({ success: false, error: 'Failed to score influencers' });
   }
 });
 

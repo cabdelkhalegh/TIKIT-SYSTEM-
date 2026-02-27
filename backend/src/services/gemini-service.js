@@ -166,12 +166,19 @@ async function scoreInfluencers(influencers, strategyCriteria) {
   try {
     trackRequest();
     const model = getModel();
-    const prompt = `Score each influencer against the campaign criteria. Return valid JSON array with objects:
-- influencerId (string)
-- score (number 0-100)
-- rationale (string explaining the score)
+    const prompt = `Score each influencer against the campaign criteria. Return ONLY valid JSON (no markdown) as an array of objects with these exact keys:
+- influencerId (string — the influencer's id)
+- score (number 0-100, overall weighted score)
+- rationale (string explaining the score in 1-2 sentences)
+- breakdown (object with numeric scores for each weight category):
+  - platform (number 0-25, how well the influencer's platform matches)
+  - followers (number 0-20, follower count fit)
+  - engagement (number 0-20, engagement rate fit)
+  - niche (number 0-15, niche alignment)
+  - geo (number 0-12, geographic match)
+  - language (number 0-8, language match)
 
-Weighting: Platform match 25%, Follower count 20%, Engagement rate 20%, Niche/Geo/Language 35%
+Weighting: Platform match 25%, Follower count 20%, Engagement rate 20%, Niche 15%, Geo 12%, Language 8%.
 
 Campaign criteria:
 ${JSON.stringify(strategyCriteria)}
@@ -181,8 +188,28 @@ ${JSON.stringify(influencers)}`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+    let parsed;
+    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      parsed = JSON.parse(jsonMatch[1].trim());
+    } else {
+      const arrMatch = text.match(/\[[\s\S]*\]/);
+      parsed = arrMatch ? JSON.parse(arrMatch[0]) : [];
+    }
+    // Ensure each item has a breakdown
+    if (Array.isArray(parsed)) {
+      parsed = parsed.map((item) => ({
+        ...item,
+        breakdown: item.breakdown || {
+          platform: 0,
+          followers: 0,
+          engagement: 0,
+          niche: 0,
+          geo: 0,
+          language: 0,
+        },
+      }));
+    }
     return { success: true, data: parsed };
   } catch (error) {
     console.error('Gemini scoreInfluencers error:', error.message);

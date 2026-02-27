@@ -2,24 +2,29 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Filter, Users } from 'lucide-react';
+import { Plus, Search, Filter, Users, Instagram } from 'lucide-react';
 import Link from 'next/link';
 import { influencerService } from '@/services/influencer.service';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import InfluencerCard from '@/components/influencers/InfluencerCard';
+import InstagramDiscoveryDialog from '@/components/influencers/InstagramDiscoveryDialog';
 import type { Platform, InfluencerStatus, ContentCategory } from '@/types/influencer.types';
 
 const platforms: Platform[] = ['instagram', 'tiktok', 'youtube', 'twitter', 'facebook', 'linkedin'];
+
+type ProfileStatusFilter = '' | 'complete' | 'stub';
 
 export default function InfluencersPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | ''>('');
   const [selectedStatus, setSelectedStatus] = useState<InfluencerStatus | ''>('');
+  const [profileStatusFilter, setProfileStatusFilter] = useState<ProfileStatusFilter>('');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showDiscovery, setShowDiscovery] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['influencers', { page, search, platform: selectedPlatform, status: selectedStatus, verified: verifiedOnly }],
@@ -46,6 +51,10 @@ export default function InfluencersPage() {
             <p className="mt-1 text-gray-600">Discover and manage influencer partnerships</p>
           </div>
           <div className="flex gap-3">
+            <Button variant="outline" onClick={() => setShowDiscovery(true)}>
+              <Instagram className="h-4 w-4 mr-2" />
+              Discover
+            </Button>
             <Link href="/dashboard/influencers/search">
               <Button variant="outline">
                 <Search className="h-4 w-4 mr-2" />
@@ -122,7 +131,22 @@ export default function InfluencersPage() {
                   </select>
                 </div>
 
-                <div className="flex items-end">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Profile Status
+                  </label>
+                  <select
+                    value={profileStatusFilter}
+                    onChange={(e) => setProfileStatusFilter(e.target.value as ProfileStatusFilter)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">All Profiles</option>
+                    <option value="complete">Complete</option>
+                    <option value="stub">Stub</option>
+                  </select>
+                </div>
+
+                <div className="flex items-end gap-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -133,13 +157,13 @@ export default function InfluencersPage() {
                     <span className="text-sm text-gray-700">Verified Only</span>
                   </label>
                 </div>
-
                 <div className="flex items-end">
                   <Button
                     variant="outline"
                     onClick={() => {
                       setSelectedPlatform('');
                       setSelectedStatus('');
+                      setProfileStatusFilter('');
                       setVerifiedOnly(false);
                       setSearch('');
                     }}
@@ -190,8 +214,30 @@ export default function InfluencersPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {influencers.map((influencer) => (
-                  <InfluencerCard key={influencer.id} influencer={influencer} />
+                {influencers
+                  .filter((influencer: any) => {
+                    if (!profileStatusFilter) return true;
+                    return influencer.profileStatus === profileStatusFilter;
+                  })
+                  .map((influencer: any) => (
+                  <div key={influencer.id} className="relative">
+                    {/* Display ID + Profile Status badges */}
+                    <div className="absolute top-2 left-2 z-10 flex gap-1">
+                      {influencer.displayId && (
+                        <span className="bg-purple-100 text-purple-700 text-[10px] font-mono px-1.5 py-0.5 rounded">
+                          {influencer.displayId}
+                        </span>
+                      )}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                        influencer.profileStatus === 'complete'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {influencer.profileStatus === 'complete' ? 'Complete' : 'Stub'}
+                      </span>
+                    </div>
+                    <InfluencerCard influencer={influencer} />
+                  </div>
                 ))}
               </div>
             )}
@@ -222,6 +268,12 @@ export default function InfluencersPage() {
             )}
           </>
         )}
+        {/* Instagram Discovery Dialog */}
+        <InstagramDiscoveryDialog
+          isOpen={showDiscovery}
+          onClose={() => setShowDiscovery(false)}
+          onSelect={() => setShowDiscovery(false)}
+        />
       </div>
     </DashboardLayout>
   );

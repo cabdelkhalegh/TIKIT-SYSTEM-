@@ -68,6 +68,38 @@ class InfluencerService extends BaseService<Influencer> {
     const response = await apiClient.post<CompareInfluencersResponse>(`${this.endpoint}/compare/bulk`, data);
     return response.data;
   }
+
+  // ===== Phase 5 US3: Discovery & Campaign-Influencer Lifecycle =====
+
+  async discoverInfluencers(mode: 'name' | 'username' | 'hashtag', query: string): Promise<any> {
+    const response = await apiClient.post(`${this.endpoint}/discover`, { mode, query });
+    return response.data;
+  }
+
+  async addToCampaign(campaignId: string, data: { influencerId?: string; newInfluencer?: any; estimatedCost?: number }): Promise<any> {
+    const response = await apiClient.post(`/campaigns/${campaignId}/influencers`, data);
+    return response.data;
+  }
+
+  async getCampaignInfluencers(campaignId: string, params?: { status?: string; sortBy?: string; sortOrder?: string }): Promise<any> {
+    const response = await apiClient.get(`/campaigns/${campaignId}/influencers`, { params });
+    return response.data;
+  }
+
+  async transitionInfluencerStatus(campaignId: string, influencerId: string, newStatus: string, extra?: { agreedCost?: number; contractStatus?: string }): Promise<any> {
+    const response = await apiClient.patch(`/campaigns/${campaignId}/influencers/${influencerId}/status`, { status: newStatus, ...extra });
+    return response.data;
+  }
+
+  async setInfluencerPricing(campaignId: string, influencerId: string, pricing: { estimatedCost?: number; agreedCost?: number }): Promise<any> {
+    const response = await apiClient.post(`/campaigns/${campaignId}/influencers/${influencerId}/pricing`, pricing);
+    return response.data;
+  }
+
+  async scoreCampaignInfluencers(campaignId: string, influencerIds?: string[]): Promise<any> {
+    const response = await apiClient.post(`/campaigns/${campaignId}/influencers/score`, { influencerIds });
+    return response.data;
+  }
 }
 
 export const influencerService = new InfluencerService();
