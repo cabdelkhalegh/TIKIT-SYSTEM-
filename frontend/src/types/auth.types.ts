@@ -2,14 +2,17 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
-  role: 'admin' | 'client_manager' | 'influencer_manager';
+  displayName?: string;
+  role: string;
+  roles?: string[];
   profileImage?: string;
   phone?: string;
   company?: string;
   jobTitle?: string;
   bio?: string;
+  isActive?: boolean;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface LoginRequest {
@@ -20,13 +23,66 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string;
   user: User;
+  remainingAttempts?: number;
+  lockedUntil?: string;
 }
 
 export interface RegisterRequest {
   email: string;
   password: string;
   fullName: string;
-  role: 'admin' | 'client_manager' | 'influencer_manager';
+  phone?: string;
+}
+
+export interface RegisterStep1Response {
+  success: boolean;
+  data: {
+    id: string;
+    email: string;
+    displayName: string;
+    isActive: boolean;
+    registration: {
+      id: string;
+      status: string;
+    };
+    token: string;
+  };
+}
+
+export interface RegisterStep2Response {
+  success: boolean;
+  data: {
+    registrationId: string;
+    extraction: {
+      companyName: string | null;
+      vatTrnNumber: string | null;
+      licenseNumber: string | null;
+      expiryDate: string | null;
+      businessAddress: string | null;
+      activities: string[];
+      ownerNames: string[];
+      confidenceScores?: Record<string, number>;
+    } | null;
+    extractionSuccess: boolean;
+    fallbackRequired: boolean;
+    confidenceScores: Record<string, number> | null;
+  };
+}
+
+export interface RegisterStep3Response {
+  success: boolean;
+  data: {
+    id: string;
+    companyName: string | null;
+    vatTrnNumber: string | null;
+    licenseNumber: string | null;
+    expiryDate: string | null;
+    businessAddress: string | null;
+    activities: string[];
+    ownerNames: string[];
+    licenseFileUrl: string | null;
+    status: string;
+  };
 }
 
 export interface RegisterResponse {

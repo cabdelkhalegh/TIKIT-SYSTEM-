@@ -6,14 +6,29 @@
 import { useMemo } from 'react';
 import { RoleName } from '@/types';
 
-// Read user roles from localStorage (JWT payload)
+// Read user roles from localStorage (Zustand persisted state or JWT payload)
 function getUserRoles(): RoleName[] {
   try {
+    // First try Zustand persisted auth storage
+    const authStorage = localStorage.getItem('tikit-auth-storage');
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      const user = parsed.state?.user;
+      if (user?.roles && Array.isArray(user.roles)) return user.roles;
+      // Also try decoding the token
+      const token = parsed.state?.token;
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (Array.isArray(payload.roles)) return payload.roles;
+        if (payload.userRole) return [payload.userRole];
+      }
+    }
+    // Fallback: legacy 'token' key
     const token = localStorage.getItem('token');
     if (!token) return [];
     const payload = JSON.parse(atob(token.split('.')[1]));
-    // Support both single role (legacy) and roles array
     if (Array.isArray(payload.roles)) return payload.roles;
+    if (payload.userRole) return [payload.userRole];
     if (payload.role) return [payload.role];
     return [];
   } catch {

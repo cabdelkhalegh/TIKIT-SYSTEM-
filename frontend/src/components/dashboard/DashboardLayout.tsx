@@ -1,9 +1,10 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth.store';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 import {
   LayoutDashboard,
   Target,
@@ -14,7 +15,12 @@ import {
   LogOut,
   Menu,
   X,
-  Building2
+  Building2,
+  Shield,
+  ClipboardCheck,
+  DollarSign,
+  FileText,
+  type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
@@ -24,13 +30,26 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const navigation = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  // Which roles can see this nav item. Empty array = everyone.
+  allowedRoles?: string[];
+}
+
+// Full navigation definition with role-based visibility
+const allNavigation: NavItem[] = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Clients', href: '/dashboard/clients', icon: Building2 },
-  { name: 'Campaigns', href: '/dashboard/campaigns', icon: Target },
-  { name: 'Influencers', href: '/dashboard/influencers', icon: Users },
-  { name: 'Collaborations', href: '/dashboard/collaborations', icon: Handshake },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+  { name: 'Clients', href: '/dashboard/clients', icon: Building2, allowedRoles: ['director', 'campaign_manager', 'reviewer', 'finance'] },
+  { name: 'Campaigns', href: '/dashboard/campaigns', icon: Target, allowedRoles: ['director', 'campaign_manager', 'reviewer'] },
+  { name: 'Influencers', href: '/dashboard/influencers', icon: Users, allowedRoles: ['director', 'campaign_manager', 'reviewer'] },
+  { name: 'Collaborations', href: '/dashboard/collaborations', icon: Handshake, allowedRoles: ['director', 'campaign_manager', 'reviewer'] },
+  { name: 'Content', href: '/dashboard/content', icon: FileText, allowedRoles: ['director', 'campaign_manager', 'reviewer', 'client', 'influencer'] },
+  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, allowedRoles: ['director', 'campaign_manager', 'reviewer', 'finance'] },
+  // Director-only admin sections
+  { name: 'Registrations', href: '/dashboard/licensing', icon: ClipboardCheck, allowedRoles: ['director'] },
+  { name: 'User Roles', href: '/dashboard/roles', icon: Shield, allowedRoles: ['director'] },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
@@ -38,12 +57,23 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const { roles, isClient, isInfluencer, hasAnyRole } = useRoleAccess();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     router.push('/');
   };
+
+  // Filter navigation based on user roles
+  const navigation = useMemo(() => {
+    return allNavigation.filter((item) => {
+      // No role restriction — visible to all
+      if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
+      // Check if user has any of the allowed roles
+      return hasAnyRole(item.allowedRoles as any[]);
+    });
+  }, [roles, hasAnyRole]);
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -76,7 +106,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-1">
+          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href));
@@ -115,6 +145,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </p>
               </div>
             </div>
+            {/* Role badges */}
+            {roles.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2 px-4">
+                {roles.map((r) => (
+                  <span key={r} className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 font-medium">
+                    {r.replace('_', ' ')}
+                  </span>
+                ))}
+              </div>
+            )}
             <button
               onClick={handleLogout}
               className="mt-2 w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 rounded-lg transition-colors"

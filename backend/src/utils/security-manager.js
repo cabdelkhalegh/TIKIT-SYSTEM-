@@ -21,19 +21,20 @@ class TikitSecurityManager {
     return isMatchingPassword;
   }
 
-  // Create session token for authenticated user
+  // Create session token for authenticated user (V2: includes roles array)
   createSessionToken(userCredentials) {
     const tokenPayload = {
       uid: userCredentials.userId,
       emailAddress: userCredentials.email,
       userRole: userCredentials.role,
+      roles: userCredentials.roles || [], // V2 multi-role support
       timestamp: Date.now()
     };
-    
+
     const sessionToken = jwtLib.sign(tokenPayload, this.secretKey, {
       expiresIn: this.tokenLifespan
     });
-    
+
     return sessionToken;
   }
 

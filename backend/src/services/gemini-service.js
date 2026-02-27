@@ -283,26 +283,66 @@ ${JSON.stringify(kpiSummary)}`;
 
 /**
  * Extract trade license data via OCR
+ * T054: Supports both file buffer (image/PDF) and URL-based extraction
+ * Extracts: companyName, vatTrnNumber, licenseNumber, expiryDate, businessAddress, activities, ownerNames
  */
-async function extractTradeLicense(fileUrl) {
+async function extractTradeLicense(fileInput, mimeType) {
   try {
     trackRequest();
     const model = getModel();
-    const prompt = `Extract structured data from this trade license document. Return valid JSON with:
-- companyName (string)
-- vatTrnNumber (string)
-- licenseNumber (string)
-- expiryDate (string, ISO date)
-- businessAddress (string)
-- activities (array of strings)
-- ownerNames (array of strings)
 
-Document URL: ${fileUrl}`;
+    const extractionPrompt = `You are an OCR specialist for UAE trade license documents. Extract structured data from this trade license.
 
-    const result = await model.generateContent(prompt);
+Return ONLY valid JSON (no markdown) with these exact keys:
+- companyName (string — the registered company/establishment name)
+- vatTrnNumber (string — VAT or TRN number, e.g. "100123456700003")
+- licenseNumber (string — the trade license number, e.g. "DED-789012")
+- expiryDate (string — license expiry date in ISO 8601 format, e.g. "2027-06-30")
+- businessAddress (string — full registered business address)
+- activities (array of strings — list of permitted business activities)
+- ownerNames (array of strings — names of license holders/owners)
+- confidenceScores (object mapping each of the 7 field names above to a confidence score between 0.0 and 1.0)
+
+If a field cannot be found in the document, return null for strings, empty array for arrays, and 0.0 for its confidence score.`;
+
+    let result;
+    if (Buffer.isBuffer(fileInput)) {
+      // File buffer provided — use Gemini multimodal with inline data
+      const imagePart = {
+        inlineData: {
+          data: fileInput.toString('base64'),
+          mimeType: mimeType || 'image/jpeg',
+        },
+      };
+      result = await model.generateContent([extractionPrompt, imagePart]);
+    } else {
+      // URL string — pass as text context (fallback for URL-based docs)
+      result = await model.generateContent(`${extractionPrompt}\n\nDocument URL: ${fileInput}`);
+    }
+
     const text = result.response.text();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+    // Parse JSON — handle potential markdown code fences
+    let parsed;
+    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      parsed = JSON.parse(jsonMatch[1].trim());
+    } else {
+      const objMatch = text.match(/\{[\s\S]*\}/);
+      parsed = objMatch ? JSON.parse(objMatch[0]) : null;
+    }
+
+    if (!parsed) {
+      return { success: false, fallbackRequired: true, error: 'Failed to parse AI response' };
+    }
+
+    // Ensure confidenceScores exists with defaults
+    if (!parsed.confidenceScores) {
+      parsed.confidenceScores = {
+        companyName: 0.5, vatTrnNumber: 0.5, licenseNumber: 0.5,
+        expiryDate: 0.5, businessAddress: 0.5, activities: 0.5, ownerNames: 0.5,
+      };
+    }
+
     return { success: true, data: parsed };
   } catch (error) {
     console.error('Gemini extractTradeLicense error:', error.message);
