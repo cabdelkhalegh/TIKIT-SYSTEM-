@@ -575,6 +575,8 @@ model Invoice {
   dueDate       DateTime? @map("due_date")
   fileUrl       String?   @map("file_url")
   notes         String?
+  sentAt        DateTime? @map("sent_at")
+  paidAt        DateTime? @map("paid_at")
   campaignId    String    @map("campaign_id")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")

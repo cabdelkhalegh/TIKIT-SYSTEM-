@@ -47,6 +47,7 @@ const allNavigation: NavItem[] = [
   { name: 'Collaborations', href: '/dashboard/collaborations', icon: Handshake, allowedRoles: ['director', 'campaign_manager', 'reviewer'] },
   { name: 'Content', href: '/dashboard/content', icon: FileText, allowedRoles: ['director', 'campaign_manager', 'reviewer', 'client', 'influencer'] },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, allowedRoles: ['director', 'campaign_manager', 'reviewer', 'finance'] },
+  { name: 'Finance', href: '/dashboard/finance', icon: DollarSign, allowedRoles: ['director', 'finance'] },
   // Director-only admin sections
   { name: 'Registrations', href: '/dashboard/licensing', icon: ClipboardCheck, allowedRoles: ['director'] },
   { name: 'User Roles', href: '/dashboard/roles', icon: Shield, allowedRoles: ['director'] },

@@ -20,6 +20,7 @@ import CampaignTabs, { type CampaignTabId } from '@/components/campaigns/Campaig
 import ApprovalGateCards from '@/components/campaigns/ApprovalGateCards';
 import RiskBadge from '@/components/campaigns/RiskBadge';
 import BudgetProgressCard from '@/components/campaigns/BudgetProgressCard';
+import FinanceTab from '@/components/campaigns/FinanceTab';
 import BriefTab from '@/components/campaigns/BriefTab';
 import StrategyTab from '@/components/campaigns/StrategyTab';
 import InfluencersTab from '@/components/campaigns/InfluencersTab';
@@ -196,26 +197,7 @@ export default function CampaignDetailPage() {
         )}
 
         {activeTab === 'finance' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <BudgetProgressCard
-                totalBudget={campaign.totalBudget || 0}
-                allocatedBudget={campaign.allocatedBudget || 0}
-                spentBudget={campaign.spentBudget || 0}
-              />
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Invoices</h3>
-                  <Link href={`/dashboard/campaigns/${campaignId}/invoices`}>
-                    <Button variant="outline" size="sm">View All</Button>
-                  </Link>
-                </div>
-                <p className="text-gray-600 text-sm">
-                  Manage client and influencer invoices for this campaign.
-                </p>
-              </Card>
-            </div>
-          </div>
+          <FinanceTab campaignId={campaignId} campaign={campaign} />
         )}
 
         {activeTab === 'closure' && (

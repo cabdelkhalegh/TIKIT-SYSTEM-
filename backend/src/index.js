@@ -16,6 +16,7 @@ const analyticsRoutes = require('./routes/analytics-routes');
 const notificationRoutes = require('./routes/notification-routes');
 const mediaRoutes = require('./routes/media-routes');
 const invoiceRoutes = require('./routes/invoice-routes');
+const financeRoutes = require('./routes/finance-routes');
 const contentRoutes = require('./routes/content-routes');
 const briefRoutes = require('./routes/brief-routes');
 
@@ -68,7 +69,8 @@ app.use('/api/v1', collaborationRoutes); // Mount campaign-influencer lifecycle 
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/media', mediaRoutes);
-app.use('/api/v1/invoices', invoiceRoutes);
+app.use('/api/v1', invoiceRoutes); // T071: campaign-scoped invoice routes at /api/v1/campaigns/:campaignId/invoices
+app.use('/api/v1', financeRoutes); // T074: global finance routes at /api/v1/finance/*
 app.use('/api/v1/content', contentRoutes);
 
 // Phase 2+ routes (registered when files exist)
