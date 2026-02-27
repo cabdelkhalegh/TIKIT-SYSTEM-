@@ -24,6 +24,7 @@ import FinanceTab from '@/components/campaigns/FinanceTab';
 import BriefTab from '@/components/campaigns/BriefTab';
 import StrategyTab from '@/components/campaigns/StrategyTab';
 import InfluencersTab from '@/components/campaigns/InfluencersTab';
+import KPIsTab from '@/components/campaigns/KPIsTab';
 import { campaignService } from '@/services/campaign.service';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { formatCurrency } from '@/lib/utils';
@@ -181,11 +182,7 @@ export default function CampaignDetailPage() {
         )}
 
         {activeTab === 'kpis' && (
-          <Card className="p-12 text-center">
-            <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">KPIs</h3>
-            <p className="text-gray-600">Coming in next phase</p>
-          </Card>
+          <KPIsTab campaignId={campaignId} campaign={campaign} />
         )}
 
         {activeTab === 'reports' && (

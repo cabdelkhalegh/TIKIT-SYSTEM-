@@ -1293,6 +1293,24 @@ router.patch('/campaigns/:campaignId/influencers/:influencerId/status', requireA
       data: updateData,
     });
 
+    // T080: Auto-create KPI schedules when transitioning to 'live'
+    if (newStatus === 'live') {
+      const liveDate = updated.liveAt || new Date();
+      const scheduleDays = [1, 3, 7];
+      const scheduleRecords = scheduleDays.map((day) => ({
+        campaignId: resolvedCampaignId,
+        campaignInfluencerId: ci.id,
+        captureDay: day,
+        scheduledAt: new Date(liveDate.getTime() + day * 24 * 60 * 60 * 1000),
+      }));
+      try {
+        await prisma.kPISchedule.createMany({ data: scheduleRecords });
+      } catch (scheduleErr) {
+        console.error('Error creating KPI schedules:', scheduleErr);
+        // Non-blocking: log but don't fail the status transition
+      }
+    }
+
     res.json({
       success: true,
       data: {

@@ -356,6 +356,79 @@ async function fetchPostMetrics(mediaId) {
   }
 }
 
+/**
+ * T081: Capture KPIs for an influencer — used by auto-capture schedules
+ * Calls business_discovery API for connected influencers, returns metrics.
+ * Falls back to demo data when not connected.
+ */
+async function captureKPIs(handleOrIgUserId) {
+  const handle = (handleOrIgUserId || '').replace(/^@/, '');
+
+  if (!isConnected()) {
+    // Demo mode: return plausible random metrics
+    const demo = DEMO_PROFILES.find(
+      (p) => p.username === handle || p.igUserId === handle
+    );
+    const baseFollowers = demo ? demo.followerCount : 50000;
+    return {
+      reach: baseFollowers + Math.floor(Math.random() * 20000),
+      impressions: Math.floor(baseFollowers * 1.5 + Math.random() * 30000),
+      engagement: Math.floor(baseFollowers * 0.04 + Math.random() * 1000),
+      clicks: Math.floor(Math.random() * 500 + 50),
+      capturedAt: new Date().toISOString(),
+      isDemoData: true,
+    };
+  }
+
+  try {
+    // Get our own IG user ID for business_discovery
+    const meUrl = `${GRAPH_API_BASE}/me?fields=id&access_token=${INSTAGRAM_ACCESS_TOKEN}`;
+    const me = await graphGet(meUrl);
+
+    // Fetch profile via business_discovery
+    const url = `${GRAPH_API_BASE}/${me.id}?fields=business_discovery.username(${handle}){id,followers_count,media.limit(12){like_count,comments_count,timestamp,insights.metric(reach,impressions){name,values}}}&access_token=${INSTAGRAM_ACCESS_TOKEN}`;
+    const data = await graphGet(url);
+    const bd = data.business_discovery;
+
+    if (!bd) {
+      throw new Error(`Could not find Instagram profile for @${handle}`);
+    }
+
+    let totalReach = bd.followers_count || 0;
+    let totalImpressions = 0;
+    let totalEngagement = 0;
+
+    if (bd.media?.data) {
+      for (const media of bd.media.data) {
+        totalEngagement += (media.like_count || 0) + (media.comments_count || 0);
+        if (media.insights?.data) {
+          for (const insight of media.insights.data) {
+            if (insight.name === 'reach') totalReach += insight.values?.[0]?.value || 0;
+            if (insight.name === 'impressions') totalImpressions += insight.values?.[0]?.value || 0;
+          }
+        }
+      }
+    }
+
+    // If no impressions from insights, estimate from reach
+    if (totalImpressions === 0) {
+      totalImpressions = Math.floor(totalReach * 1.4);
+    }
+
+    return {
+      reach: totalReach,
+      impressions: totalImpressions,
+      engagement: totalEngagement,
+      clicks: null, // clicks not available from business_discovery
+      capturedAt: new Date().toISOString(),
+      isDemoData: false,
+    };
+  } catch (error) {
+    console.error('Instagram captureKPIs error:', error.message);
+    throw error;
+  }
+}
+
 module.exports = {
   isConnected,
   searchByName,
@@ -363,4 +436,5 @@ module.exports = {
   searchByHashtag,
   fetchProfileMetrics,
   fetchPostMetrics,
+  captureKPIs,
 };
