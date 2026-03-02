@@ -69,7 +69,7 @@ const TABS: TabDef[] = [
     id: 'closure',
     label: 'Closure',
     icon: Lock,
-    enabledStatuses: ['closed'],
+    enabledStatuses: ['reporting', 'closed'],
   },
 ];
 
