@@ -27,6 +27,7 @@ import InfluencersTab from '@/components/campaigns/InfluencersTab';
 import ContentTab from '@/components/campaigns/ContentTab';
 import KPIsTab from '@/components/campaigns/KPIsTab';
 import ReportsTab from '@/components/campaigns/ReportsTab';
+import ClosureTab from '@/components/campaigns/ClosureTab';
 import { campaignService } from '@/services/campaign.service';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { formatCurrency } from '@/lib/utils';
@@ -192,11 +193,7 @@ export default function CampaignDetailPage() {
         )}
 
         {activeTab === 'closure' && (
-          <Card className="p-12 text-center">
-            <Lock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Closure</h3>
-            <p className="text-gray-600">Coming in next phase</p>
-          </Card>
+          <ClosureTab campaignId={campaignId} campaign={campaign} />
         )}
       </div>
     </DashboardLayout>

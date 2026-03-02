@@ -256,7 +256,7 @@ async function generateClosureIntelligence(campaignData, cxSurvey, postMortem, k
     const prompt = `Generate a comprehensive campaign closure intelligence document. Return valid JSON with:
 - learnings (array of key takeaways)
 - bestPractices (array of practices to replicate)
-- wrapUp (string, comprehensive summary)
+- intelligenceDocument (string, comprehensive narrative summary covering the full campaign lifecycle, outcomes, and strategic recommendations)
 
 Campaign data:
 ${JSON.stringify(campaignData)}
