@@ -4,6 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 const { requireAuthentication } = require('../middleware/access-control');
 const createCrudRouter = require('../utils/crud-router-factory');
 const createRoleBasedMethodMiddleware = require('../middleware/role-based-method');
+const { generateClientId } = require('../services/id-generator-service');
 
 const prisma = new PrismaClient();
 
@@ -25,7 +26,14 @@ const router = createCrudRouter({
     default: {
       campaigns: true
     }
-  }
+  },
+  // T129: Auto-generate CLI-XXXX display ID on client creation
+  beforeCreate: async (data) => {
+    if (!data.displayId) {
+      data.displayId = await generateClientId();
+    }
+    return data;
+  },
 });
 
 // Apply authentication middleware to all routes

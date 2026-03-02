@@ -165,4 +165,108 @@ router.put('/preferences', async (req, res, next) => {
   }
 });
 
+// ─── T126: Reminder CRUD endpoints ────────────────────────────────────────────
+
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+// POST /reminders — create a reminder
+router.post('/reminders', async (req, res, next) => {
+  try {
+    const userId = req.user?.userId || req.authenticatedUser?.userId;
+    const { title, description, dueDate, campaignId, entityType, entityId } = req.body;
+
+    if (!title || !dueDate) {
+      throw new ValidationError('title and dueDate are required');
+    }
+
+    const reminder = await prisma.reminder.create({
+      data: {
+        userId,
+        title,
+        description: description || null,
+        dueDate: new Date(dueDate),
+        campaignId: campaignId || null,
+        entityType: entityType || null,
+        entityId: entityId || null,
+      },
+    });
+
+    res.status(201).json({ success: true, data: reminder });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /reminders — list user's reminders
+router.get('/reminders', async (req, res, next) => {
+  try {
+    const userId = req.user?.userId || req.authenticatedUser?.userId;
+    const { upcoming, campaignId } = req.query;
+
+    const where = { userId };
+    if (campaignId) where.campaignId = campaignId;
+    if (upcoming === 'true') {
+      where.dueDate = { gte: new Date() };
+      where.isSent = false;
+    }
+
+    const reminders = await prisma.reminder.findMany({
+      where,
+      orderBy: { dueDate: 'asc' },
+      take: 50,
+      include: {
+        campaign: { select: { campaignId: true, campaignName: true, displayId: true } },
+      },
+    });
+
+    res.json({ success: true, data: reminders });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH /reminders/:id — update a reminder
+router.patch('/reminders/:id', async (req, res, next) => {
+  try {
+    const userId = req.user?.userId || req.authenticatedUser?.userId;
+    const { id } = req.params;
+    const { title, description, dueDate, isSent } = req.body;
+
+    const existing = await prisma.reminder.findFirst({ where: { id, userId } });
+    if (!existing) {
+      throw new NotFoundError('Reminder not found');
+    }
+
+    const data = {};
+    if (title !== undefined) data.title = title;
+    if (description !== undefined) data.description = description;
+    if (dueDate !== undefined) data.dueDate = new Date(dueDate);
+    if (isSent !== undefined) data.isSent = isSent;
+
+    const updated = await prisma.reminder.update({ where: { id }, data });
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /reminders/:id — delete a reminder
+router.delete('/reminders/:id', async (req, res, next) => {
+  try {
+    const userId = req.user?.userId || req.authenticatedUser?.userId;
+    const { id } = req.params;
+
+    const existing = await prisma.reminder.findFirst({ where: { id, userId } });
+    if (!existing) {
+      throw new NotFoundError('Reminder not found');
+    }
+
+    await prisma.reminder.delete({ where: { id } });
+    res.json({ success: true, message: 'Reminder deleted' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
