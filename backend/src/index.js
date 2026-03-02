@@ -21,7 +21,7 @@ const contentRoutes = require('./routes/content-routes');
 const briefRoutes = require('./routes/brief-routes');
 
 // Phase 2+ routes (stubs registered, files created per phase)
-let strategyRoutes, kpiRoutes, reportRoutes, closureRoutes, auditRoutes, adminRoutes, clientPortalRoutes, influencerPortalRoutes;
+let strategyRoutes, kpiRoutes, reportRoutes, closureRoutes, auditRoutes, adminRoutes, clientPortalRoutes, influencerPortalRoutes, searchRoutes;
 try { strategyRoutes = require('./routes/strategy-routes'); } catch {}
 try { kpiRoutes = require('./routes/kpi-routes'); } catch {}
 try { reportRoutes = require('./routes/report-routes'); } catch {}
@@ -30,6 +30,7 @@ try { auditRoutes = require('./routes/audit-routes'); } catch {}
 try { adminRoutes = require('./routes/admin-routes'); } catch {}
 try { clientPortalRoutes = require('./routes/client-portal-routes'); } catch {}
 try { influencerPortalRoutes = require('./routes/influencer-portal-routes'); } catch {}
+try { searchRoutes = require('./routes/search-routes'); } catch {}
 
 // Import middleware
 const requestLogger = require('./middleware/request-logger');
@@ -82,6 +83,7 @@ if (auditRoutes) app.use('/api/v1/audit-logs', auditRoutes);
 if (adminRoutes) app.use('/api/v1/admin', adminRoutes);
 if (clientPortalRoutes) app.use('/api/v1/client-portal', clientPortalRoutes);
 if (influencerPortalRoutes) app.use('/api/v1/influencer-portal', influencerPortalRoutes);
+if (searchRoutes) app.use('/api/v1', searchRoutes);
 app.use('/api/v1', briefRoutes);
 
 // Health check endpoint

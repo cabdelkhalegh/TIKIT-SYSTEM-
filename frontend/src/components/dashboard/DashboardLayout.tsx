@@ -20,6 +20,8 @@ import {
   ClipboardCheck,
   DollarSign,
   FileText,
+  Bell,
+  ClipboardList,
   type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -48,6 +50,8 @@ const allNavigation: NavItem[] = [
   { name: 'Content', href: '/dashboard/content', icon: FileText, allowedRoles: ['director', 'campaign_manager', 'reviewer', 'client', 'influencer'] },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, allowedRoles: ['director', 'campaign_manager', 'reviewer', 'finance'] },
   { name: 'Finance', href: '/dashboard/finance', icon: DollarSign, allowedRoles: ['director', 'finance'] },
+  { name: 'Reports', href: '/dashboard/reports', icon: ClipboardList, allowedRoles: ['director', 'campaign_manager', 'reviewer'] },
+  { name: 'Reminders', href: '/dashboard/reminders', icon: Bell, allowedRoles: ['director', 'campaign_manager', 'reviewer', 'finance'] },
   // Director-only admin sections
   { name: 'Registrations', href: '/dashboard/licensing', icon: ClipboardCheck, allowedRoles: ['director'] },
   { name: 'User Roles', href: '/dashboard/roles', icon: Shield, allowedRoles: ['director'] },
