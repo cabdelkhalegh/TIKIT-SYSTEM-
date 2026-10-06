@@ -99,7 +99,6 @@ export interface CreateCollaborationRequest {
   role?: string;
   agreedDeliverables?: Deliverable[];
   agreedAmount?: number;
-  notes?: string;
 }
 
 export interface UpdateCollaborationRequest {
